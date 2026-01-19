@@ -51,11 +51,22 @@
     const handleScroll = () => {
       scrolled = window.scrollY > 10;
     };
+
+    const handleKeydown = (e) => {
+      // Cmd+K (Mac) or Ctrl+K (Windows/Linux) to open search
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchOpen = true;
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     document.addEventListener("click", handleClickOutside);
+    document.addEventListener("keydown", handleKeydown);
     return () => {
       window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleKeydown);
     };
   });
 
@@ -83,7 +94,7 @@
     "sticky top-0 z-50 w-full transition-all duration-300",
     scrolled
       ? "bg-background/60 backdrop-blur-2xl border-b border-border/50"
-      : "bg-transparent border-b border-transparent"
+      : "bg-transparent border-b border-transparent",
   )}
 >
   <nav class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-8">
@@ -152,7 +163,7 @@
           </div>
         {:else if $authStore.isConnected}
           <!-- My Apps Button -->
-          <a href="/apps" class="btn-primary-small mr-4"> My apps </a>
+          <a href="/my-apps" class="btn-primary-small mr-4"> My apps </a>
           <!-- Profile Avatar with Dropdown -->
           <div class="relative profile-dropdown">
             <button

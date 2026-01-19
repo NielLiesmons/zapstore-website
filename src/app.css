@@ -648,6 +648,70 @@ h5, h6 {
 }
 
 /* ========================================
+   PANELS (BASIC CONTAINERS)
+   Cards/panels without borders - the most basic container element.
+   Default: gray66 bg, 16px radius, 16px padding.
+   ======================================== */
+
+/* Base panel - gray66 background (default) */
+.panel {
+  background-color: hsl(var(--gray66));
+  border-radius: var(--radius-16);
+  padding: 16px;
+}
+
+/* Light panel variant - white16 background */
+.panel-light {
+  background-color: hsl(var(--white16));
+}
+
+/* Dark panel variant - black33 background */
+.panel-dark {
+  background-color: hsl(var(--black33));
+}
+
+/* Panel padding variants */
+.panel-p-12 {
+  padding: 12px;
+}
+
+.panel-p-16 {
+  padding: 16px;
+}
+
+.panel-p-20 {
+  padding: 20px;
+}
+
+.panel-p-24 {
+  padding: 24px;
+}
+
+/* ========================================
+   CLICKABLE PANELS
+   For cards/panels that are interactive (links, buttons).
+   Adds subtle scale effect on hover/tap.
+   ======================================== */
+
+.panel-clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.panel-clickable:hover {
+  transform: scale(1.01);
+}
+
+.panel-clickable:active {
+  transform: scale(0.99);
+}
+
+.panel-clickable:focus {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* ========================================
    GLASSMORPHISM CARDS
    ======================================== */
 

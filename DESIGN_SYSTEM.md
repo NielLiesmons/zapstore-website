@@ -6,11 +6,94 @@
 
 ## Table of Contents
 
-1. [Button Standards](#button-standards)
-2. [Icon Standards](#icon-standards)
-3. [Color System](#color-system)
-4. [Typography](#typography)
-5. [Selector Component](#selector-component)
+1. [Panels (Basic Containers)](#panels-basic-containers)
+2. [Button Standards](#button-standards)
+3. [Icon Standards](#icon-standards)
+4. [Loading States & Skeleton Loader](#loading-states--skeleton-loader)
+5. [Color System](#color-system)
+6. [Typography](#typography)
+7. [Selector Component](#selector-component)
+
+---
+
+## Panels (Basic Containers)
+
+### Overview
+
+**CRITICAL RULE**: Panels are the most basic container element in this design system. They are used for cards, sections, and any grouped content. **Panels have NO border by default** - only a solid background color.
+
+### Panel Specs
+
+- **Background**: `gray66` (default), `white16` (light), `black33` (dark)
+- **Border radius**: 16px (`var(--radius-16)`)
+- **Padding**: 16px default (variants: 12px, 20px, 24px)
+- **Border**: NONE by default
+
+### Available Classes
+
+#### Base Panel
+- `.panel` - Default panel with gray66 background, 16px radius, 16px padding
+
+#### Color Variants (add to `.panel`)
+- `.panel-light` - Light variant with white16 background
+- `.panel-dark` - Dark variant with black33 background
+
+#### Padding Variants (add to `.panel`)
+- `.panel-p-12` - 12px padding
+- `.panel-p-16` - 16px padding (default)
+- `.panel-p-20` - 20px padding
+- `.panel-p-24` - 24px padding
+
+#### Clickable Panels
+- `.panel-clickable` - Adds hover/active scale effects for interactive panels
+
+### Usage Examples
+
+```svelte
+<!-- Default panel -->
+<div class="panel">
+  Content here
+</div>
+
+<!-- Light panel with more padding -->
+<div class="panel panel-light panel-p-24">
+  Content here
+</div>
+
+<!-- Dark clickable panel -->
+<div class="panel panel-dark panel-clickable" on:click={handleClick}>
+  Interactive content
+</div>
+
+<!-- Clickable panel as link -->
+<a href="/somewhere" class="panel panel-clickable">
+  Click to navigate
+</a>
+```
+
+### Clickable Panel Behavior
+
+The `.panel-clickable` class adds:
+- `cursor: pointer`
+- Hover: `scale(1.01)` - subtle grow effect
+- Active: `scale(0.99)` - slight press effect
+- Focus: 2px primary outline for accessibility
+
+### When to Use Each Variant
+
+| Variant | Use Case |
+|---------|----------|
+| `.panel` (gray66) | Default containers, cards, sections |
+| `.panel-light` (white16) | Content on dark backgrounds, subtle elevation |
+| `.panel-dark` (black33) | Content that needs more depth, overlays |
+| `.panel-clickable` | Any panel that navigates or triggers an action |
+
+### Important Notes
+
+1. **Never add borders to panels** unless specifically required for a special case
+2. **Always use panel classes** for container elements - don't create custom card styles
+3. **Clickable elements MUST have `cursor: pointer`** - this is enforced by `.panel-clickable`
+4. Use Tailwind utilities for additional spacing (margin, gap) as needed
 
 ---
 
@@ -261,6 +344,147 @@ import { Download, Search, User } from "lucide-svelte";
 **When to use custom icons vs Lucide:**
 - ✅ **Custom icons**: Brand-specific icons, unique designs from Figma, chevrons/navigation
 - ✅ **Lucide icons**: Generic UI icons for quick prototyping (gradually replace with custom)
+
+---
+
+## Loading States & Skeleton Loader
+
+### Overview
+
+**CRITICAL**: This section defines how to build loading states for feeds, screens, and any content that is fetched from Nostr or APIs.
+
+**Minimum border radius**: All loading placeholder containers use at least `rounded-xl` (12px) border radius.
+
+### The 100ms Rule
+
+**Loading UI MUST only appear after a 100ms delay.** Before that, the screen should be empty/blank.
+
+This prevents flickering for fast loads and only shows loading UI when actually needed.
+
+```svelte
+<script>
+  import { onMount } from "svelte";
+  
+  let showLoadingUI = false;
+  let isLoading = true;
+  
+  onMount(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        showLoadingUI = true;
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  });
+</script>
+
+{#if isLoading}
+  {#if showLoadingUI}
+    <!-- Loading UI here -->
+  {/if}
+{:else}
+  <!-- Actual content -->
+{/if}
+```
+
+### Building Loading UIs: Two Types of Placeholders
+
+Loading states use a **mix** of two placeholder types:
+
+| Content Type | Placeholder | Why |
+|--------------|-------------|-----|
+| **Images** (icons, avatars, screenshots) | `<SkeletonLoader />` with shimmer | Visual elements need shimmer to show "loading" |
+| **Titles/Names** (app name, profile name, article title) | `<SkeletonLoader />` with shimmer | Primary text hierarchy needs shimmer |
+| **Body text, descriptions, secondary text** | `gray33` colored container | NO shimmer - use static gray33 background |
+
+**CRITICAL**: Body text and descriptions get `gray33` containers, NOT skeleton loaders!
+
+### Skeleton Loader Component
+
+**Location**: `src/lib/components/SkeletonLoader.svelte`
+
+The `SkeletonLoader` fills its parent container. The **parent element** defines:
+- Size (`width`, `height`)
+- Shape (`border-radius`)
+- `overflow-hidden` to clip the shimmer effect
+
+**When to use SkeletonLoader**:
+- ✅ App icons, profile pictures, screenshots (images)
+- ✅ App Name, Article Title, Profile Name (fetched titles)
+- ❌ Section headers (static UI text)
+- ❌ Body text / descriptions (use gray33 container instead)
+- ❌ Paragraphs
+
+### Gray33 Placeholder Containers
+
+For body text, descriptions, and secondary content - use simple `gray33` background containers:
+
+```svelte
+<!-- Description placeholder (NO shimmer) -->
+<div class="w-full h-4 rounded-lg" style="background-color: hsl(var(--gray33));"></div>
+```
+
+### Complete Feed/Screen Loading Example
+
+```svelte
+<script>
+  import { onMount } from "svelte";
+  import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
+  
+  let showLoadingUI = false;
+  let isLoading = true;
+  
+  onMount(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) showLoadingUI = true;
+    }, 100);
+    return () => clearTimeout(timer);
+  });
+</script>
+
+{#if isLoading && showLoadingUI}
+  <!-- App Card Loading State -->
+  <div class="flex gap-4 p-4">
+    <!-- App icon - SKELETON -->
+    <div class="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0">
+      <SkeletonLoader />
+    </div>
+    
+    <div class="flex-1 flex flex-col gap-2">
+      <!-- App name (title) - SKELETON -->
+      <div class="w-32 h-6 rounded-xl overflow-hidden">
+        <SkeletonLoader />
+      </div>
+      
+      <!-- Developer name (secondary) - GRAY33 -->
+      <div class="w-24 h-4 rounded-lg" style="background-color: hsl(var(--gray33));"></div>
+      
+      <!-- Description lines - GRAY33 -->
+      <div class="w-full h-4 rounded-lg" style="background-color: hsl(var(--gray33));"></div>
+      <div class="w-3/4 h-4 rounded-lg" style="background-color: hsl(var(--gray33));"></div>
+    </div>
+  </div>
+{/if}
+```
+
+### Title Skeleton Container Sizes
+
+When using SkeletonLoader for titles, match the container height to the font:
+- Large titles (text-4xl+): `h-10` or `h-12`
+- Medium titles (text-xl/2xl): `h-7` or `h-8`
+- Small titles (text-lg): `h-6`
+- Default text (text-base): `h-5`
+
+Always use `rounded-xl` (12px) for text skeleton containers.
+
+### Technical Details
+
+- **Animation**: 1.2s ease-in-out infinite shimmer
+- **Gradient**: Extra-wide soft-feathered gradient (`transparent → white4 → white8 → white16 → white8 → white4 → transparent`)
+- **Performance**: Uses CSS transforms for GPU acceleration
+- **Accessibility**: Includes `role="status"` and `aria-label="Loading..."`
+- **Reduced motion**: Respects `prefers-reduced-motion` media query
 
 ---
 

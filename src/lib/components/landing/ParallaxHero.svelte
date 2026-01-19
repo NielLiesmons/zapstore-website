@@ -2,8 +2,12 @@
   import { onMount } from "svelte";
   import { assets } from "$app/paths";
   import { ChevronRight, Code2 } from "$lib/components/icons";
+  import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
 
   let heroButton;
+
+  // Track loaded state for each icon image
+  let loadedImages = {};
   let devButton;
   let mouseX = 0;
   let mouseY = 0;
@@ -598,7 +602,7 @@
       {@const thicknessSpread = 1}
       {@const thicknessOffsetMultiplier = Math.max(
         8,
-        (windowWidth / 100) * 0.6
+        (windowWidth / 100) * 0.6,
       )}
       {@const thicknessOffsetX =
         Math.sin((iconData.rotationY * Math.PI) / 180) *
@@ -646,14 +650,22 @@
             box-shadow: {thicknessOffsetX}px {thicknessOffsetY}px 0 {thicknessSpread}px hsl(var(--white8));
           "
         >
+          <!-- Skeleton loader while image loads -->
+          {#if !loadedImages[iconData.imageUrl]}
+            <div class="absolute inset-0 overflow-hidden">
+              <SkeletonLoader />
+            </div>
+          {/if}
           <img
             src={iconData.imageUrl}
             alt="App icon"
-            class="w-full h-full object-cover"
+            class="w-full h-full object-cover transition-opacity duration-300"
+            class:opacity-0={!loadedImages[iconData.imageUrl]}
             style="
               backface-visibility: hidden;
               transform: translateZ(0);
             "
+            on:load={() => (loadedImages[iconData.imageUrl] = true)}
           />
         </div>
       </div>
@@ -680,8 +692,8 @@
     <p class="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-8">
       Finally, an open app store for freely sharing apps
     </p>
-    <button
-      type="button"
+    <a
+      href="/apps"
       bind:this={heroButton}
       class="btn-glass-large btn-glass-with-chevron flex items-center group"
       on:mousemove={handleMouseMove}
@@ -693,7 +705,7 @@
         size={18}
         className="transition-transform group-hover:translate-x-0.5"
       />
-    </button>
+    </a>
   </div>
 
   <!-- Developer button anchored to bottom -->
@@ -706,7 +718,7 @@
     <span class="btn-icon-green flex items-center">
       <Code2 variant="outline" size={14} color="currentColor" />
     </span>
-    <span class="btn-text-white">Developer Site</span>
+    <span class="btn-text-white">For Developers</span>
   </button>
 </section>
 

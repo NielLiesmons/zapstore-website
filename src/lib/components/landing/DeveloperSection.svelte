@@ -128,7 +128,7 @@
       class="btn-glass-large btn-glass-green flex items-center gap-3 mx-auto"
     >
       <Code2 variant="outline" color="#19DD75" size={16} />
-      Developer Site
+      For Developers
     </button>
   </div>
 </section>
