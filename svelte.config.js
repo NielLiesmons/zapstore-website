@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-node';
+import adapter from '@sveltejs/adapter-vercel';
 import { mdsvex } from 'mdsvex';
 import { defineMDSveXConfig as defineConfig } from 'mdsvex';
 import rehypeSlug from 'rehype-slug';
@@ -63,14 +63,7 @@ const config = {
 	extensions: ['.svelte', ...mdsvexConfig.extensions],
 	preprocess: [mdsvex(mdsvexConfig)],
 	kit: {
-		adapter: adapter({
-			// Enable precompressed asset serving
-			precompress: {
-				brotli: true,
-				gzip: true,
-				files: ['html', 'js', 'json', 'css', 'svg', 'xml', 'wasm']
-			}
-		}),
+		adapter: adapter(),
 		prerender: {
 			handleHttpError: ({ path, referrer, message }) => {
 				// ignore deliberate link to shiny 404 page
