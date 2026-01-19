@@ -23,6 +23,18 @@ importers:
       '@scure/base':
         specifier: ^2.0.0
         version: 2.0.0
+      applesauce-core:
+        specifier: ^5.0.3
+        version: 5.0.3
+      applesauce-loaders:
+        specifier: ^5.0.2
+        version: 5.0.2
+      applesauce-relay:
+        specifier: ^5.0.0
+        version: 5.0.0
+      applesauce-signers:
+        specifier: ^5.0.0
+        version: 5.0.0
       lucide-svelte:
         specifier: ^0.511.0
         version: 0.511.0(svelte@5.33.1)
@@ -307,6 +319,13 @@ packages:
   '@noble/hashes@1.3.2':
     resolution: {integrity: sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==}
     engines: {node: '>= 16'}
+
+  '@noble/hashes@1.8.0':
+    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
+    engines: {node: ^14.21.3 || >=16}
+
+  '@noble/secp256k1@1.7.2':
+    resolution: {integrity: sha512-/qzwYl5eFLH8OWIecQWM31qld2g1NfjgylK+TNhqtaUKP37Nm+Y+z30Fjhw0Ct8p9yCQEm2N3W/AckdIb3SMcQ==}
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
@@ -656,6 +675,18 @@ packages:
     resolution: {integrity: sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==}
     engines: {node: '>=8'}
 
+  applesauce-core@5.0.3:
+    resolution: {integrity: sha512-ErhWsRlR7Q6of1bjtWSWLza51HHv3Hqk3Vhfe8IHsPoVma8wvj4ES35sPHapdoXLSIz25Qe9szwuO4j3NUd1uw==}
+
+  applesauce-loaders@5.0.2:
+    resolution: {integrity: sha512-ia+0SD0iPklAAkweFnxyp9SXIyfyxKsK7SGa1ZoDu5Q6ZRZzMSijP+NhIdCawNH/eYym8930y1OO00Jj3pUifQ==}
+
+  applesauce-relay@5.0.0:
+    resolution: {integrity: sha512-XcL3ymwwENGabRPTddATuujXlP6IyDMnwV9vL/TaS0OL+WycykB5wGTG9u+FRSvndVzcoD0FFKVVqW4vL9y8hw==}
+
+  applesauce-signers@5.0.0:
+    resolution: {integrity: sha512-wybzjnK584iTH5SeAgQHVk/CwYgFFahV1T/3oU3wR6v6TecFnDe7cVhBToYMk2F8ANQVcrDYEebyeq844+al7w==}
+
   aria-query@5.3.2:
     resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
     engines: {node: '>= 0.4'}
@@ -790,6 +821,9 @@ packages:
   extend@3.0.2:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
 
+  fast-deep-equal@3.1.3:
+    resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
+
   fdir@6.4.4:
     resolution: {integrity: sha512-1NZP+GK4GfuAv3PqKvxQRDMjdSRZjnkq7KfhlNrCNNlZ0ygQFpebfrnfnq/W7fpUnAv9aGWmY1zKx7FYL3gwhg==}
     peerDependencies:
@@ -822,6 +856,9 @@ packages:
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
+
+  hash-sum@2.0.0:
+    resolution: {integrity: sha512-WdZTbAByD+pHfl/g9QSsBIIwy8IT+EsPiKDs0KNX+zSHhdDLFKdZu0BQHljvO+0QI/BasbMSUa8wYNCZTvhslg==}
 
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
@@ -1117,6 +1154,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@5.1.6:
+    resolution: {integrity: sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
 
@@ -1126,6 +1168,14 @@ packages:
 
   nostr-tools@2.13.0:
     resolution: {integrity: sha512-A1arGsvpULqVK0NmZQqK1imwaCiPm8gcG/lo+cTax2NbNqBEYsuplbqAFdVqcGHEopmkByYbTwF76x25+oEbew==}
+    peerDependencies:
+      typescript: '>=5.0.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  nostr-tools@2.19.4:
+    resolution: {integrity: sha512-qVLfoTpZegNYRJo5j+Oi6RPu0AwLP6jcvzcB3ySMnIT5DrAGNXfs5HNBspB/2HiGfH3GY+v6yXkTtcKSBQZwSg==}
     peerDependencies:
       typescript: '>=5.0.0'
     peerDependenciesMeta:
@@ -1206,6 +1256,9 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
+  rxjs@7.8.2:
+    resolution: {integrity: sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==}
+
   sade@1.8.1:
     resolution: {integrity: sha512-xal3CZX1Xlo/k4ApwCFrHVACi9fBqJ7V+mwhBsuf/1IOKbBy098Fex+Wa/5QMubw09pSZ/u8EY8PWgevJsXp1A==}
     engines: {node: '>=6'}
@@ -1269,6 +1322,9 @@ packages:
 
   trough@2.2.0:
     resolution: {integrity: sha512-tmMpK00BjZiUyVyvrBK7knerNgmgvcV/KLVyuma/SC+TQN167GrMRciANTz09+k3zW8L8t60jWO1GpfkZdjTaw==}
+
+  tslib@2.8.1:
+    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
@@ -1524,6 +1580,10 @@ snapshots:
 
   '@noble/hashes@1.3.2': {}
 
+  '@noble/hashes@1.8.0': {}
+
+  '@noble/secp256k1@1.7.2': {}
+
   '@polka/url@1.0.0-next.29': {}
 
   '@rollup/plugin-commonjs@28.0.8(rollup@4.41.1)':
@@ -1629,12 +1689,12 @@ snapshots:
   '@scure/bip32@1.3.1':
     dependencies:
       '@noble/curves': 1.1.0
-      '@noble/hashes': 1.3.1
+      '@noble/hashes': 1.3.2
       '@scure/base': 1.1.1
 
   '@scure/bip39@1.2.1':
     dependencies:
-      '@noble/hashes': 1.3.1
+      '@noble/hashes': 1.3.2
       '@scure/base': 1.1.1
 
   '@shikijs/core@3.12.2':
@@ -1842,6 +1902,49 @@ snapshots:
     dependencies:
       color-convert: 2.0.1
 
+  applesauce-core@5.0.3:
+    dependencies:
+      debug: 4.4.1
+      fast-deep-equal: 3.1.3
+      hash-sum: 2.0.0
+      nanoid: 5.1.6
+      nostr-tools: 2.19.4
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  applesauce-loaders@5.0.2:
+    dependencies:
+      applesauce-core: 5.0.3
+      nanoid: 5.1.6
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  applesauce-relay@5.0.0:
+    dependencies:
+      '@noble/hashes': 1.8.0
+      applesauce-core: 5.0.3
+      nanoid: 5.1.6
+      nostr-tools: 2.19.4
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  applesauce-signers@5.0.0:
+    dependencies:
+      '@noble/secp256k1': 1.7.2
+      applesauce-core: 5.0.3
+      debug: 4.4.1
+      nanoid: 5.1.6
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
   aria-query@5.3.2: {}
 
   autoprefixer@10.4.21(postcss@8.5.3):
@@ -1967,6 +2070,8 @@ snapshots:
 
   extend@3.0.2: {}
 
+  fast-deep-equal@3.1.3: {}
+
   fdir@6.4.4(picomatch@4.0.2):
     optionalDependencies:
       picomatch: 4.0.2
@@ -1989,6 +2094,8 @@ snapshots:
   graceful-fs@4.2.11: {}
 
   has-flag@4.0.0: {}
+
+  hash-sum@2.0.0: {}
 
   hasown@2.0.2:
     dependencies:
@@ -2448,6 +2555,8 @@ snapshots:
 
   nanoid@3.3.11: {}
 
+  nanoid@5.1.6: {}
+
   node-releases@2.0.19: {}
 
   normalize-range@0.1.2: {}
@@ -2463,8 +2572,17 @@ snapshots:
     optionalDependencies:
       nostr-wasm: 0.1.0
 
-  nostr-wasm@0.1.0:
-    optional: true
+  nostr-tools@2.19.4:
+    dependencies:
+      '@noble/ciphers': 0.5.3
+      '@noble/curves': 1.2.0
+      '@noble/hashes': 1.3.1
+      '@scure/base': 1.1.1
+      '@scure/bip32': 1.3.1
+      '@scure/bip39': 1.2.1
+      nostr-wasm: 0.1.0
+
+  nostr-wasm@0.1.0: {}
 
   oniguruma-parser@0.12.1: {}
 
@@ -2584,6 +2702,10 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.41.1
       fsevents: 2.3.3
 
+  rxjs@7.8.2:
+    dependencies:
+      tslib: 2.8.1
+
   sade@1.8.1:
     dependencies:
       mri: 1.2.0
@@ -2664,6 +2786,8 @@ snapshots:
   trim-lines@3.0.1: {}
 
   trough@2.2.0: {}
+
+  tslib@2.8.1: {}
 
   unified@11.0.5:
     dependencies:
