@@ -1,5 +1,15 @@
+/**
+ * Authentication store using Applesauce signers
+ * 
+ * This module provides authentication state management using the
+ * Applesauce signers package for NIP-07 browser extension support.
+ * 
+ * @see https://hzrd149.github.io/applesauce/
+ */
+
 import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { ExtensionSigner } from 'applesauce-signers/signers/extension-signer';
 import { fetchProfile, pubkeyToNpub } from '$lib/nostr.js';
 
 const STORAGE_KEY = 'zapstore_auth_pubkey';
@@ -11,8 +21,26 @@ const initialState = {
 	profile: null,
 	isConnected: false,
 	isConnecting: false,
-	error: null
+	error: null,
+	signer: null // Applesauce signer instance
 };
+
+// Singleton ExtensionSigner instance
+let extensionSigner = null;
+
+/**
+ * Gets or creates the NIP-07 extension signer instance
+ * @returns {ExtensionSigner|null}
+ */
+function getExtensionSigner() {
+	if (!browser) return null;
+	
+	if (!extensionSigner && typeof window.nostr !== 'undefined') {
+		extensionSigner = new ExtensionSigner();
+	}
+	
+	return extensionSigner;
+}
 
 // Create the store
 function createAuthStore() {
@@ -32,15 +60,16 @@ function createAuthStore() {
 
 		try {
 			// Verify we still have NIP-07 extension available
-			if (typeof window.nostr === 'undefined') {
+			const signer = getExtensionSigner();
+			if (!signer) {
 				// Extension not available, clear saved state
 				localStorage.removeItem(STORAGE_KEY);
 				set(initialState);
 				return;
 			}
 
-			// Try to get current pubkey from extension
-			const currentPubkey = await window.nostr.getPublicKey();
+			// Try to get current pubkey from extension using Applesauce signer
+			const currentPubkey = await signer.getPublicKey();
 			
 			// If pubkey matches saved one, restore session
 			if (currentPubkey === savedPubkey) {
@@ -54,7 +83,8 @@ function createAuthStore() {
 					profile,
 					isConnected: true,
 					isConnecting: false,
-					error: null
+					error: null,
+					signer
 				}));
 			} else {
 				// Different account, update localStorage
@@ -69,7 +99,8 @@ function createAuthStore() {
 					profile,
 					isConnected: true,
 					isConnecting: false,
-					error: null
+					error: null,
+					signer
 				}));
 			}
 		} catch (err) {
@@ -85,13 +116,14 @@ function createAuthStore() {
 		update(state => ({ ...state, isConnecting: true, error: null }));
 
 		try {
-			// Check for NIP-07 extension
-			if (typeof window.nostr === 'undefined') {
+			// Get Applesauce extension signer
+			const signer = getExtensionSigner();
+			if (!signer) {
 				throw new Error('No Nostr extension found. Please install Alby, nos2x, or similar.');
 			}
 
-			// Get public key from extension
-			const pubkey = await window.nostr.getPublicKey();
+			// Get public key from extension using Applesauce signer
+			const pubkey = await signer.getPublicKey();
 			const npub = pubkeyToNpub(pubkey);
 
 			// Save to localStorage for session persistence
@@ -107,10 +139,11 @@ function createAuthStore() {
 				profile,
 				isConnected: true,
 				isConnecting: false,
-				error: null
+				error: null,
+				signer
 			}));
 
-			return { pubkey, npub, profile };
+			return { pubkey, npub, profile, signer };
 		} catch (err) {
 			console.error('Failed to connect:', err);
 			update(state => ({
@@ -126,6 +159,7 @@ function createAuthStore() {
 		if (browser) {
 			localStorage.removeItem(STORAGE_KEY);
 		}
+		extensionSigner = null;
 		set(initialState);
 	}
 
@@ -134,11 +168,35 @@ function createAuthStore() {
 		return browser && typeof window.nostr !== 'undefined';
 	}
 
+	/**
+	 * Sign an event using the connected signer
+	 * @param {Object} event - Unsigned event
+	 * @returns {Promise<Object>} Signed event
+	 */
+	async function signEvent(event) {
+		const state = get({ subscribe });
+		if (!state.signer) {
+			throw new Error('Not connected. Please sign in first.');
+		}
+		return state.signer.signEvent(event);
+	}
+
+	/**
+	 * Get the current signer instance
+	 * @returns {ExtensionSigner|null}
+	 */
+	function getSigner() {
+		const state = get({ subscribe });
+		return state.signer;
+	}
+
 	return {
 		subscribe,
 		connect,
 		disconnect,
 		isExtensionAvailable,
+		signEvent,
+		getSigner,
 		// Get current state synchronously
 		getState: () => get({ subscribe })
 	};
@@ -150,5 +208,5 @@ export const authStore = createAuthStore();
 export const connect = () => authStore.connect();
 export const disconnect = () => authStore.disconnect();
 export const isExtensionAvailable = () => authStore.isExtensionAvailable();
-
-
+export const signEvent = (event) => authStore.signEvent(event);
+export const getSigner = () => authStore.getSigner();

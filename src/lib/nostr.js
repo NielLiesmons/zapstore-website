@@ -1,56 +1,47 @@
-import { SimplePool } from 'nostr-tools/pool';
+/**
+ * Nostr client-side operations using Applesauce SDK
+ * 
+ * This module provides all client-side Nostr functionality using the
+ * Applesauce library for reactive, modular Nostr development.
+ * 
+ * @see https://hzrd149.github.io/applesauce/
+ */
+
 import * as nip19 from 'nostr-tools/nip19';
 import { bech32 } from '@scure/base';
 import { cacheEvent, getCachedEvent } from './event-cache.js';
-// Note: marked removed, using simple fallback for renderMarkdown
+import {
+	getRelayPool,
+	getEventStore,
+	fetchEvents,
+	fetchFirstEvent,
+	publishEvent,
+	subscribeToEvents,
+	subscribeToMany,
+	addEventToStore,
+	addEventsToStore,
+	RELAY_URL,
+	PROFILE_RELAYS,
+	SOCIAL_RELAYS,
+	COMMENT_RELAYS,
+	KIND_PROFILE,
+	KIND_COMMENT,
+	KIND_FILE_METADATA,
+	KIND_ZAP_REQUEST,
+	KIND_ZAP_RECEIPT,
+	KIND_RELEASE,
+	KIND_APP,
+	CONNECTION_TIMEOUT,
+	getDiscoverPageState,
+	setDiscoverPageState
+} from './applesauce.js';
 
-const RELAY_URL = 'wss://relay.zapstore.dev';
-const PROFILE_RELAY_URL = 'wss://relay.vertexlab.io';
-const SOCIAL_RELAYS = [
-	'wss://relay.damus.io',
-	'wss://relay.primal.net',
-	'wss://relay.nostr.band',
-	'wss://nos.lol'
-];
-const PROFILE_RELAYS = Array.from(new Set([PROFILE_RELAY_URL, RELAY_URL, ...SOCIAL_RELAYS]));
-// Comments should only go to social relays (exclude primary relay)
-const COMMENT_RELAYS = Array.from(new Set(SOCIAL_RELAYS));
-const CONNECTION_TIMEOUT = 10000; // 10 seconds
-const KIND_ZAP_RECEIPT = 9735;
+// Re-export discover page state functions
+export { getDiscoverPageState, setDiscoverPageState };
 
-// Event kinds
-const KIND_PROFILE = 0;
-const KIND_COMMENT = 1111;
-const KIND_FILE_METADATA = 1063;
-const KIND_RELEASE = 30063;
-const KIND_APP = 32267;
-
-// Create a global pool instance
-let pool = null;
-
-// Apps list cache for discover page state persistence
-let discoverPageState = {
-	apps: [],
-	hasMore: true,
-	expanded: false,
-	query: ''
-};
-
-/**
- * Gets the discover page state
- * @returns {Object} The current discover page state
- */
-export function getDiscoverPageState() {
-	return discoverPageState;
-}
-
-/**
- * Sets the discover page state
- * @param {Object} state - The state to save
- */
-export function setDiscoverPageState(state) {
-	discoverPageState = { ...discoverPageState, ...state };
-}
+// ============================================================================
+// App Caching
+// ============================================================================
 
 /**
  * Gets a cached app by pubkey and dTag
@@ -97,11 +88,11 @@ export function cacheRelease(release, appDTag) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Zaps caching (kind 9735 grouped per app)
-// ---------------------------------------------------------------------------
+// ============================================================================
+// Zaps Caching
+// ============================================================================
+
 function getZapsCacheKey(appEventId, pubkey, appId) {
-	// Prefer the specific app event id; fallback to stable pubkey:dTag
 	return appEventId || `${pubkey}:${appId}`;
 }
 
@@ -117,9 +108,10 @@ export function cacheZaps(appEventId, pubkey, appId, zapsData) {
 	cacheEvent(KIND_ZAP_RECEIPT, key, zapsData);
 }
 
-// ---------------------------------------------------------------------------
-// Comments caching (kind 1111 grouped per app)
-// ---------------------------------------------------------------------------
+// ============================================================================
+// Comments Caching
+// ============================================================================
+
 function getCommentsCacheKey(pubkey, appId) {
 	return pubkey && appId ? `${pubkey}:${appId}` : null;
 }
@@ -136,16 +128,9 @@ export function cacheComments(pubkey, appId, comments) {
 	cacheEvent(KIND_COMMENT, key, comments);
 }
 
-/**
- * Gets or creates the global SimplePool instance
- * @returns {SimplePool} Pool instance
- */
-function getPool() {
-	if (!pool) {
-		pool = new SimplePool();
-	}
-	return pool;
-}
+// ============================================================================
+// Profile Fetching
+// ============================================================================
 
 /**
  * Fetches profile information for a given pubkey
@@ -153,16 +138,13 @@ function getPool() {
  * @returns {Promise<Object|null>} Profile object or null if not found
  */
 export async function fetchProfile(pubkey) {
-	// Check IndexedDB cache
+	// Check IndexedDB cache first
 	const cached = await getCachedEvent(KIND_PROFILE, pubkey);
 	if (cached) {
 		return cached;
 	}
 
-	return new Promise((resolve, reject) => {
 		try {
-			const pool = getPool();
-
 			const filter = {
 				kinds: [KIND_PROFILE],
 				authors: [pubkey],
@@ -171,15 +153,12 @@ export async function fetchProfile(pubkey) {
 
 			console.log('Fetching profile for:', pubkey);
 
-			let foundProfile = null;
-			let eoseReceived = false;
-
-			const subscription = pool.subscribe(
-				PROFILE_RELAYS,
-				filter,
-				{
-					onevent(event) {
-						console.log('Found profile event:', event);
+		const event = await fetchFirstEvent(PROFILE_RELAYS, filter);
+		
+		if (!event) {
+			console.log('No profile found for:', pubkey);
+			return null;
+		}
 						
 						let content = {};
 						try {
@@ -188,67 +167,38 @@ export async function fetchProfile(pubkey) {
 							console.warn('Failed to parse profile content for', pubkey);
 						}
 
-						foundProfile = {
+		const profile = {
 							pubkey: event.pubkey,
 							name: content.name || content.display_name || '',
 							displayName: content.display_name || content.name || '',
 							picture: content.picture || '',
 							about: content.about || '',
 							nip05: content.nip05 || '',
-							lud16: content.lud16 || '', // Lightning Address
-							lud06: content.lud06 || '', // LNURL
+			lud16: content.lud16 || '',
+			lud06: content.lud06 || '',
 							createdAt: event.created_at
 						};
 
 						// Cache in IndexedDB
-						cacheEvent(KIND_PROFILE, pubkey, foundProfile);
-						
-						eoseReceived = true;
-						subscription.close();
-						resolve(foundProfile);
-					},
-					oneose() {
-						console.log('EOSE received for profile, found:', !!foundProfile);
-						eoseReceived = true;
-						subscription.close();
-						resolve(foundProfile);
-					},
-					onclose() {
-						if (!eoseReceived) {
-							console.log('Profile subscription closed before EOSE');
-							resolve(foundProfile);
-						}
-					}
-				}
-			);
+		cacheEvent(KIND_PROFILE, pubkey, profile);
+		
+		// Add to EventStore for reactive access
+		addEventToStore(event);
 
-			// Set a timeout
-			setTimeout(() => {
-				if (!eoseReceived) {
-					console.log('Timeout reached for profile fetch');
-					subscription.close();
-					resolve(foundProfile);
-				}
-			}, CONNECTION_TIMEOUT);
-
+		return profile;
 		} catch (err) {
 			console.error('Error in fetchProfile:', err);
-			reject(err);
+		return null;
 		}
-	});
 }
 
 /**
  * Fetches profile information for a given pubkey, bypassing cache
- * Used when we need fresh data (e.g., for zapping to ensure lud16 is present)
  * @param {string} pubkey - The user's public key
  * @returns {Promise<Object|null>} Profile object or null if not found
  */
 export async function fetchProfileFresh(pubkey) {
-	return new Promise((resolve, reject) => {
 		try {
-			const pool = getPool();
-
 			const filter = {
 				kinds: [KIND_PROFILE],
 				authors: [pubkey],
@@ -257,15 +207,12 @@ export async function fetchProfileFresh(pubkey) {
 
 			console.log('Fetching profile fresh (no cache) for:', pubkey);
 
-			let foundProfile = null;
-			let eoseReceived = false;
-
-			const subscription = pool.subscribe(
-				PROFILE_RELAYS,
-				filter,
-				{
-					onevent(event) {
-						console.log('Found profile event:', event);
+		const event = await fetchFirstEvent(PROFILE_RELAYS, filter);
+		
+		if (!event) {
+			console.log('No profile found for:', pubkey);
+			return null;
+		}
 						
 						let content = {};
 						try {
@@ -274,55 +221,32 @@ export async function fetchProfileFresh(pubkey) {
 							console.warn('Failed to parse profile content for', pubkey);
 						}
 
-						foundProfile = {
+		const profile = {
 							pubkey: event.pubkey,
 							name: content.name || content.display_name || '',
 							displayName: content.display_name || content.name || '',
 							picture: content.picture || '',
 							about: content.about || '',
 							nip05: content.nip05 || '',
-							lud16: content.lud16 || '', // Lightning Address
-							lud06: content.lud06 || '', // LNURL
+			lud16: content.lud16 || '',
+			lud06: content.lud06 || '',
 							createdAt: event.created_at
 						};
 
 						// Update cache with fresh data
-						cacheEvent(KIND_PROFILE, pubkey, foundProfile);
-						
-						eoseReceived = true;
-						subscription.close();
-						resolve(foundProfile);
-					},
-					oneose() {
-						console.log('EOSE received for profile, found:', !!foundProfile);
-						eoseReceived = true;
-						subscription.close();
-						resolve(foundProfile);
-					},
-					onclose() {
-						if (!eoseReceived) {
-							console.log('Profile subscription closed before EOSE');
-							resolve(foundProfile);
-						}
-					}
-				}
-			);
+		cacheEvent(KIND_PROFILE, pubkey, profile);
+		addEventToStore(event);
 
-			// Set a timeout
-			setTimeout(() => {
-				if (!eoseReceived) {
-					console.log('Timeout reached for profile fetch');
-					subscription.close();
-					resolve(foundProfile);
-				}
-			}, CONNECTION_TIMEOUT);
-
+		return profile;
 		} catch (err) {
 			console.error('Error in fetchProfileFresh:', err);
-			reject(err);
+		return null;
 		}
-	});
 }
+
+// ============================================================================
+// NIP-19 Encoding/Decoding
+// ============================================================================
 
 /**
  * Converts a hex pubkey to npub format
@@ -339,7 +263,80 @@ export function pubkeyToNpub(pubkey) {
 }
 
 /**
- * Renders markdown content to HTML (simple fallback without marked)
+ * Generates an app URL slug using naddr encoding
+ * @param {string} pubkey - Hex public key
+ * @param {string} dTag - App d-tag identifier
+ * @returns {string} URL slug as naddr
+ */
+export function getAppSlug(pubkey, dTag) {
+	try {
+		return nip19.naddrEncode({
+			kind: KIND_APP,
+			pubkey: pubkey,
+			identifier: dTag
+		});
+	} catch (err) {
+		console.warn('Failed to encode naddr:', err);
+		const npub = pubkeyToNpub(pubkey);
+		return `${npub}-${dTag}`;
+	}
+}
+
+/**
+ * Parses an app URL slug to extract pubkey and d-tag
+ * @param {string} slug - URL slug (naddr format or legacy npub-appid format)
+ * @returns {Object} Object with pubkey and dTag properties
+ */
+export function parseAppSlug(slug) {
+	// Try to decode as naddr first
+	if (slug.startsWith('naddr1')) {
+		try {
+			const decoded = nip19.decode(slug);
+			if (decoded.type === 'naddr' && decoded.data.kind === KIND_APP) {
+				return {
+					pubkey: decoded.data.pubkey,
+					dTag: decoded.data.identifier
+				};
+			}
+		} catch (err) {
+			console.warn('Failed to decode naddr, trying legacy format:', err);
+		}
+	}
+	
+	// Fallback to legacy npub-appid format
+	const npubLength = 63;
+	
+	if (slug.length < npubLength + 2) {
+		throw new Error('Invalid app URL format: too short');
+	}
+	
+	if (!slug.startsWith('npub1')) {
+		throw new Error('Invalid app URL format: must start with npub or naddr');
+	}
+
+	const npub = slug.substring(0, npubLength);
+	const dTag = slug.substring(npubLength + 1);
+
+	let pubkey;
+	try {
+		const decoded = nip19.decode(npub);
+		if (decoded.type !== 'npub') {
+			throw new Error('Invalid npub format');
+		}
+		pubkey = decoded.data;
+	} catch (err) {
+		throw new Error('Failed to decode npub: ' + err.message);
+	}
+
+	return { pubkey, dTag };
+}
+
+// ============================================================================
+// Markdown Rendering
+// ============================================================================
+
+/**
+ * Renders markdown content to HTML
  * @param {string} markdown - Markdown content
  * @returns {string} HTML content
  */
@@ -373,13 +370,12 @@ export function renderMarkdown(markdown) {
         }
 
         function applyInlineMarkdown(s) {
-            // Fix existing <a> tags without target="_blank" - add target and rel attributes
+			// Fix existing <a> tags without target="_blank"
             s = s.replace(/<a\s+href=["']([^"']+)["'](?![^>]*target=)([^>]*)>/gi, '<a href="$1" target="_blank" rel="noopener noreferrer"$2>');
             // Links [text](url)
             s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-            // Plain URLs (not already in an anchor tag) - use placeholder approach for safety
+			// Plain URLs
             s = s.replace(/(^|[^"'>])(https?:\/\/[^\s<>"'\)]+)/g, function(match, prefix, url) {
-                // Don't convert if it appears to be inside an existing tag attribute
                 if (prefix === '=' || prefix === '/') return match;
                 return prefix + '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
             });
@@ -413,7 +409,6 @@ export function renderMarkdown(markdown) {
             }
 
             if (inCodeBlock) {
-                // Escape HTML inside code blocks minimally
                 const escaped = line
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
@@ -422,7 +417,7 @@ export function renderMarkdown(markdown) {
                 continue;
             }
 
-            // Blank line: close paragraph and lists if applicable
+			// Blank line
             if (/^\s*$/.test(line)) {
                 flushParagraph();
                 closeLists();
@@ -464,12 +459,11 @@ export function renderMarkdown(markdown) {
             paraBuffer.push(line.trim());
         }
 
-        // Flush any remaining structures
+		// Flush remaining structures
         flushParagraph();
         closeLists();
         if (inCodeBlock) {
             htmlParts.push('</code></pre>');
-            inCodeBlock = false;
         }
 
         return htmlParts.join('');
@@ -479,95 +473,58 @@ export function renderMarkdown(markdown) {
     }
 }
 
+// ============================================================================
+// Date Formatting
+// ============================================================================
+
+import { formatTimestampSeconds } from '$lib/date.js';
+
+export function formatDate(timestamp, options = {}) {
+	const seconds = typeof timestamp === 'number' && timestamp > 1e12
+		? Math.floor(timestamp / 1000)
+		: timestamp;
+	const month = options.month === 'long' ? 'long' : options.month === 'short' ? 'short' : 'short';
+	return formatTimestampSeconds(seconds, { month });
+}
+
+// ============================================================================
+// App Fetching
+// ============================================================================
+
 /**
  * Fetches apps from the relay with optional filters
  * @param {Object} options - Query options
- * @param {number} options.limit - Maximum number of apps to fetch
- * @param {string[]} options.authors - Filter by specific authors
- * @param {string[]} options.dTags - Filter by specific d-tags
- * @param {number} options.until - Fetch events created before this timestamp
- * @param {string} options.search - Free-text search (NIP-50) against app metadata/content
  * @returns {Promise<Array>} Array of app objects
  */
 export async function fetchApps({ limit = 12, authors, dTags, until, search } = {}) {
-	return new Promise((resolve, reject) => {
 		try {
-			const pool = getPool();
-
             const filter = {
-				kinds: [32267],
+			kinds: [KIND_APP],
 				limit
 			};
 
-			if (authors) {
-				filter.authors = authors;
-			}
-
-			if (dTags) {
-				filter['#d'] = dTags;
-			}
-
-            if (until) {
-				filter.until = until;
-			}
-
-            // NIP-50 free-text search support (relay must support it)
+		if (authors) filter.authors = authors;
+		if (dTags) filter['#d'] = dTags;
+		if (until) filter.until = until;
             if (search && typeof search === 'string' && search.trim().length > 0) {
                 filter.search = search.trim();
             }
-
-            // Filter by platform/arch tag 'f'
             filter['#f'] = ['android-arm64-v8a'];
 
 			console.log('Fetching apps with filter:', filter);
 
-			const events = [];
-			let eoseReceived = false;
-			
-			// Use subscribe method with callback approach
-			const subscription = pool.subscribe(
-				[RELAY_URL],
-				filter,
-				{
-					onevent(event) {
-						console.log('Received event:', event.id);
-						events.push(parseAppEvent(event));
-					},
-					oneose() {
-						console.log('End of stored events, got', events.length, 'apps');
-						eoseReceived = true;
+		const events = await fetchEvents([RELAY_URL], filter);
+		const apps = events.map(parseAppEvent);
+		
+		// Add to store for reactive access
+		addEventsToStore(events);
 						
 						// Sort by creation date (newest first)
-						const sortedApps = events.sort((a, b) => b.createdAt - a.createdAt);
-						
-						subscription.close();
-						resolve(sortedApps);
-					},
-					onclose() {
-						if (!eoseReceived) {
-							console.log('Subscription closed before EOSE');
-							const sortedApps = events.sort((a, b) => b.createdAt - a.createdAt);
-							resolve(sortedApps);
-						}
-					}
-				}
-			);
-
-			// Set a timeout to close connection
-			setTimeout(() => {
-				if (!eoseReceived) {
-					console.log('Timeout reached, closing subscription');
-					subscription.close();
-					const sortedApps = events.sort((a, b) => b.createdAt - a.createdAt);
-					resolve(sortedApps);
-				}
-			}, CONNECTION_TIMEOUT);
-
+		return apps.sort((a, b) => b.createdAt - a.createdAt);
 		} catch (err) {
 			console.error('Error in fetchApps:', err);
-			reject(err);
+		return [];
 		}
-	});
 }
 
 /**
@@ -577,119 +534,58 @@ export async function fetchApps({ limit = 12, authors, dTags, until, search } = 
  * @returns {Promise<Object|null>} App object or null if not found
  */
 export async function fetchApp(pubkey, dTag) {
-	return new Promise((resolve, reject) => {
 		try {
-			const pool = getPool();
-
 			const filter = {
-				kinds: [32267],
+			kinds: [KIND_APP],
 				authors: [pubkey],
 				'#d': [dTag]
 			};
 
 			console.log('Fetching app with filter:', filter);
 
-			let foundApp = null;
-			let eoseReceived = false;
+		const event = await fetchFirstEvent([RELAY_URL], filter);
+		
+		if (!event) {
+			return null;
+		}
 
-			// Use subscribe method with callback approach
-			const subscription = pool.subscribe(
-				[RELAY_URL],
-				filter,
-				{
-					onevent(event) {
-						console.log('Found app event:', event);
-						foundApp = parseAppEvent(event);
-						eoseReceived = true;
-						subscription.close();
-						resolve(foundApp);
-					},
-					oneose() {
-						console.log('EOSE received, app found:', !!foundApp);
-						eoseReceived = true;
-						subscription.close();
-						resolve(foundApp);
-					},
-					onclose() {
-						if (!eoseReceived) {
-							console.log('Subscription closed before EOSE');
-							resolve(foundApp);
-						}
-					}
-				}
-			);
-
-			// Set a timeout to close connection
-			setTimeout(() => {
-				if (!eoseReceived) {
-					console.log('Timeout reached for app fetch');
-					subscription.close();
-					resolve(foundApp);
-				}
-			}, CONNECTION_TIMEOUT);
-
+		const app = parseAppEvent(event);
+		addEventToStore(event);
+		
+		return app;
 		} catch (err) {
 			console.error('Error in fetchApp:', err);
-			reject(err);
+		return null;
 		}
-	});
 }
 
 /**
- * Fetch an app by d-tag (android app id) regardless of author
- * Used for resolving plain IDs to their canonical naddr
+ * Fetch an app by d-tag regardless of author
  * @param {string} dTag - The app's d-tag identifier
  * @returns {Promise<Object|null>} App object or null if not found
  */
 export async function fetchAppByDTag(dTag) {
-    return new Promise((resolve, reject) => {
         try {
-            const pool = getPool();
-
             const filter = {
-                kinds: [32267],
+			kinds: [KIND_APP],
                 '#d': [dTag],
                 limit: 1
             };
 
-            let foundApp = null;
-            let eoseReceived = false;
+		const event = await fetchFirstEvent([RELAY_URL], filter);
+		
+		if (!event) {
+			return null;
+		}
 
-            const subscription = pool.subscribe(
-                [RELAY_URL],
-                filter,
-                {
-                    onevent(event) {
-                        foundApp = parseAppEvent(event);
-                        eoseReceived = true;
-                        subscription.close();
-                        resolve(foundApp);
-                    },
-                    oneose() {
-                        eoseReceived = true;
-                        subscription.close();
-                        resolve(foundApp);
-                    },
-                    onclose() {
-                        if (!eoseReceived) {
-                            resolve(foundApp);
-                        }
-                    }
-                }
-            );
-
-            setTimeout(() => {
-                if (!eoseReceived) {
-                    subscription.close();
-                    resolve(foundApp);
-                }
-            }, CONNECTION_TIMEOUT);
-
+		const app = parseAppEvent(event);
+		addEventToStore(event);
+		
+		return app;
         } catch (err) {
             console.error('Error in fetchAppByDTag:', err);
-            reject(err);
+		return null;
         }
-    });
 }
 
 /**
@@ -698,20 +594,15 @@ export async function fetchAppByDTag(dTag) {
  * @returns {Object} Parsed app object
  */
 export function parseAppEvent(event) {
-	// Convert tags array to a more usable format for lookups
 	const tagMap = {};
 	const imageTags = [];
 	
-	// Process tags to extract specific information
 	event.tags.forEach(tag => {
 		if (tag.length >= 2) {
 			const [key, value] = tag;
-			
 			if (key === 'image') {
-				// Collect all image tags
 				imageTags.push(value);
 			} else if (!tagMap[key]) {
-				// Store first occurrence of other tags
 				tagMap[key] = value;
 			}
 		}
@@ -722,20 +613,14 @@ export function parseAppEvent(event) {
 		content = JSON.parse(event.content);
 	} catch (e) {
 		console.warn('Failed to parse content for event', event.id);
-		// If JSON parsing fails, treat the content as plain text description
 		content = { description: event.content };
 	}
 
-	// Extract icon from tags first, then fallback to content
 	const icon = tagMap.icon || content.icon || content.picture || '';
-	
-	// Use images from tags, fallback to content if no tag images
 	const images = imageTags.length > 0 ? imageTags : (content.images || []);
-	
-	// Get description from content (this is the primary source)
 	const description = content.description || content.about || content.summary || event.content || 'No description available';
 
-	// Normalize license: treat "NOASSERTION" as undefined/empty
+	// Normalize license
 	const rawLicense = content.license || tagMap.license || '';
 	const license = (typeof rawLicense === 'string' && rawLicense.trim().toUpperCase() === 'NOASSERTION') ? '' : rawLicense;
 
@@ -756,320 +641,33 @@ export function parseAppEvent(event) {
 		tags: event.tags,
 		content: content,
 		fullContent: event.content,
-		fullEvent: event, // Add the complete nostr event for Raw Event Data
-		// Additional fields that might be in the content
+		fullEvent: event,
 		category: content.category || tagMap.category || '',
 		license: license,
 		developer: content.developer || content.publisher || content.author || tagMap.developer || '',
 		requirements: content.requirements || content.systemRequirements || '',
 		changelog: content.changelog || content.releaseNotes || '',
-		// Platform information
 		platform: content.platform || tagMap.platform || '',
-		// Additional metadata
 		price: content.price || tagMap.price || '',
 		rating: content.rating || tagMap.rating || '',
 		downloads: content.downloads || tagMap.downloads || ''
 	};
 }
 
-/**
- * Formats a timestamp into a readable date string
- * @param {number} timestamp - Unix timestamp
- * @param {Object} options - Intl.DateTimeFormat options
- * @returns {string} Formatted date string
- */
-import { formatTimestampSeconds, formatDisplayDate } from '$lib/date.js';
-
-export function formatDate(timestamp, options = {}) {
-    // Keep signature compatible; underlying format now matches site-wide style
-    // Accept seconds (nostr created_at) or milliseconds
-    const seconds = typeof timestamp === 'number' && timestamp > 1e12
-        ? Math.floor(timestamp / 1000)
-        : timestamp;
-    const month = options.month === 'long' ? 'long' : options.month === 'short' ? 'short' : 'short';
-    return formatTimestampSeconds(seconds, { month });
-}
+// ============================================================================
+// Release & File Metadata
+// ============================================================================
 
 /**
- * Formats a file size into a human-readable string
- * @param {number|string} size - File size in bytes or string
- * @returns {string} Formatted size string
- */
-// removed size formatting helper
-
-/**
- * Generates an app URL slug using naddr encoding
- * @param {string} pubkey - Hex public key
- * @param {string} dTag - App d-tag identifier
- * @returns {string} URL slug as naddr
- */
-export function getAppSlug(pubkey, dTag) {
-	try {
-		return nip19.naddrEncode({
-			kind: 32267,
-			pubkey: pubkey,
-			identifier: dTag
-		});
-	} catch (err) {
-		console.warn('Failed to encode naddr:', err);
-		// Fallback to old format if encoding fails
-		const npub = pubkeyToNpub(pubkey);
-		return `${npub}-${dTag}`;
-	}
-}
-
-/**
- * Parses an app URL slug to extract pubkey and d-tag
- * @param {string} slug - URL slug (naddr format or legacy npub-appid format)
- * @returns {Object} Object with pubkey and dTag properties
- */
-export function parseAppSlug(slug) {
-	// Try to decode as naddr first
-	if (slug.startsWith('naddr1')) {
-		try {
-			const decoded = nip19.decode(slug);
-			if (decoded.type === 'naddr' && decoded.data.kind === 32267) {
-				return {
-					pubkey: decoded.data.pubkey,
-					dTag: decoded.data.identifier
-				};
-			}
-		} catch (err) {
-			console.warn('Failed to decode naddr, trying legacy format:', err);
-		}
-	}
-	
-	// Fallback to legacy npub-appid format for backward compatibility
-	const npubLength = 63;
-	
-	if (slug.length < npubLength + 2) { // +2 for dash and at least 1 char for appid
-		throw new Error('Invalid app URL format: too short');
-	}
-	
-	if (!slug.startsWith('npub1')) {
-		throw new Error('Invalid app URL format: must start with npub or naddr');
-	}
-
-	const npub = slug.substring(0, npubLength);
-	const dTag = slug.substring(npubLength + 1); // +1 to skip the dash
-
-	// Convert npub back to hex pubkey
-	let pubkey;
-	try {
-		const decoded = nip19.decode(npub);
-		if (decoded.type !== 'npub') {
-			throw new Error('Invalid npub format');
-		}
-		pubkey = decoded.data;
-	} catch (err) {
-		throw new Error('Failed to decode npub: ' + err.message);
-	}
-
-	return { pubkey, dTag };
-}
-
-/**
- * Fetches zap events for a specific app
- * @param {string} pubkey - The app publisher's public key
- * @param {string} appId - The app's d-tag identifier
- * @returns {Promise<Array>} Array of zap events
- */
-export async function fetchAppZaps(pubkey, appId) {
-	return new Promise((resolve, reject) => {
-		try {
-			const pool = getPool();
-			
-			// Create the 'a' tag value for the app: 32267:pubkey:appId
-			const aTagValue = `32267:${pubkey}:${appId}`;
-			
-			const filter = {
-				kinds: [9735],
-				'#a': [aTagValue],
-				limit: 100
-			};
-
-			console.log('Fetching zaps with filter:', filter);
-
-			const zapEvents = [];
-			let eoseCount = 0;
-			const totalRelays = SOCIAL_RELAYS.length;
-			
-			// Use subscribe method with callback approach
-			const subscription = pool.subscribe(
-				SOCIAL_RELAYS,
-				filter,
-				{
-					onevent(event) {
-						console.log('Received zap event:', event.id);
-						zapEvents.push(parseZapEvent(event));
-					},
-					oneose() {
-						eoseCount++;
-						console.log(`EOSE received from ${eoseCount}/${totalRelays} relays`);
-						
-						// Wait for all relays to finish
-						if (eoseCount >= totalRelays) {
-							console.log('All relays finished, got', zapEvents.length, 'zaps');
-							
-							// Sort by creation date (newest first) and remove duplicates
-							const uniqueZaps = removeDuplicateZaps(zapEvents);
-							const sortedZaps = uniqueZaps.sort((a, b) => b.createdAt - a.createdAt);
-							
-							subscription.close();
-							resolve(sortedZaps);
-						}
-					},
-					onclose() {
-						if (eoseCount < totalRelays) {
-							console.log('Subscription closed before all relays finished');
-							const uniqueZaps = removeDuplicateZaps(zapEvents);
-							const sortedZaps = uniqueZaps.sort((a, b) => b.createdAt - a.createdAt);
-							resolve(sortedZaps);
-						}
-					}
-				}
-			);
-
-			// Set a timeout to close connection
-			setTimeout(() => {
-				if (eoseCount < totalRelays) {
-					console.log('Timeout reached for zap fetch');
-					subscription.close();
-					const uniqueZaps = removeDuplicateZaps(zapEvents);
-					const sortedZaps = uniqueZaps.sort((a, b) => b.createdAt - a.createdAt);
-					resolve(sortedZaps);
-				}
-			}, CONNECTION_TIMEOUT);
-
-		} catch (err) {
-			console.error('Error in fetchAppZaps:', err);
-			reject(err);
-		}
-	});
-}
-
-/**
- * Parses a zap event into a usable object
- * @param {Object} event - Raw zap event
- * @returns {Object} Parsed zap object
- */
-export function parseZapEvent(event) {
-	// Convert tags array to a more usable format
-	const tagMap = {};
-	event.tags.forEach(tag => {
-		if (tag.length >= 2) {
-			const [key, value] = tag;
-			if (!tagMap[key]) {
-				tagMap[key] = value;
-			}
-		}
-	});
-
-	// Extract amount from bolt11 invoice if available
-	let amountSats = 0;
-	const bolt11 = tagMap.bolt11;
-	if (bolt11) {
-		try {
-			// BOLT11 format: lnbc<amount><multiplier>...
-			// Multipliers: m=milli (0.001), u=micro (0.000001), n=nano (0.000000001), p=pico (0.000000000001)
-			const amountMatch = bolt11.match(/lnbc(\d+)([munp]?)/i);
-			if (amountMatch) {
-				const value = parseInt(amountMatch[1]);
-				const unit = amountMatch[2]?.toLowerCase() || '';
-				
-				// Convert to satoshis (1 BTC = 100,000,000 sats)
-				switch (unit) {
-					case 'm': amountSats = value * 100000; break;      // milli-bitcoin: 1 mBTC = 100,000 sats
-					case 'u': amountSats = value * 100; break;         // micro-bitcoin: 1 uBTC = 100 sats
-					case 'n': amountSats = Math.floor(value / 10); break;  // nano-bitcoin: 10 nBTC = 1 sat
-					case 'p': amountSats = Math.floor(value / 10000); break; // pico-bitcoin: 10000 pBTC = 1 sat
-					default: amountSats = value * 100000000; break;    // bitcoin: 1 BTC = 100,000,000 sats
-				}
-			}
-		} catch (e) {
-			console.warn('Failed to parse bolt11 amount:', e);
-		}
-	}
-
-	// Extract description (zap note content)
-	let description = '';
-	try {
-		const descriptionTag = event.tags.find(tag => tag[0] === 'description');
-		if (descriptionTag && descriptionTag[1]) {
-			const descEvent = JSON.parse(descriptionTag[1]);
-			description = descEvent.content || '';
-		}
-	} catch (e) {
-		console.warn('Failed to parse zap description:', e);
-	}
-
-	return {
-		id: event.id,
-		pubkey: event.pubkey,
-		npub: pubkeyToNpub(event.pubkey),
-		createdAt: event.created_at,
-		amountSats: amountSats,
-		description: description,
-		preimage: tagMap.preimage || '',
-		bolt11: bolt11 || '',
-		fullEvent: event
-	};
-}
-
-/**
- * Removes duplicate zap events based on event ID
- * @param {Array} zapEvents - Array of zap events
- * @returns {Array} Array of unique zap events
- */
-function removeDuplicateZaps(zapEvents) {
-	const seen = new Set();
-	return zapEvents.filter(zap => {
-		if (seen.has(zap.id)) {
-			return false;
-		}
-		seen.add(zap.id);
-		return true;
-	});
-}
-
-/**
- * Formats satoshi amount to a human-readable string
- * @param {number} sats - Amount in satoshis
- * @returns {string} Formatted amount string
- */
-export function formatSats(sats) {
-	if (sats >= 100000000) {
-		return `${(sats / 100000000).toFixed(2)} BTC`;
-	} else if (sats >= 1000000) {
-		return `${(sats / 1000000).toFixed(1)}M sats`;
-	} else if (sats >= 1000) {
-		return `${(sats / 1000).toFixed(1)}K sats`;
-	}
-	return `${sats} sats`;
-}
-
-/**
- * Closes the global pool and cleans up connections
- */
-export function closePool() {
-	if (pool) {
-		pool.close(PROFILE_RELAYS);
-		pool = null;
-	}
-} 
-
-/**
- * Fetches the latest release (kind 30063) for an app via its 'a' tag
- * The app event should include an 'a' tag like: 30063:<pubkey>:<app-id>@<version>
- * @param {Object} app - Parsed app object returned by parseAppEvent
+ * Fetches the latest release (kind 30063) for an app
+ * @param {Object} app - Parsed app object
  * @param {Object} options - Options
- * @param {boolean} options.skipCache - Skip cache lookup and force fetch
  * @returns {Promise<Object|null>} Parsed release object or null
  */
 export async function fetchLatestReleaseForApp(app, { skipCache = false } = {}) {
     if (!app || !app.pubkey || !app.dTag) return null;
 
-    // Check cache first (unless skipCache is true)
+	// Check cache first
     if (!skipCache) {
         const cached = await getCachedRelease(app.pubkey, app.dTag);
         if (cached) {
@@ -1078,13 +676,8 @@ export async function fetchLatestReleaseForApp(app, { skipCache = false } = {}) 
         }
     }
 
-    // Kind 30063 release events point back to the app via '#a' = '32267:<pubkey>:<app-id>'
-    // Query by that reference and optionally by author
-    const aValue = `32267:${app.pubkey}:${app.dTag}`;
-
-    return new Promise((resolve, reject) => {
         try {
-            const pool = getPool();
+		const aValue = `32267:${app.pubkey}:${app.dTag}`;
             const filter = {
                 kinds: [KIND_RELEASE],
                 '#a': [aValue],
@@ -1092,58 +685,22 @@ export async function fetchLatestReleaseForApp(app, { skipCache = false } = {}) 
                 limit: 5
             };
 
-            let releases = [];
-            let eoseReceived = false;
-
-            const subscription = pool.subscribe(
-                [RELAY_URL],
-                filter,
-                {
-                    onevent(event) {
-                        releases.push(parseReleaseEvent(event));
-                    },
-                    oneose() {
-                        eoseReceived = true;
+		const events = await fetchEvents([RELAY_URL], filter);
+		const releases = events.map(parseReleaseEvent);
                         releases.sort((a, b) => b.createdAt - a.createdAt);
-                        const latestRelease = releases[0] || null;
-                        
-                        // Cache the release
-                        if (latestRelease) {
-                            cacheRelease(latestRelease, app.dTag);
-                        }
-                        
-                        subscription.close();
-                        resolve(latestRelease);
-                    },
-                    onclose() {
-                        if (!eoseReceived) {
-                            releases.sort((a, b) => b.createdAt - a.createdAt);
+		
                             const latestRelease = releases[0] || null;
-                            if (latestRelease) {
-                                cacheRelease(latestRelease, app.dTag);
-                            }
-                            resolve(latestRelease);
-                        }
-                    }
-                }
-            );
-
-            setTimeout(() => {
-                if (!eoseReceived) {
-                    subscription.close();
-                    releases.sort((a, b) => b.createdAt - a.createdAt);
-                    const latestRelease = releases[0] || null;
+		
                     if (latestRelease) {
                         cacheRelease(latestRelease, app.dTag);
+			addEventsToStore(events);
                     }
-                    resolve(latestRelease);
-                }
-            }, CONNECTION_TIMEOUT);
+		
+		return latestRelease;
         } catch (err) {
             console.error('Error fetching latest release:', err);
-            resolve(null);
+		return null;
         }
-    });
 }
 
 /**
@@ -1152,10 +709,10 @@ export async function fetchLatestReleaseForApp(app, { skipCache = false } = {}) 
  * @returns {Object} Parsed release object
  */
 export function parseReleaseEvent(event) {
-    // Extract tags into a map (first occurrence)
     const tagMap = {};
     const allATags = [];
     const allETags = [];
+	
     for (const tag of event.tags || []) {
         if (Array.isArray(tag) && tag.length >= 2) {
             const [k, v] = tag;
@@ -1177,7 +734,7 @@ export function parseReleaseEvent(event) {
         npub: pubkeyToNpub(event.pubkey),
         dTag: dTag,
         aTags: allATags,
-        eTags: allETags,  // References to 1063 file metadata events
+		eTags: allETags,
         url: url,
         notes: content,
         notesHtml: renderMarkdown(content),
@@ -1188,14 +745,14 @@ export function parseReleaseEvent(event) {
 /**
  * Gets a cached file metadata event by event ID
  * @param {string} eventId - The event ID
- * @returns {Promise<Object|null>} Cached file metadata or null
+ * @returns {Promise<Object|null>}
  */
 export async function getCachedFileMetadata(eventId) {
     return await getCachedEvent(KIND_FILE_METADATA, eventId);
 }
 
 /**
- * Caches a file metadata event in IndexedDB
+ * Caches a file metadata event
  * @param {Object} fileMeta - The file metadata to cache
  */
 export function cacheFileMetadata(fileMeta) {
@@ -1206,13 +763,13 @@ export function cacheFileMetadata(fileMeta) {
 
 /**
  * Fetches file metadata events (kind 1063) by their event IDs
- * @param {string[]} eventIds - Array of event IDs to fetch
- * @returns {Promise<Array>} Array of parsed file metadata objects
+ * @param {string[]} eventIds - Array of event IDs
+ * @returns {Promise<Array>}
  */
 export async function fetchFileMetadata(eventIds) {
     if (!eventIds || eventIds.length === 0) return [];
 
-    // Check cache first for each event ID
+	// Check cache first
     const results = [];
     const missingIds = [];
     
@@ -1225,16 +782,12 @@ export async function fetchFileMetadata(eventIds) {
         }
     }
     
-    // If all were cached, return immediately
     if (missingIds.length === 0) {
         console.log('All file metadata found in cache');
         return results;
     }
 
-    return new Promise((resolve, reject) => {
         try {
-            const pool = getPool();
-
             const filter = {
                 kinds: [KIND_FILE_METADATA],
                 ids: missingIds
@@ -1242,78 +795,46 @@ export async function fetchFileMetadata(eventIds) {
 
             console.log('Fetching file metadata with filter:', filter);
 
-            const events = [];
-            let eoseReceived = false;
-
-            const subscription = pool.subscribe(
-                [RELAY_URL],
-                filter,
-                {
-                    onevent(event) {
-                        console.log('Received file metadata event:', event.id);
+		const events = await fetchEvents([RELAY_URL], filter);
+		
+		for (const event of events) {
                         const parsed = parseFileMetadataEvent(event);
-                        events.push(parsed);
-                        // Cache it
+			results.push(parsed);
                         cacheFileMetadata(parsed);
-                    },
-                    oneose() {
-                        console.log('EOSE received for file metadata, got', events.length, 'events');
-                        eoseReceived = true;
-                        subscription.close();
-                        resolve([...results, ...events]);
-                    },
-                    onclose() {
-                        if (!eoseReceived) {
-                            console.log('File metadata subscription closed before EOSE');
-                            resolve([...results, ...events]);
-                        }
-                    }
-                }
-            );
-
-            setTimeout(() => {
-                if (!eoseReceived) {
-                    console.log('Timeout reached for file metadata fetch');
-                    subscription.close();
-                    resolve([...results, ...events]);
-                }
-            }, CONNECTION_TIMEOUT);
-
+		}
+		
+		addEventsToStore(events);
+		
+		return results;
         } catch (err) {
             console.error('Error in fetchFileMetadata:', err);
-            reject(err);
+		return results;
         }
-    });
 }
 
 /**
  * Fetches the version for an app from its FileMetadata
  * @param {Object} app - The app object
- * @returns {Promise<string|null>} The version string or null
+ * @returns {Promise<string|null>}
  */
 export async function fetchAppVersion(app) {
     if (!app || !app.pubkey || !app.dTag) return null;
     
     try {
-        // Get the latest release for this app
         const release = await fetchLatestReleaseForApp(app);
         if (!release || !release.eTags || release.eTags.length === 0) {
             return null;
         }
         
-        // Fetch file metadata from the release
         const fileMetadata = await fetchFileMetadata(release.eTags);
         if (!fileMetadata || fileMetadata.length === 0) {
             return null;
         }
         
-        // Find the first file metadata with a version
         for (const f of fileMetadata) {
-            // Try parsed version first
             if (f?.version && String(f.version).trim().length > 0) {
                 return f.version;
             }
-            // Fallback: extract from fullEvent tags if available
             if (f?.fullEvent?.tags) {
                 const versionTag = f.fullEvent.tags.find(t => t[0] === 'version');
                 if (versionTag && versionTag[1] && String(versionTag[1]).trim().length > 0) {
@@ -1332,7 +853,7 @@ export async function fetchAppVersion(app) {
 /**
  * Parses a file metadata event (kind 1063)
  * @param {Object} event - Raw nostr event
- * @returns {Object} Parsed file metadata object
+ * @returns {Object}
  */
 export function parseFileMetadataEvent(event) {
     const tagMap = {};
@@ -1358,42 +879,162 @@ export function parseFileMetadataEvent(event) {
     };
 }
 
+// ============================================================================
+// Zaps
+// ============================================================================
+
 /**
- * Fetches zaps for app (32267) and file metadata (1063) events
+ * Fetches zap events for a specific app
+ * @param {string} pubkey - The app publisher's public key
+ * @param {string} appId - The app's d-tag identifier
+ * @returns {Promise<Array>}
+ */
+export async function fetchAppZaps(pubkey, appId) {
+	try {
+		const aTagValue = `32267:${pubkey}:${appId}`;
+		const filter = {
+			kinds: [KIND_ZAP_RECEIPT],
+			'#a': [aTagValue],
+			limit: 100
+		};
+
+		console.log('Fetching zaps with filter:', filter);
+
+		const events = await fetchEvents(SOCIAL_RELAYS, filter);
+		const zapEvents = events.map(parseZapEvent);
+		
+		const uniqueZaps = removeDuplicateZaps(zapEvents);
+		const sortedZaps = uniqueZaps.sort((a, b) => b.createdAt - a.createdAt);
+		
+		addEventsToStore(events);
+		
+		return sortedZaps;
+	} catch (err) {
+		console.error('Error in fetchAppZaps:', err);
+		return [];
+	}
+}
+
+/**
+ * Parses a zap event into a usable object
+ * @param {Object} event - Raw zap event
+ * @returns {Object}
+ */
+export function parseZapEvent(event) {
+	const tagMap = {};
+	event.tags.forEach(tag => {
+		if (tag.length >= 2) {
+			const [key, value] = tag;
+			if (!tagMap[key]) {
+				tagMap[key] = value;
+			}
+		}
+	});
+
+	let amountSats = 0;
+	const bolt11 = tagMap.bolt11;
+	if (bolt11) {
+		try {
+			const amountMatch = bolt11.match(/lnbc(\d+)([munp]?)/i);
+			if (amountMatch) {
+				const value = parseInt(amountMatch[1]);
+				const unit = amountMatch[2]?.toLowerCase() || '';
+				
+				switch (unit) {
+					case 'm': amountSats = value * 100000; break;
+					case 'u': amountSats = value * 100; break;
+					case 'n': amountSats = Math.floor(value / 10); break;
+					case 'p': amountSats = Math.floor(value / 10000); break;
+					default: amountSats = value * 100000000; break;
+				}
+			}
+		} catch (e) {
+			console.warn('Failed to parse bolt11 amount:', e);
+		}
+	}
+
+	let description = '';
+	try {
+		const descriptionTag = event.tags.find(tag => tag[0] === 'description');
+		if (descriptionTag && descriptionTag[1]) {
+			const descEvent = JSON.parse(descriptionTag[1]);
+			description = descEvent.content || '';
+		}
+	} catch (e) {
+		console.warn('Failed to parse zap description:', e);
+	}
+
+	return {
+		id: event.id,
+		pubkey: event.pubkey,
+		npub: pubkeyToNpub(event.pubkey),
+		createdAt: event.created_at,
+		amountSats: amountSats,
+		description: description,
+		preimage: tagMap.preimage || '',
+		bolt11: bolt11 || '',
+		fullEvent: event
+	};
+}
+
+function removeDuplicateZaps(zapEvents) {
+	const seen = new Set();
+	return zapEvents.filter(zap => {
+		if (seen.has(zap.id)) {
+			return false;
+		}
+		seen.add(zap.id);
+		return true;
+	});
+}
+
+/**
+ * Formats satoshi amount to a human-readable string
+ * @param {number} sats - Amount in satoshis
+ * @returns {string}
+ */
+export function formatSats(sats) {
+	if (sats >= 100000000) {
+		return `${(sats / 100000000).toFixed(2)} BTC`;
+	} else if (sats >= 1000000) {
+		return `${(sats / 1000000).toFixed(1)}M sats`;
+	} else if (sats >= 1000) {
+		return `${(sats / 1000).toFixed(1)}K sats`;
+	}
+	return `${sats} sats`;
+}
+
+/**
+ * Fetches zaps for app and file metadata events
  * @param {string} appEventId - The app event ID
  * @param {string} pubkey - The app publisher's public key
  * @param {string} appId - The app's d-tag identifier
  * @param {string[]} fileEventIds - Optional array of file metadata event IDs
- * @returns {Promise<Object>} Object containing zaps array and total amount
+ * @returns {Promise<Object>}
  */
 export async function fetchAppAndFileZaps(appEventId, pubkey, appId, fileEventIds = []) {
-    return new Promise((resolve, reject) => {
         try {
-            const pool = getPool();
-            
             const aTagValue = `32267:${pubkey}:${appId}`;
             const allEventIds = [appEventId, ...fileEventIds].filter(Boolean);
             
-            // Query zap receipts by recipient pubkey
             const filter = {
-                kinds: [9735],
+			kinds: [KIND_ZAP_RECEIPT],
                 '#p': [pubkey],
                 limit: 200
             };
 
             console.log('Fetching zaps with filter:', JSON.stringify(filter));
-            console.log('Looking for zaps with a tag:', aTagValue);
-            console.log('Or e tags:', allEventIds);
 
-            const zapEvents = [];
-            let eoseCount = 0;
-            let resolved = false;
-            const totalRelays = SOCIAL_RELAYS.length;
-            
-            function finalize() {
-                if (resolved) return;
-                resolved = true;
-                
+		const events = await fetchEvents(SOCIAL_RELAYS, filter);
+		
+		// Filter to only relevant zaps
+		const relevantZaps = events.filter(event => {
+			const hasMatchingATag = event.tags.some(t => t[0] === 'a' && t[1] === aTagValue);
+			const hasMatchingETag = allEventIds.length > 0 && event.tags.some(t => t[0] === 'e' && allEventIds.includes(t[1]));
+			return hasMatchingATag || hasMatchingETag;
+		});
+
+		const zapEvents = relevantZaps.map(parseZapEventWithSender);
                 const uniqueZaps = removeDuplicateZaps(zapEvents);
                 const sortedZaps = uniqueZaps.sort((a, b) => b.createdAt - a.createdAt);
                 const totalSats = sortedZaps.reduce((sum, zap) => sum + zap.amountSats, 0);
@@ -1406,70 +1047,24 @@ export async function fetchAppAndFileZaps(appEventId, pubkey, appId, fileEventId
                     count: sortedZaps.length
                 };
 
-                // Cache for instant reuse
                 cacheZaps(appEventId, pubkey, appId, result);
-                
-                resolve(result);
-            }
-            
-            const subscription = pool.subscribe(
-                SOCIAL_RELAYS,
-                filter,
-                {
-                    onevent(event) {
-                        // Check if this zap is relevant to our app (has matching 'a' or 'e' tag)
-                        const hasMatchingATag = event.tags.some(t => t[0] === 'a' && t[1] === aTagValue);
-                        const hasMatchingETag = allEventIds.length > 0 && event.tags.some(t => t[0] === 'e' && allEventIds.includes(t[1]));
-                        
-                        if (hasMatchingATag || hasMatchingETag) {
-                            console.log('Received relevant zap event:', event.id);
-                            zapEvents.push(parseZapEventWithSender(event));
-                        }
-                    },
-                    oneose() {
-                        eoseCount++;
-                        console.log(`EOSE received from ${eoseCount}/${totalRelays} relays, have ${zapEvents.length} zaps so far`);
-                        
-                        // If we already have data, resolve as soon as the first relay finishes
-                        if (zapEvents.length > 0 || eoseCount >= totalRelays) {
-                            subscription.close();
-                            finalize();
-                        }
-                    },
-                    onclose(reason) {
-                        console.log('Zap subscription closed:', reason);
-                        if (!resolved) {
-                            finalize();
-                        }
-                    }
-                }
-            );
-
-            // Timeout - resolve with whatever we have
-            setTimeout(() => {
-                if (!resolved) {
-                    console.log('Timeout reached for zap fetch, got', zapEvents.length, 'zaps');
-                    subscription.close();
-                    finalize();
-                }
-            }, CONNECTION_TIMEOUT);
-
+		addEventsToStore(events);
+		
+		return result;
         } catch (err) {
             console.error('Error in fetchAppAndFileZaps:', err);
-            reject(err);
+		return { zaps: [], totalSats: 0, count: 0 };
         }
-    });
 }
 
 /**
- * Parses a zap event and extracts the sender pubkey from description
+ * Parses a zap event and extracts the sender pubkey
  * @param {Object} event - Raw zap event
- * @returns {Object} Parsed zap object with sender info
+ * @returns {Object}
  */
 export function parseZapEventWithSender(event) {
     const baseZap = parseZapEvent(event);
     
-    // Extract sender pubkey from the description (zap request)
     let senderPubkey = '';
     try {
         const descriptionTag = event.tags.find(tag => tag[0] === 'description');
@@ -1488,145 +1083,89 @@ export function parseZapEventWithSender(event) {
     };
 }
 
-/**
- * Publish a signed event to the default relays (waits for at least one OK)
- * @param {Object} event - Signed nostr event
- * @param {string[]} relays - Relays to publish to
- * @returns {Promise<Object>} Publish result info
- */
-export async function publishToRelays(
-    event,
-    relays = COMMENT_RELAYS
-) {
-    const pool = getPool();
-    const uniqueRelays = Array.from(new Set(relays));
-
-    // Publish to each relay individually so we can track failures
-    const results = await Promise.allSettled(
-        uniqueRelays.map((url) => pool.publish([url], event))
-    );
-
-    const okCount = results.filter((r) => r.status === 'fulfilled').length;
-    const failCount = results.length - okCount;
-
-    if (okCount === 0) {
-        throw new Error('Failed to publish event to any relay');
-    }
-
-    return { okCount, failCount };
-}
+// ============================================================================
+// Comments
+// ============================================================================
 
 /**
- * Fetch comments (kind 1111) for an app using its 'a' tag reference
+ * Fetch comments (kind 1111) for an app
  * @param {string} pubkey - App publisher pubkey
  * @param {string} appId - App d-tag identifier
  * @param {Object} options - Additional options
- * @param {number} options.limit - Max events to fetch
- * @returns {Promise<Array>} Parsed comment objects
+ * @returns {Promise<Array>}
  */
 export async function fetchAppComments(pubkey, appId, { limit = 200 } = {}) {
-    if (!pubkey || !appId) return [];
+	console.log('[Comments] fetchAppComments called:', { pubkey, appId, limit });
+	
+	if (!pubkey || !appId) {
+		console.warn('[Comments] Missing pubkey or appId');
+		return [];
+	}
 
-    return new Promise((resolve, reject) => {
-        try {
-            const pool = getPool();
+	try {
             const appAddress = `32267:${pubkey}:${appId}`;
 
-            const filter = {
+		// Try with uppercase A tag first (NIP-1111 root reference)
+		const filterA = {
                 kinds: [KIND_COMMENT],
                 '#A': [appAddress],
                 limit
             };
 
-            const events = [];
-            let eoseCount = 0;
-            let resolved = false;
-            const totalRelays = COMMENT_RELAYS.length;
-
-            function finalize() {
-                if (resolved) return;
-                resolved = true;
-
-                // Deduplicate by event id only (same event from multiple relays)
+		console.log('[Comments] Fetching with #A filter:', filterA, 'from relays:', COMMENT_RELAYS);
+		let events = await fetchEvents(COMMENT_RELAYS, filterA, { timeout: 15000 });
+		console.log('[Comments] Raw events from #A filter:', events.length);
+		
+		// If no results, try lowercase a tag as fallback (older comments or different relay support)
+		if (events.length === 0) {
+			const filterLowerA = {
+				kinds: [KIND_COMMENT],
+				'#a': [appAddress],
+				limit
+			};
+			console.log('[Comments] No results from #A, trying #a filter:', filterLowerA);
+			events = await fetchEvents(COMMENT_RELAYS, filterLowerA, { timeout: 15000 });
+			console.log('[Comments] Raw events from #a filter:', events.length);
+		}
+		
+		const comments = events.map(parseCommentEvent);
+		
+		// Deduplicate by event id
                 const uniqueById = new Map();
-                for (const evt of events) {
-                    if (!uniqueById.has(evt.id)) {
-                        uniqueById.set(evt.id, evt);
-                    }
-                }
+		for (const comment of comments) {
+			if (!uniqueById.has(comment.id)) {
+				uniqueById.set(comment.id, comment);
+			}
+		}
 
-                const finalEvents = Array.from(uniqueById.values()).sort(
+		const finalComments = Array.from(uniqueById.values()).sort(
                     (a, b) => b.createdAt - a.createdAt
                 );
 
-                // Cache full list for instant reloads
-                cacheComments(pubkey, appId, finalEvents);
+		console.log('[Comments] Final comments after dedup:', finalComments.length);
+		
+		cacheComments(pubkey, appId, finalComments);
+		addEventsToStore(events);
 
-                resolve(finalEvents);
-            }
-
-            const subscription = pool.subscribe(
-                COMMENT_RELAYS,
-                filter,
-                {
-                    onevent(event) {
-                        events.push(parseCommentEvent(event));
-                    },
-                    oneose() {
-                        eoseCount++;
-                        // Resolve early once we have data and the first relay finishes
-                        if (events.length > 0 || eoseCount >= totalRelays) {
-                            subscription.close();
-                            finalize();
-                        }
-                    },
-                    onclose() {
-                        finalize();
-                    }
-                }
-            );
-
-            setTimeout(() => {
-                if (!resolved) {
-                    subscription.close();
-                    finalize();
-                }
-            }, CONNECTION_TIMEOUT);
+		return finalComments;
         } catch (err) {
-            reject(err);
+		console.error('[Comments] Error fetching comments:', err);
+		return [];
         }
-    });
 }
 
 /**
- * Publish a comment (kind 1111) for an app using the browser nostr extension
- * @param {Object} app - App object containing pubkey and dTag
+ * Publish a comment (kind 1111) for an app
+ * @param {Object} app - App object
  * @param {string} content - Comment text
- * @param {any} signer - NIP-07 signer (defaults to window.nostr when available)
- * @param {string} version - Optional version string to tag the comment
- * @returns {Promise<Object>} The signed event
- */
-/**
- * Publishes a comment on an app (kind 1111) following NIP-22
- * 
- * Tag structure:
- * - Root comment on App:
- *   - Root scope (uppercase): A=32267:<pubkey>:<identifier>, K=32267, P=<app_pubkey>
- *   - Parent (lowercase, same as root because no nesting UI): a=<address>, e=<event_id>, k=32267, p=<app_pubkey>
- *   - Version thread tag: v=<version>
- * - Reply to comment:
- *   - Same root scope A/K/P/v
- *   - Parent comment: e=<parent_id>, k=1111, p=<parent_pubkey>
- * 
- * @param {Object} app - The app object with pubkey and dTag
- * @param {string} content - Comment text
- * @param {Object} signer - NIP-07 signer (window.nostr)
- * @param {string} version - Version string used as thread key (from FileMetadata)
- * @param {Object} [parentComment] - Optional parent comment for replies
- * @param {string} [parentComment.id] - Parent comment event id
- * @param {string} [parentComment.pubkey] - Parent comment author pubkey
+ * @param {Object} signer - NIP-07 signer
+ * @param {string} version - Version string
+ * @param {Object} parentComment - Optional parent comment for replies
+ * @returns {Promise<Object>}
  */
 export async function publishAppComment(app, content, signer, version, parentComment = null) {
+    console.log('[Comments] publishAppComment called:', { appDTag: app?.dTag, version, hasParent: !!parentComment });
+    
     const nostrSigner = signer || (typeof window !== 'undefined' ? window.nostr : null);
     if (!nostrSigner?.signEvent) {
         throw new Error('Nostr extension not available. Please install/enable it.');
@@ -1654,7 +1193,6 @@ export async function publishAppComment(app, content, signer, version, parentCom
         ['v', version]
     ];
 
-    // Parent references (lowercase) - for top-level comments the parent is the app event itself
     if (parentComment?.id && parentComment?.pubkey) {
         tags.push(['e', parentComment.id, RELAY_URL, parentComment.pubkey]);
         tags.push(['k', String(KIND_COMMENT)]);
@@ -1667,6 +1205,8 @@ export async function publishAppComment(app, content, signer, version, parentCom
         tags.push(['k', rootKind]);
         tags.push(['p', app.pubkey, RELAY_URL]);
     }
+    
+    console.log('[Comments] Comment tags:', tags);
 
     const unsignedEvent = {
         kind: KIND_COMMENT,
@@ -1675,25 +1215,21 @@ export async function publishAppComment(app, content, signer, version, parentCom
         content: trimmed
     };
 
+    console.log('[Comments] Signing event...');
     const signedEvent = await nostrSigner.signEvent(unsignedEvent);
-    await publishToRelays(signedEvent);
+    console.log('[Comments] Event signed:', signedEvent.id);
+    
+    console.log('[Comments] Publishing to relays:', COMMENT_RELAYS);
+    const result = await publishEvent(signedEvent, COMMENT_RELAYS);
+    console.log('[Comments] Publish result:', result);
+    
     return signedEvent;
 }
 
 /**
  * Parses a comment event (kind 1111)
- * 
- * Tag structure:
- * - A: App address (32267:<pubkey>:<identifier>) - root anchor
- * - K: App kind (32267)
- * - P: App pubkey
- * - v: Version/thread key
- * - a/e: Parent item reference (app or comment)
- * - k: Parent kind (32267 for top-level, 1111 for replies)
- * - p: Parent author pubkey
- * 
  * @param {Object} event - Raw nostr event
- * @returns {Object} Parsed comment object
+ * @returns {Object}
  */
 export function parseCommentEvent(event) {
     const tagMap = {};
@@ -1711,33 +1247,41 @@ export function parseCommentEvent(event) {
         createdAt: event.created_at,
         content: event.content || '',
         contentHtml: renderMarkdown(event.content || ''),
-        // Root anchor (App)
         appAddress: tagMap.A || '',
         appKind: tagMap.K || '',
         appPubkey: tagMap.P || '',
-        // Thread key (version) - NIP-22 requires `v`
         version: tagMap.v || '',
-        // Parent reference
         parentAddress: tagMap.a || '',
         parentId: tagMap.e || null,
         parentKind: tagMap.k || null,
         parentPubkey: tagMap.p || null,
-        // Is this a reply?
         isReply: String(tagMap.k || '') === String(KIND_COMMENT),
         fullEvent: event
     };
 }
 
 // ============================================================================
-// NIP-57 Zapping Functions
+// Publishing
 // ============================================================================
 
-const KIND_ZAP_REQUEST = 9734;
+/**
+ * Publish a signed event to relays
+ * @param {Object} event - Signed nostr event
+ * @param {string[]} relays - Relays to publish to
+ * @returns {Promise<Object>}
+ */
+export async function publishToRelays(event, relays = COMMENT_RELAYS) {
+	return publishEvent(event, relays);
+}
+
+// ============================================================================
+// NIP-57 Zapping
+// ============================================================================
 
 /**
  * Parses a Lightning Address (lud16) to get the LNURL endpoint
- * @param {string} lud16 - Lightning address (e.g., user@domain.com)
- * @returns {string} LNURL endpoint URL
+ * @param {string} lud16 - Lightning address
+ * @returns {string|null}
  */
 function parseLud16ToUrl(lud16) {
     if (!lud16 || typeof lud16 !== 'string') return null;
@@ -1747,10 +1291,9 @@ function parseLud16ToUrl(lud16) {
 }
 
 /**
- * Decodes a bech32-encoded LNURL (lud06) to get the endpoint URL
- * Uses the bech32 library from nostr-tools
+ * Decodes a bech32-encoded LNURL (lud06)
  * @param {string} lud06 - Bech32-encoded LNURL
- * @returns {string} LNURL endpoint URL
+ * @returns {string|null}
  */
 function decodeLud06(lud06) {
     if (!lud06 || typeof lud06 !== 'string') return null;
@@ -1775,16 +1318,14 @@ function decodeLud06(lud06) {
 }
 
 /**
- * Gets the zap endpoint URL for a given pubkey by fetching their profile
- * Forces a fresh fetch to ensure we have lud16/lud06 fields
+ * Gets the zap endpoint URL for a given pubkey
  * @param {string} pubkey - The recipient's public key
- * @returns {Promise<Object|null>} Object with endpoint URL and other LNURL data, or null
+ * @returns {Promise<Object|null>}
  */
 export async function getZapEndpoint(pubkey) {
     if (!pubkey) return null;
 
     try {
-        // Fetch the profile fresh (skip cache to ensure we have lud16/lud06)
         const profile = await fetchProfileFresh(pubkey);
         if (!profile) {
             console.warn('No profile found for pubkey:', pubkey);
@@ -1793,7 +1334,6 @@ export async function getZapEndpoint(pubkey) {
 
         console.log('Profile for zap:', { pubkey, lud16: profile.lud16, lud06: profile.lud06 });
 
-        // Try lud16 first (Lightning Address), then lud06 (LNURL)
         let lnurlEndpoint = null;
         if (profile.lud16) {
             lnurlEndpoint = parseLud16ToUrl(profile.lud16);
@@ -1806,7 +1346,6 @@ export async function getZapEndpoint(pubkey) {
             return null;
         }
 
-        // Fetch LNURL metadata
         const response = await fetch(lnurlEndpoint);
         if (!response.ok) {
             throw new Error(`LNURL fetch failed: ${response.status}`);
@@ -1814,7 +1353,6 @@ export async function getZapEndpoint(pubkey) {
 
         const lnurlData = await response.json();
         
-        // Verify it supports zaps (must have allowsNostr and nostrPubkey)
         if (!lnurlData.allowsNostr || !lnurlData.nostrPubkey) {
             console.warn('LNURL endpoint does not support Nostr zaps');
             return null;
@@ -1822,8 +1360,8 @@ export async function getZapEndpoint(pubkey) {
 
         return {
             callback: lnurlData.callback,
-            minSendable: lnurlData.minSendable || 1000, // millisats
-            maxSendable: lnurlData.maxSendable || 100000000000, // millisats
+			minSendable: lnurlData.minSendable || 1000,
+			maxSendable: lnurlData.maxSendable || 100000000000,
             nostrPubkey: lnurlData.nostrPubkey,
             allowsNostr: lnurlData.allowsNostr,
             lnurlEndpoint
@@ -1835,12 +1373,12 @@ export async function getZapEndpoint(pubkey) {
 }
 
 /**
- * Creates and signs a zap request event (kind 9734) for an app
- * @param {Object} app - The app object with pubkey and dTag
+ * Creates and signs a zap request event (kind 9734)
+ * @param {Object} app - The app object
  * @param {number} amountSats - Amount in satoshis
  * @param {string} comment - Optional zap comment
- * @param {Object} signer - NIP-07 signer (window.nostr)
- * @returns {Promise<Object>} Signed zap request event
+ * @param {Object} signer - NIP-07 signer
+ * @returns {Promise<Object>}
  */
 export async function createZapRequest(app, amountSats, comment = '', signer = null) {
     const nostrSigner = signer || (typeof window !== 'undefined' ? window.nostr : null);
@@ -1866,7 +1404,6 @@ export async function createZapRequest(app, amountSats, comment = '', signer = n
         ['relays', ...SOCIAL_RELAYS]
     ];
 
-    // Add event ID if available
     if (app.id) {
         tags.push(['e', app.id]);
     }
@@ -1883,11 +1420,11 @@ export async function createZapRequest(app, amountSats, comment = '', signer = n
 }
 
 /**
- * Requests a Lightning invoice from the LNURL callback with the zap request
+ * Requests a Lightning invoice from the LNURL callback
  * @param {string} callback - The LNURL callback URL
  * @param {Object} zapRequest - Signed zap request event
  * @param {number} amountSats - Amount in satoshis
- * @returns {Promise<Object>} Object containing the invoice (pr) and other data
+ * @returns {Promise<Object>}
  */
 export async function requestZapInvoice(callback, zapRequest, amountSats) {
     if (!callback || !zapRequest) {
@@ -1897,10 +1434,8 @@ export async function requestZapInvoice(callback, zapRequest, amountSats) {
     const amountMillisats = amountSats * 1000;
     const zapRequestJson = JSON.stringify(zapRequest);
 
-    // Build callback URL with params
     const url = new URL(callback);
     url.searchParams.set('amount', String(amountMillisats));
-    // URLSearchParams will handle encoding - avoid double-encoding the zap request
     url.searchParams.set('nostr', zapRequestJson);
 
     try {
@@ -1936,16 +1471,14 @@ export async function requestZapInvoice(callback, zapRequest, amountSats) {
  * @param {number} amountSats - Amount in satoshis
  * @param {string} comment - Optional comment
  * @param {Object} signer - NIP-07 signer
- * @returns {Promise<Object>} Object with invoice and other details
+ * @returns {Promise<Object>}
  */
 export async function createZap(app, amountSats, comment = '', signer = null) {
-    // 1. Get zap endpoint from publisher's profile
     const endpoint = await getZapEndpoint(app.pubkey);
     if (!endpoint) {
         throw new Error('This publisher has not set up a Lightning address for receiving zaps.');
     }
 
-    // 2. Validate amount
     const amountMillisats = amountSats * 1000;
     if (amountMillisats < endpoint.minSendable) {
         throw new Error(`Minimum zap amount is ${Math.ceil(endpoint.minSendable / 1000)} sats.`);
@@ -1954,10 +1487,7 @@ export async function createZap(app, amountSats, comment = '', signer = null) {
         throw new Error(`Maximum zap amount is ${Math.floor(endpoint.maxSendable / 1000)} sats.`);
     }
 
-    // 3. Create and sign zap request
     const zapRequest = await createZapRequest(app, amountSats, comment, signer);
-
-    // 4. Request invoice from LNURL endpoint
     const invoiceData = await requestZapInvoice(endpoint.callback, zapRequest, amountSats);
 
     return {
@@ -1971,24 +1501,16 @@ export async function createZap(app, amountSats, comment = '', signer = null) {
 
 /**
  * Subscribe to zap receipts (kind 9735) for a specific recipient
- * Used to detect when a zap payment has been completed
  * @param {string} recipientPubkey - The pubkey receiving the zap
  * @param {string} zapRequestId - The ID of our zap request event
  * @param {Function} onReceipt - Callback when receipt is received
  * @param {Object} options - Extra matching hints
- * @param {string} options.invoice - Optional BOLT11 invoice to match via bolt11 tag
- * @param {string} options.appAddress - Optional a-tag (app address) to match
- * @param {string} options.appEventId - Optional e-tag (app event id) to match
  * @returns {Function} Unsubscribe function
  */
 export function subscribeToZapReceipt(recipientPubkey, zapRequestId, onReceipt, options = {}) {
-    const pool = getPool();
-    let closed = false;
     let foundReceipt = false;
     const { invoice, appAddress, appEventId } = options;
     
-    // Subscribe to all relays where zap receipts might appear
-    // Include common wallet/zap relays in addition to social relays
     const zapRelays = [
         ...SOCIAL_RELAYS,
         RELAY_URL,
@@ -1996,47 +1518,26 @@ export function subscribeToZapReceipt(recipientPubkey, zapRequestId, onReceipt, 
         'wss://relay.nostr.band',
         'wss://nostr.wine'
     ];
-    // Dedupe
     const allRelays = [...new Set(zapRelays)];
     
-    // Use a recent since to avoid getting flooded with old events
-    // But keep it open for new events after EOSE
-    const since = Math.floor(Date.now() / 1000) - 300; // Last 5 minutes
+	const since = Math.floor(Date.now() / 1000) - 300;
     
-    // NOTE: Standard is lowercase 'p' tag, but we'll subscribe to both
-    // in case some implementations incorrectly use uppercase
     const filters = [
-        {
-            kinds: [9735],
-            '#p': [recipientPubkey],
-            since
-        },
-        {
-            kinds: [9735],
-            '#P': [recipientPubkey],
-            since
-        }
+		{ kinds: [KIND_ZAP_RECEIPT], '#p': [recipientPubkey], since },
+		{ kinds: [KIND_ZAP_RECEIPT], '#P': [recipientPubkey], since }
     ];
 
     console.log('=== ZAP RECEIPT SUBSCRIPTION ===');
     console.log('Relays:', allRelays);
     console.log('Recipient pubkey:', recipientPubkey);
     console.log('Zap request ID to match:', zapRequestId);
-    console.log('Filters:', JSON.stringify(filters));
 
-    const subscription = pool.subscribeMany(
-        allRelays,
-        filters,
-        {
-            onevent(event) {
-                if (closed || foundReceipt) return;
+	const unsubscribe = subscribeToMany(allRelays, filters, (event) => {
+		if (foundReceipt) return;
                 
                 console.log('=== RECEIVED ZAP RECEIPT ===');
                 console.log('Event ID:', event.id);
-                console.log('Event kind:', event.kind);
-                console.log('Event tags:', JSON.stringify(event.tags));
                 
-                // Helper to finalize on match
                 const finalizeMatch = () => {
                     console.log('*** MATCHING ZAP RECEIPT FOUND! ***');
                     foundReceipt = true;
@@ -2044,12 +1545,11 @@ export function subscribeToZapReceipt(recipientPubkey, zapRequestId, onReceipt, 
                     onReceipt(parsedZap);
                 };
                 
-                // 1) Primary match: description tag contains zap request JSON with matching id
+		// Primary match: description tag contains zap request JSON with matching id
                 const descriptionTag = event.tags.find(t => t[0] === 'description');
                 if (descriptionTag && descriptionTag[1]) {
                     try {
                         const zapRequest = JSON.parse(descriptionTag[1]);
-                        console.log('Embedded zap request ID:', zapRequest.id);
                         if (zapRequest.id === zapRequestId) {
                             finalizeMatch();
                             return;
@@ -2059,51 +1559,46 @@ export function subscribeToZapReceipt(recipientPubkey, zapRequestId, onReceipt, 
                     }
                 }
                 
-                // 2) Fallback: bolt11 tag matches the invoice we requested
+		// Fallback: bolt11 tag matches
                 if (invoice) {
                     const bolt11Tag = event.tags.find(t => t[0] === 'bolt11');
                     if (bolt11Tag && bolt11Tag[1] && bolt11Tag[1].toLowerCase() === invoice.toLowerCase()) {
-                        console.log('Matched via bolt11 tag');
                         finalizeMatch();
                         return;
                     }
                 }
                 
-                // 3) Fallback: a-tag matches app address
+		// Fallback: a-tag matches
                 if (appAddress) {
                     const aTag = event.tags.find(t => t[0] === 'a' && t[1] === appAddress);
                     if (aTag) {
-                        console.log('Matched via a-tag');
                         finalizeMatch();
                         return;
                     }
                 }
                 
-                // 4) Fallback: e-tag matches app event id
+		// Fallback: e-tag matches
                 if (appEventId) {
                     const eTag = event.tags.find(t => t[0] === 'e' && t[1] === appEventId);
                     if (eTag) {
-                        console.log('Matched via e-tag');
                         finalizeMatch();
                         return;
                     }
                 }
-            },
-            oneose() {
-                console.log('EOSE received - subscription will continue listening for new events');
-            },
-            onclose(reasons) {
-                console.log('Zap receipt subscription closed:', reasons);
-            }
-        }
-    );
+	});
 
-    // Return unsubscribe function
-    return () => {
-        if (!closed) {
-            closed = true;
-            subscription.close();
-            console.log('Unsubscribed from zap receipts');
-        }
-    };
+	return unsubscribe;
+}
+
+// ============================================================================
+// Cleanup
+// ============================================================================
+
+import { cleanup as applesauceCleanup } from './applesauce.js';
+
+/**
+ * Closes the global pool and cleans up connections
+ */
+export function closePool() {
+	applesauceCleanup();
 }
