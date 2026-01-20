@@ -2,6 +2,7 @@
   import { Search, X } from "lucide-svelte";
   import { fade } from "svelte/transition";
   import Label from "./Label.svelte";
+  import ProfilePic from "./ProfilePic.svelte";
   import { ChevronRight, Magic } from "$lib/components/icons";
 
   export let open = false;
@@ -282,19 +283,13 @@
               {#each catalogs as catalog}
                 <button
                   type="button"
-                  class="catalog-pill flex items-center gap-2 transition-colors cursor-pointer flex-shrink-0"
+                  class="catalog-pill flex items-center gap-2 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
                 >
-                  <div
-                    class="catalog-image rounded-full bg-white/10 flex-shrink-0 overflow-hidden"
-                  >
-                    {#if catalog.image}
-                      <img
-                        src={catalog.image}
-                        alt={catalog.name}
-                        class="w-full h-full object-cover"
-                      />
-                    {/if}
-                  </div>
+                  <ProfilePic
+                    pictureUrl={catalog.image || null}
+                    name={catalog.name}
+                    size="sm"
+                  />
                   <span
                     class="text-sm whitespace-nowrap"
                     style="color: hsl(var(--white66));">{catalog.name}</span
@@ -347,7 +342,7 @@
             {#each platforms as platform}
               <button
                 type="button"
-                class="platform-pill flex items-center gap-2 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                class="pill flex items-center gap-2 bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
               >
                 {#if platform === "iOS" || platform === "macOS" || platform === "Mac"}
                   {@render AppleIcon()}
@@ -413,25 +408,17 @@
     display: none;
   }
 
+  /* Catalog pill - hugs ProfilePic with equal padding */
   .catalog-pill {
-    background: hsl(var(--white8));
-    padding: 0.25rem;
+    padding: 4px;
     padding-right: 0.875rem;
     border-radius: 9999px;
   }
 
-  .catalog-pill:hover {
-    background: hsl(var(--white16));
-  }
-
-  .catalog-image {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-
-  .platform-pill {
-    padding: 0.25rem;
-    padding-right: 0.875rem;
+  /* Platform pill - matches Label height (32px) */
+  .pill {
+    height: 32px;
+    padding: 0 0.875rem 0 0.5rem;
     border-radius: 9999px;
   }
 

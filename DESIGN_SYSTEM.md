@@ -13,6 +13,8 @@
 5. [Color System](#color-system)
 6. [Typography](#typography)
 7. [Selector Component](#selector-component)
+8. [Profile Picture Component](#profile-picture-component)
+9. [App Picture Component](#app-picture-component)
 
 ---
 
@@ -612,6 +614,261 @@ The `Selector` component is a standardized tab/option selector used for filterin
 ### Standardization
 
 **CRITICAL**: All tab/option selectors MUST use the `Selector` component. Do not create custom selector components. The existing `PlatformSelector` component has been updated to use `Selector` internally.
+
+---
+
+## Profile Picture Component
+
+### Overview
+
+**CRITICAL**: All profile pictures across the site MUST use the `ProfilePic` component. This ensures consistent styling, loading states, and fallback behavior.
+
+### Location
+
+**Component file**: `src/lib/components/ProfilePic.svelte`
+
+### Features
+
+- **Circular shape** with thin 0.33px outline (`hsl(var(--white16))`)
+- **Skeleton loader** while image loads (uses `SkeletonLoader` component)
+- **Colored initial fallback** when no image URL is provided - displays first letter of name in a colored background
+- **Generic icon fallback** when neither image nor name is available
+- **Color generation** from pubkey or name using `color.js` utilities
+- **Hover/press states** with subtle scale transforms
+- **Performance optimized** with lazy loading and CSS containment
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `pictureUrl` | `string \| null` | `null` | Profile picture URL |
+| `name` | `string \| null` | `null` | Display name (used for initial letter fallback and color generation) |
+| `pubkey` | `string \| null` | `null` | Hex pubkey (used for color generation) |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | `'md'` | Size preset |
+| `onClick` | `() => void` | `() => {}` | Click handler |
+| `className` | `string` | `''` | Additional CSS classes |
+
+### Size Reference
+
+| Size | Pixels | Use Case |
+|------|--------|----------|
+| `xs` | 20px | Inline mentions, compact lists |
+| `sm` | 28px | Comment input, small avatars |
+| `md` | 38px | Default - comments, cards, lists |
+| `lg` | 48px | Header, forum posts, testimonials |
+| `xl` | 64px | Profile cards, featured content |
+| `2xl` | 96px | Profile page header |
+
+### Usage Examples
+
+```svelte
+<script>
+  import ProfilePic from "$lib/components/ProfilePic.svelte";
+</script>
+
+<!-- Basic usage with image URL -->
+<ProfilePic 
+  pictureUrl="https://example.com/avatar.jpg" 
+  name="Alice" 
+  size="md" 
+/>
+
+<!-- With pubkey for color generation (Nostr profiles) -->
+<ProfilePic 
+  pictureUrl={profile?.picture}
+  name={profile?.displayName || profile?.name}
+  pubkey={profile?.pubkey}
+  size="lg"
+/>
+
+<!-- Name only (shows colored initial letter) -->
+<ProfilePic name="Bob" size="sm" />
+
+<!-- Pubkey only (shows colored user icon) -->
+<ProfilePic pubkey="abc123def456..." size="md" />
+
+<!-- With click handler -->
+<ProfilePic 
+  name="Charlie" 
+  size="lg"
+  onClick={() => openProfile()}
+/>
+
+<!-- Profile page (large size) -->
+<ProfilePic
+  pictureUrl={developer?.picture}
+  name={developer?.displayName || developer?.name}
+  pubkey={developer?.pubkey}
+  size="2xl"
+/>
+```
+
+### Fallback Behavior
+
+The component handles missing data gracefully:
+
+1. **Has image URL**: Shows image with skeleton loader during load
+2. **No image, has name**: Shows first letter of name on colored background
+3. **No image, no name, has pubkey**: Shows user icon on colored background (color derived from pubkey)
+4. **Nothing provided**: Shows gray user icon
+
+### Color Generation
+
+- **From pubkey**: Uses `hexToColor()` to generate a consistent color from the hex pubkey
+- **From name**: Uses `stringToColor()` to generate a color from the name string
+- **Background**: Profile color at 24% opacity
+- **Text/Icon**: Full profile color
+
+### Standardization
+
+**CRITICAL**: All profile pictures MUST use the `ProfilePic` component. Do not create custom avatar implementations. This includes:
+
+- Header profile buttons
+- Comment avatars
+- Forum post authors
+- Testimonial authors
+- Profile page headers
+- Zapper avatar lists
+- Any other profile picture display
+
+---
+
+## App Picture Component
+
+### Overview
+
+**CRITICAL**: All app icons across the site MUST use the `AppPic` component. This ensures consistent styling, loading states, and fallback behavior for application icons.
+
+### Location
+
+**Component file**: `src/lib/components/AppPic.svelte`
+
+### Features
+
+- **Rounded square shape** with size-dependent border radius
+- **Thin 0.33px outline** (`hsl(var(--white16))`)
+- **Skeleton loader** while image loads (uses `SkeletonLoader` component)
+- **Blurred background fill** for icons with transparency (Android icons with round shapes or padding)
+- **Colored initial fallback** when no icon URL is provided - displays first letter of app name
+- **Generic icon fallback** when neither icon nor name is available
+- **Color generation** from identifier or name using `color.js` utilities
+- **Hover/press states** with subtle scale transforms
+
+### Blurred Background Feature
+
+Many Android apps upload icons that don't fill the entire square - they may be circular with transparent corners, or have transparent padding around a centered logo. The `AppPic` component automatically handles this by:
+
+1. Rendering the icon image with `object-fit: contain` (preserves aspect ratio)
+2. Adding a blurred, scaled-up version of the same image behind it
+3. The blurred background fills any transparent areas
+
+This ensures **all app icons appear visually filled** without requiring manual processing.
+
+**Technical implementation:**
+- Blurred background uses CSS `filter: blur(20px) saturate(1.5)`
+- Scaled to 140% to overflow and fill corners
+- Opacity at 80% for subtle effect
+- GPU-accelerated (no JavaScript computation)
+- Controlled via `fillBackground` prop (default: `true`)
+
+### Border Radius Rules
+
+The border radius scales with size (matching Flutter implementation):
+
+| Size (pixels) | Border Radius |
+|---------------|---------------|
+| >= 72px | 24px |
+| >= 48px | 16px |
+| < 48px | 8px |
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `iconUrl` | `string \| null` | `null` | App icon URL |
+| `name` | `string \| null` | `null` | App name (used for initial letter fallback and color generation) |
+| `identifier` | `string \| null` | `null` | App identifier/dTag (used for color generation) |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | `'md'` | Size preset |
+| `fillBackground` | `boolean` | `true` | Show blurred background for transparent icons |
+| `onClick` | `() => void` | `() => {}` | Click handler |
+| `className` | `string` | `''` | Additional CSS classes |
+
+### Size Reference
+
+| Size | Pixels | Border Radius | Use Case |
+|------|--------|---------------|----------|
+| `xs` | 32px | 8px | Compact lists, inline mentions |
+| `sm` | 38px | 8px | Small app lists |
+| `md` | 48px | 16px | Default - app cards, search results |
+| `lg` | 56px | 16px | Featured apps, detail views |
+| `xl` | 72px | 24px | App detail header |
+| `2xl` | 96px | 24px | Large feature displays |
+
+### Usage Examples
+
+```svelte
+<script>
+  import AppPic from "$lib/components/AppPic.svelte";
+</script>
+
+<!-- Basic usage with icon URL -->
+<AppPic 
+  iconUrl="https://example.com/app-icon.png" 
+  name="Zapstore" 
+  size="md" 
+/>
+
+<!-- With identifier for consistent color generation -->
+<AppPic 
+  iconUrl={app.icon}
+  name={app.name}
+  identifier={app.dTag}
+  size="lg"
+/>
+
+<!-- Name only (shows colored initial letter) -->
+<AppPic name="MyApp" size="sm" />
+
+<!-- App detail page (large size) -->
+<AppPic
+  iconUrl={app.icon}
+  name={app.name}
+  identifier={app.identifier}
+  size="xl"
+/>
+
+<!-- With click handler -->
+<AppPic 
+  name="Settings" 
+  size="md"
+  onClick={() => openApp()}
+/>
+```
+
+### Fallback Behavior
+
+The component handles missing data gracefully:
+
+1. **Has icon URL**: Shows image with skeleton loader during load
+2. **No icon, has name**: Shows first letter of name on colored background
+3. **No icon, no name, has identifier**: Shows app icon on colored background (color derived from identifier)
+4. **Nothing provided**: Shows gray generic app icon
+
+### Color Generation
+
+- **From identifier**: Uses `stringToColor()` to generate a consistent color from the app identifier/dTag
+- **From name**: Uses `stringToColor()` to generate a color from the app name
+- **Background**: App color at 24% opacity
+- **Text/Icon**: Full app color
+
+### Difference from ProfilePic
+
+| Feature | ProfilePic | AppPic |
+|---------|------------|--------|
+| Shape | Circle | Rounded square |
+| Border radius | Fixed (50%) | Size-dependent (8px/16px/24px) |
+| Color source | Pubkey (hex) or name | Identifier or name |
+| Use case | User avatars | App icons |
 
 ---
 

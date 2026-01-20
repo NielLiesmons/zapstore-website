@@ -1,18 +1,19 @@
 <script>
   import { page } from "$app/stores";
   import {
-    User,
     LogIn,
     LogOut,
     Loader2,
     ChevronDown,
     Search,
+    User,
   } from "lucide-svelte";
   import { cn } from "$lib/utils";
   import { assets } from "$app/paths";
   import { onMount } from "svelte";
   import { authStore, connect, disconnect } from "$lib/stores/auth.js";
   import SearchModal from "./SearchModal.svelte";
+  import ProfilePic from "./ProfilePic.svelte";
 
   let scrolled = false;
   let dropdownOpen = false;
@@ -166,28 +167,13 @@
           <a href="/my-apps" class="btn-primary-small mr-4"> My apps </a>
           <!-- Profile Avatar with Dropdown -->
           <div class="relative profile-dropdown">
-            <button
-              type="button"
-              on:click={toggleDropdown}
-              class="profile-avatar-btn h-10 w-10 rounded-full overflow-hidden flex items-center justify-center cursor-pointer"
-              aria-label="User menu"
-            >
-              {#if $authStore.profile?.picture}
-                <img
-                  src={$authStore.profile.picture}
-                  alt={$authStore.profile.displayName ||
-                    $authStore.profile.name ||
-                    "Profile"}
-                  class="h-10 w-10 rounded-full object-cover bg-muted"
-                />
-              {:else}
-                <div
-                  class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center"
-                >
-                  <User class="h-5 w-5 text-primary" />
-                </div>
-              {/if}
-            </button>
+            <ProfilePic
+              pictureUrl={$authStore.profile?.picture}
+              name={$authStore.profile?.displayName || $authStore.profile?.name}
+              pubkey={$authStore.pubkey}
+              size="lg"
+              onClick={toggleDropdown}
+            />
 
             <!-- Dropdown Menu -->
             {#if dropdownOpen}

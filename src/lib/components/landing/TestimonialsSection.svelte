@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import SectionHeader from "./SectionHeader.svelte";
+  import ProfilePic from "$lib/components/ProfilePic.svelte";
 
   export let testimonials = [];
 
@@ -240,22 +241,11 @@
               >
                 <!-- Top row: Profile pic, name, date/time -->
                 <div class="flex items-center gap-3 mb-3">
-                  {#if testimonial.profile?.picture}
-                    <img
-                      src={testimonial.profile.picture}
-                      alt={getDisplayName(testimonial)}
-                      class="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                      loading="lazy"
-                    />
-                  {:else}
-                    <div
-                      class="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center flex-shrink-0"
-                    >
-                      <span class="text-primary font-semibold text-sm">
-                        {getDisplayName(testimonial).charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  {/if}
+                  <ProfilePic
+                    pictureUrl={testimonial.profile?.picture}
+                    name={getDisplayName(testimonial)}
+                    size="lg"
+                  />
 
                   <div
                     class="flex-1 min-w-0 flex items-center justify-between gap-2"
