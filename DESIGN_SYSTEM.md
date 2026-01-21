@@ -15,6 +15,8 @@
 7. [Selector Component](#selector-component)
 8. [Profile Picture Component](#profile-picture-component)
 9. [App Picture Component](#app-picture-component)
+10. [Responsive Sizing Pattern](#responsive-sizing-pattern)
+11. [Horizontal Scroll Containers](#horizontal-scroll-containers)
 
 ---
 
@@ -872,6 +874,188 @@ The component handles missing data gracefully:
 
 ---
 
+## Responsive Sizing Pattern
+
+### Overview
+
+**CRITICAL**: This pattern applies to all functional UI elements (feeds, cards, lists, headers, etc.) but NOT to landing page promotional/marketing sections which have their own custom responsive behavior.
+
+### Two-Breakpoint System
+
+Use exactly **two size categories** for responsive UI:
+
+| Breakpoint | Name | Screen Width | Use Case |
+|------------|------|--------------|----------|
+| Mobile | Default | `< 768px` | Phones, small tablets |
+| Desktop | `md:` | `>= 768px` | Tablets, laptops, desktops |
+
+### Implementation
+
+Always define mobile sizes first, then override for desktop using `@media (min-width: 768px)`:
+
+```css
+/* Mobile (default) */
+.element {
+  font-size: 0.875rem;
+  padding: 12px;
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  .element {
+    font-size: 1rem;
+    padding: 16px;
+  }
+}
+```
+
+### Component Examples
+
+#### SectionHeader
+| Property | Mobile | Desktop |
+|----------|--------|---------|
+| Title font size | 1.25rem (20px) | 1.5rem (24px) |
+| Chevron size | 16px | 14px |
+
+#### AppSmallCard (in horizontal scroll)
+| Property | Mobile | Desktop |
+|----------|--------|---------|
+| Icon size | 56px (lg) | 72px (xl) |
+| Icon-to-text gap | 16px | 20px |
+| Name font size | 0.875rem (14px) | 1rem (16px) |
+| Description font size | 0.75rem (12px) | 0.875rem (14px) |
+| Description lines | 1 | 2 |
+| Column width | 280px | 320px |
+| Card gap | 12px | 16px |
+
+### When NOT to Apply
+
+This pattern does NOT apply to:
+- Landing page hero sections
+- Marketing/promotional sections with custom animations
+- Full-bleed visual elements
+- Components in `src/lib/components/landing/` (these use their own responsive logic)
+
+### Best Practices
+
+1. **Mobile-first**: Always write mobile styles as the default
+2. **Single breakpoint**: Use only the 768px breakpoint for functional UI
+3. **Proportional scaling**: Desktop elements should be ~15-25% larger than mobile
+4. **Test both sizes**: Always verify appearance at both breakpoints
+
+---
+
+## Horizontal Scroll Containers
+
+### Overview
+
+**CRITICAL**: All horizontally scrolling UI elements MUST have edge fade effects to indicate content continues beyond the visible area.
+
+### Edge Fade Pattern
+
+Use CSS `mask-image` with a linear gradient to fade content at the edges:
+
+```css
+.horizontal-scroll {
+  overflow-x: auto;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  /* Fade mask: opaque in center, transparent at edges */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 1rem,
+    black calc(100% - 1rem),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 1rem,
+    black calc(100% - 1rem),
+    transparent 100%
+  );
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+  display: none;
+}
+```
+
+### Alignment with Container Padding
+
+When a scroll container extends beyond its parent (using negative margins with matching padding), the fade distance MUST match the padding:
+
+```css
+/* Example: Full-width scroll aligned with container content */
+.horizontal-scroll {
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  
+  /* Fade matches padding */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 1rem,
+    black calc(100% - 1rem),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 1rem,
+    black calc(100% - 1rem),
+    transparent 100%
+  );
+}
+
+/* Update at each breakpoint */
+@media (min-width: 640px) {
+  .horizontal-scroll {
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 1.5rem,
+      black calc(100% - 1.5rem),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 1.5rem,
+      black calc(100% - 1.5rem),
+      transparent 100%
+    );
+  }
+}
+```
+
+### Usage Examples
+
+- **App discovery feeds**: Horizontal scroll of app cards
+- **Label/tag lists**: Scrollable labels in cards (see `ForumPost.svelte`)
+- **Screenshot galleries**: Horizontal app screenshot carousels
+- **Category chips**: Horizontally scrolling filter options
+
+### Key Rules
+
+1. **Always hide scrollbar**: Use `scrollbar-width: none` and `::-webkit-scrollbar { display: none }`
+2. **Always add fade mask**: Content should fade at the edges to indicate scrollability
+3. **Match fade to padding**: The gradient transition distance should equal the container padding
+4. **Update at breakpoints**: If padding changes at different screen sizes, update the mask gradient to match
+
+---
+
 ## General Rules
 
 1. **Always use standardized classes** - Don't create custom styles for buttons, icons, or common UI elements
@@ -880,6 +1064,7 @@ The component handles missing data gracefully:
 4. **Document exceptions** - If you need a specialized component, document it here
 5. **Consistency first** - Prefer reusing existing patterns over creating new ones
 6. **Cursor pointer on clickable elements** - **ALL clickable elements MUST have `cursor: pointer`**. This includes buttons, links, cards that navigate, toggles, and any other interactive elements. Users must always have clear visual feedback that an element is clickable.
+7. **Two-breakpoint responsive**: Use the mobile/desktop (768px) breakpoint pattern for all functional UI - see "Responsive Sizing Pattern" section
 
 ---
 

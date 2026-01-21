@@ -1,16 +1,13 @@
 import { fetchAppsServer } from '$lib/nostr-server.js';
 
-const PAGE_SIZE = 12;
+// Load more apps for horizontal scroll display (columns of 3)
+const PAGE_SIZE = 30;
 
 export async function load({ url }) {
 	try {
-		const searchQuery = url.searchParams.get('q') || '';
-		console.log('[Server] Loading apps page data with search:', searchQuery);
+		console.log('[Server] Loading apps page data');
 		
 		const options = { limit: PAGE_SIZE + 1 };
-		if (searchQuery) {
-			options.search = searchQuery;
-		}
 		
 		// Fetch one extra to check if there are more pages
 		const allApps = await fetchAppsServer(options);
@@ -24,8 +21,7 @@ export async function load({ url }) {
 		return {
 			apps,
 			hasMore,
-			loading: false,
-			initialQuery: searchQuery
+			loading: false
 		};
 	} catch (err) {
 		console.error('[Server] Failed to load apps:', err);
@@ -33,8 +29,7 @@ export async function load({ url }) {
 			apps: [],
 			hasMore: false,
 			loading: false,
-			error: err.message,
-			initialQuery: ''
+			error: err.message
 		};
 	}
 }

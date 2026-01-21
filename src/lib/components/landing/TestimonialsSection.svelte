@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import SectionHeader from "./SectionHeader.svelte";
+  import LandingSectionTitle from "./LandingSectionTitle.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
 
   export let testimonials = [];
@@ -196,7 +196,7 @@
 
 {#if testimonials.length > 0}
   <section class="border-t border-border/50 pt-16 pb-8 lg:pt-20 lg:pb-10">
-    <SectionHeader
+    <LandingSectionTitle
       title="What people are saying"
       description="Real posts from the Nostr community"
       showSeeMore={true}

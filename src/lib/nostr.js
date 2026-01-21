@@ -30,6 +30,7 @@ import {
 	KIND_ZAP_REQUEST,
 	KIND_ZAP_RECEIPT,
 	KIND_RELEASE,
+	KIND_APP_STACK,
 	KIND_APP,
 	CONNECTION_TIMEOUT,
 	getDiscoverPageState,
@@ -525,6 +526,97 @@ export async function fetchApps({ limit = 12, authors, dTags, until, search } = 
 			console.error('Error in fetchApps:', err);
 		return [];
 		}
+}
+
+/**
+ * Parses an App Stack event (kind 30267) into a structured object
+ * @param {Object} event - Nostr event
+ * @returns {Object} Parsed app stack object
+ */
+function parseAppStackEvent(event) {
+	const tags = event.tags || [];
+	
+	// Get name from content (title is stored in content field)
+	const name = event.content || null;
+	
+	// Get d-tag (identifier)
+	const dTag = tags.find(t => t[0] === 'd');
+	const identifier = dTag ? dTag[1] : null;
+	
+	// Get app references from 'a' tags (format: 32267:pubkey:identifier)
+	const appRefs = tags
+		.filter(t => t[0] === 'a' && t[1]?.startsWith('32267:'))
+		.map(t => {
+			const parts = t[1].split(':');
+			return {
+				kind: parseInt(parts[0]),
+				pubkey: parts[1],
+				identifier: parts[2]
+			};
+		});
+	
+	// Placeholder description for now
+	const description = "A curated collection of apps for your needs.";
+	
+	return {
+		id: event.id,
+		pubkey: event.pubkey,
+		identifier,
+		name,
+		description,
+		appRefs,
+		createdAt: event.created_at,
+		event
+	};
+}
+
+/**
+ * Fetches App Stacks (kind 30267) from the relay
+ * @param {Object} options - Query options
+ * @returns {Promise<Array>} Array of app stack objects with resolved apps
+ */
+export async function fetchAppStacks({ limit = 20, authors } = {}) {
+	try {
+		const filter = {
+			kinds: [KIND_APP_STACK],
+			limit
+		};
+
+		if (authors) filter.authors = authors;
+
+		console.log('Fetching app stacks with filter:', filter);
+
+		const events = await fetchEvents([RELAY_URL], filter);
+		const stacks = events.map(parseAppStackEvent);
+		
+		// Add to store for reactive access
+		addEventsToStore(events);
+		
+		// Sort by creation date (newest first)
+		return stacks.sort((a, b) => b.createdAt - a.createdAt);
+	} catch (err) {
+		console.error('Error in fetchAppStacks:', err);
+		return [];
+	}
+}
+
+/**
+ * Resolves app references in a stack to actual app objects
+ * @param {Object} stack - App stack with appRefs
+ * @param {Array} availableApps - Array of app objects to match against
+ * @returns {Object} Stack with resolved apps array
+ */
+export function resolveStackApps(stack, availableApps) {
+	const apps = stack.appRefs
+		.map(ref => availableApps.find(app => 
+			app.pubkey === ref.pubkey && app.dTag === ref.identifier
+		))
+		.filter(Boolean);
+	
+	return {
+		...stack,
+		apps
+	};
 }
 
 /**

@@ -1,247 +1,229 @@
 <script>
   import { onMount } from "svelte";
   import {
-    Package,
-    Download,
-    ExternalLink,
-    User,
-    Calendar,
-  } from "lucide-svelte";
-  import {
     fetchApps,
-    formatDate,
+    fetchApp,
     getAppSlug,
-    getDiscoverPageState,
-    setDiscoverPageState,
     cacheApp,
-    fetchAppVersion,
+    fetchAppStacks,
+    resolveStackApps,
+    fetchProfile,
+    pubkeyToNpub,
   } from "$lib/nostr.js";
-  import ProfileInfo from "$lib/components/ProfileInfo.svelte";
-  import AppPic from "$lib/components/AppPic.svelte";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
+  import SectionHeader from "$lib/components/SectionHeader.svelte";
+  import AppSmallCard from "$lib/components/AppSmallCard.svelte";
+  import AppStackCard from "$lib/components/AppStackCard.svelte";
+  import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
 
   // Receive server-rendered data
   export let data;
 
-  // Check if we have cached state from previous visit
-  const cachedState = getDiscoverPageState();
-  const hasCachedState = cachedState.apps.length > 0 && !data.initialQuery;
-
-  let apps = hasCachedState ? cachedState.apps : data.apps;
+  let apps = data.apps || [];
   let loading = data.loading;
   let error = data.error || null;
   let loadingMore = false;
-  let hasMore = hasCachedState ? cachedState.hasMore : data.hasMore;
-  let query = data.initialQuery || cachedState.query || "";
-  let debouncedQuery = data.initialQuery || cachedState.query || "";
-  let canSearch = false;
-  $: canSearch = query.trim().length > 0;
-  const PAGE_SIZE = 12;
+  let hasMore = data.hasMore;
 
-  // Store versions fetched from FileMetadata
-  let appVersions = new Map();
-
-  // Fetch version for an app from FileMetadata
-  async function loadVersionForApp(app) {
-    if (!app?.id || appVersions.has(app.id)) return;
-    const version = await fetchAppVersion(app);
-    if (version) {
-      appVersions.set(app.id, version);
-      appVersions = appVersions; // Trigger reactivity
-    }
-  }
+  // App Stacks state
+  let stacks = [];
+  let stacksLoading = true;
 
   // Cache apps for instant loading in detail page
   $: {
     apps.forEach((app) => {
       cacheApp(app);
-      loadVersionForApp(app);
-    });
-    // Save state for when user navigates back
-    setDiscoverPageState({
-      apps,
-      hasMore,
-      query: debouncedQuery,
-      expanded: apps.length > PAGE_SIZE,
     });
   }
 
-  async function loadApps(reset = true) {
+  // Load app stacks when apps are available
+  onMount(async () => {
+    if (apps.length > 0) {
+      await loadStacks();
+    }
+  });
+
+  // Also load stacks when apps change (in case they load after mount)
+  $: if (apps.length > 0 && stacks.length === 0 && stacksLoading) {
+    loadStacks();
+  }
+
+  async function loadStacks() {
     try {
-      if (reset) {
-        loading = true;
-        error = null;
-        apps = [];
-        hasMore = true;
-      } else {
-        loadingMore = true;
-      }
+      stacksLoading = true;
+      const rawStacks = await fetchAppStacks({ limit: 30 });
 
-      // For pagination, use the oldest loaded app's created_at as 'until' filter
-      const until =
-        !reset && apps.length > 0
-          ? Math.min(...apps.map((app) => app.createdAt))
-          : undefined;
-      const options = { limit: PAGE_SIZE + 1 };
-      if (until) {
-        options.until = until;
-      }
-      if (debouncedQuery && debouncedQuery.trim().length > 0) {
-        options.search = debouncedQuery.trim();
-      }
+      // Resolve app references and fetch creator profiles
+      // Also fetch apps that aren't in our current list
+      const resolvedStacks = await Promise.all(
+        rawStacks.map(async (stack) => {
+          // First try to resolve from already loaded apps
+          let resolved = resolveStackApps(stack, apps);
 
-      const newApps = await fetchApps(options);
+          // If we didn't get all apps, try fetching the missing ones
+          if (
+            resolved.apps.length < stack.appRefs.length &&
+            stack.appRefs.length > 0
+          ) {
+            const missingRefs = stack.appRefs.filter(
+              (ref) =>
+                !resolved.apps.find(
+                  (a) => a.pubkey === ref.pubkey && a.dTag === ref.identifier,
+                ),
+            );
 
-      if (reset) {
-        // Determine if we have more than one page by overfetching by 1
-        hasMore = newApps.length > PAGE_SIZE;
-        apps = newApps.slice(0, PAGE_SIZE);
-        loading = false;
-      } else {
-        // Filter out any duplicates and add only up to PAGE_SIZE
-        const existingIds = new Set(apps.map((app) => app.id));
-        const uniqueNewApps = newApps.filter((app) => !existingIds.has(app.id));
-        // Determine if there are more results by checking raw fetch size
-        hasMore = newApps.length > PAGE_SIZE;
-        const toAppend = uniqueNewApps.slice(0, PAGE_SIZE);
-        apps = [...apps, ...toAppend];
-        loadingMore = false;
-      }
+            // Fetch missing apps individually (limit to first 4 for display)
+            const fetchPromises = missingRefs
+              .slice(0, 4 - resolved.apps.length)
+              .map(async (ref) => {
+                try {
+                  const app = await fetchApp(ref.pubkey, ref.identifier);
+                  return app;
+                } catch (e) {
+                  return null;
+                }
+              });
+
+            const fetchedApps = (await Promise.all(fetchPromises)).filter(
+              Boolean,
+            );
+            resolved.apps = [...resolved.apps, ...fetchedApps].slice(0, 4);
+          }
+
+          // Fetch creator profile
+          let creator = null;
+          if (stack.pubkey) {
+            try {
+              const profile = await fetchProfile(stack.pubkey);
+              creator = {
+                name: profile?.displayName || profile?.name,
+                picture: profile?.picture,
+                pubkey: stack.pubkey,
+                npub: profile?.npub || pubkeyToNpub(stack.pubkey),
+              };
+            } catch (e) {
+              creator = {
+                name: null,
+                picture: null,
+                pubkey: stack.pubkey,
+                npub: pubkeyToNpub(stack.pubkey),
+              };
+            }
+          }
+
+          return { ...resolved, creator };
+        }),
+      );
+
+      // Keep all stacks, even those with no resolved apps (they might have apps we couldn't fetch)
+      stacks = resolvedStacks.filter((s) => s.name); // Just filter out ones without names
     } catch (err) {
-      console.error("Error fetching apps:", err);
-      error = err.message;
-      loading = false;
-      loadingMore = false;
+      console.error("Error loading stacks:", err);
+    } finally {
+      stacksLoading = false;
     }
   }
 
   async function loadMoreApps() {
-    if (!loadingMore && hasMore) {
-      await loadApps(false);
+    if (loadingMore || !hasMore) return;
+
+    try {
+      loadingMore = true;
+      const PAGE_SIZE = 30;
+
+      // For pagination, use the oldest loaded app's created_at as 'until' filter
+      const until =
+        apps.length > 0
+          ? Math.min(...apps.map((app) => app.createdAt))
+          : undefined;
+
+      const options = { limit: PAGE_SIZE + 1 };
+      if (until) {
+        options.until = until;
+      }
+
+      const newApps = await fetchApps(options);
+
+      // Filter out any duplicates and add only up to PAGE_SIZE
+      const existingIds = new Set(apps.map((app) => app.id));
+      const uniqueNewApps = newApps.filter((app) => !existingIds.has(app.id));
+
+      // Determine if there are more results
+      hasMore = newApps.length > PAGE_SIZE;
+      const toAppend = uniqueNewApps.slice(0, PAGE_SIZE);
+      apps = [...apps, ...toAppend];
+    } catch (err) {
+      console.error("Error fetching more apps:", err);
+    } finally {
+      loadingMore = false;
     }
-  }
-
-  // No onMount needed - initial data comes from server!
-
-  function onInputQuery(e) {
-    query = e.target.value;
-    const trimmed = query.trim();
-    if (trimmed.length === 0 && debouncedQuery) {
-      debouncedQuery = "";
-      updateURLAndLoadApps("");
-    }
-  }
-
-  function onKeyDownQuery(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      executeSearch();
-    }
-  }
-
-  function executeSearch() {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      debouncedQuery = "";
-      updateURLAndLoadApps("");
-      return;
-    }
-    debouncedQuery = trimmed;
-    updateURLAndLoadApps(trimmed);
-  }
-
-  async function updateURLAndLoadApps(searchQuery) {
-    // Update URL with search parameter
-    const url = new URL($page.url);
-    if (searchQuery) {
-      url.searchParams.set("q", searchQuery);
-    } else {
-      url.searchParams.delete("q");
-    }
-
-    // Navigate without reloading the page
-    await goto(url.toString(), {
-      replaceState: false,
-      noScroll: true,
-      keepFocus: true,
-    });
-
-    // Load apps with the new search query
-    await loadApps(true);
   }
 
   function getAppUrl(app) {
     return `/apps/${getAppSlug(app.pubkey, app.dTag)}`;
   }
+
+  // Group apps into columns of 3 for horizontal scroll
+  function getAppColumns(appList, itemsPerColumn = 3) {
+    const columns = [];
+    for (let i = 0; i < appList.length; i += itemsPerColumn) {
+      columns.push(appList.slice(i, i + itemsPerColumn));
+    }
+    return columns;
+  }
+
+  $: appColumns = getAppColumns(apps, 3);
 </script>
 
 <svelte:head>
-  <title>Apps — Zapstore</title>
-  <meta name="description" content="Browse apps on Zapstore" />
+  <title>Discover — Zapstore</title>
+  <meta
+    name="description"
+    content="Discover apps, stacks, communities and more on Zapstore"
+  />
 </svelte:head>
 
-<!-- Hero Section --
-
-<!-- Search + Apps Grid -->
-<section class="pt-2 pb-4">
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Search bar -->
-    <div class="mb-6 py-4">
-      <div class="max-w-2xl mx-auto flex items-stretch gap-2">
-        <input
-          type="search"
-          placeholder="Search apps by name, description, or tags..."
-          class="flex-1 rounded-md border border-border bg-background px-6 py-3 text-[1rem] shadow-sm focus:outline-none focus:ring-1 focus:ring-border focus:border-muted-foreground/40 placeholder:text-gray-500 dark:placeholder:text-gray-400"
-          on:input={onInputQuery}
-          on:keydown={onKeyDownQuery}
-          value={query}
-        />
-        <button
-          on:click={executeSearch}
-          disabled={!canSearch}
-          class="inline-flex items-center justify-center rounded-md bg-card px-4 py-2 text-sm font-medium shadow-sm transition-all hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Search"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            ><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg
-          >
-        </button>
-      </div>
-    </div>
-
+<section class="discover-page">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
     {#if loading}
-      <div class="flex items-center justify-center py-24">
-        <div class="text-center">
-          <div
-            class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"
-          ></div>
-          <p class="text-muted-foreground">
-            Loading apps from the nostr network...
-          </p>
+      <!-- Loading State -->
+      <div class="section-container">
+        <SectionHeader title="Apps" linkText="See all" href="/apps/all" />
+        <div class="horizontal-scroll">
+          <div class="scroll-content">
+            {#each Array(4) as _, colIndex}
+              <div class="app-column">
+                {#each Array(3) as _, cardIndex}
+                  <div class="skeleton-card">
+                    <div class="skeleton-icon">
+                      <SkeletonLoader />
+                    </div>
+                    <div class="skeleton-info">
+                      <div class="skeleton-name">
+                        <SkeletonLoader />
+                      </div>
+                      <div class="skeleton-desc"></div>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {/each}
+          </div>
         </div>
       </div>
     {:else if error}
+      <!-- Error State -->
       <div class="flex items-center justify-center py-24">
         <div class="text-center">
           <div
             class="rounded-lg bg-destructive/10 border border-destructive/20 p-6 max-w-md"
           >
             <h3 class="text-lg font-semibold text-destructive mb-2">
-              Error Loading Apps
+              Error Loading Content
             </h3>
             <p class="text-muted-foreground mb-4">{error}</p>
             <button
-              on:click={loadApps}
-              class="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              on:click={() => window.location.reload()}
+              class="btn-primary"
             >
               Try Again
             </button>
@@ -249,115 +231,384 @@
         </div>
       </div>
     {:else}
-      <p class="text-sm text-muted-foreground mb-4">
-        Current catalog relays: <code
-          class="font-mono bg-muted px-1.5 py-0.5 rounded"
-          >relay.zapstore.dev</code
-        >
-      </p>
-      <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-      >
-        {#each apps as app}
-          <div
-            class="group relative overflow-hidden rounded-lg border border-border bg-card hover:border-primary/50 transition-all duration-200 hover:shadow-lg hover:shadow-primary/5"
-          >
-            <a href={getAppUrl(app)} class="block p-6">
-              <!-- App Icon and Name -->
-              <div class="flex items-start gap-4 mb-4">
-                <AppPic
-                  iconUrl={app.icon}
-                  name={app.name}
-                  identifier={app.dTag}
-                  size="lg"
-                />
-                <div class="min-w-0 flex-1">
-                  <h3
-                    class="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight"
-                  >
-                    {app.name}
-                  </h3>
-                  {#if appVersions.get(app.id)}
-                    <div class="mt-0.5">
-                      <span
-                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-primary text-white max-w-[140px]"
-                      >
-                        <span class="truncate"
-                          >{appVersions.get(app.id).length > 20
-                            ? appVersions.get(app.id).slice(0, 20) + "…"
-                            : appVersions.get(app.id)}</span
-                        >
-                      </span>
-                    </div>
-                  {/if}
-                </div>
+      <!-- Apps Section -->
+      <div class="section-container">
+        <SectionHeader title="Apps" linkText="See all" href="/apps/all" />
+        <div class="horizontal-scroll">
+          <div class="scroll-content">
+            {#each appColumns as column, colIndex}
+              <div class="app-column">
+                {#each column as app, cardIndex}
+                  <AppSmallCard {app} href={getAppUrl(app)} />
+                {/each}
               </div>
+            {/each}
 
-              <!-- Description -->
-              <div class="text-sm text-muted-foreground mb-4 line-clamp-3">
-                {@html app.descriptionHtml}
-              </div>
-
-              <!-- App Images Preview -->
-              <!-- Publisher and Date -->
-              <div class="space-y-3">
-                <!-- Publisher Profile -->
-                <ProfileInfo
-                  pubkey={app.pubkey}
-                  npub={app.npub}
-                  size="xs"
-                  showLabel={true}
-                  disableLink={true}
-                />
-
-                <!-- Date -->
-                <div
-                  class="flex items-center gap-1 text-xs text-muted-foreground"
+            {#if hasMore}
+              <div class="load-more-column">
+                <button
+                  class="load-more-btn"
+                  on:click={loadMoreApps}
+                  disabled={loadingMore}
                 >
-                  <Calendar class="h-3 w-3" />
-                  <span>{formatDate(app.createdAt, { month: "short" })}</span>
-                </div>
+                  {#if loadingMore}
+                    <div class="spinner"></div>
+                  {:else}
+                    <span>Load more</span>
+                  {/if}
+                </button>
               </div>
-            </a>
+            {/if}
           </div>
-        {/each}
+        </div>
       </div>
 
-      <!-- See More Button -->
-      {#if hasMore}
-        <div class="text-center mt-12">
-          <button
-            on:click={loadMoreApps}
-            disabled={loadingMore}
-            class="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-sm font-medium shadow-sm transition-all hover:bg-accent hover:text-accent-foreground hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {#if loadingMore}
-              <div
-                class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"
-              ></div>
-              Loading more...
-            {:else}
-              See More Apps
-            {/if}
-          </button>
+      <!-- Stacks Section -->
+      <div class="section-container">
+        <SectionHeader title="Stacks" linkText="See all" href="/stacks" />
+        {#if stacksLoading}
+          <div class="horizontal-scroll">
+            <div class="scroll-content">
+              {#each Array(3) as _}
+                <div class="stack-item">
+                  <div class="skeleton-stack">
+                    <div class="skeleton-stack-grid">
+                      <SkeletonLoader />
+                    </div>
+                    <div class="skeleton-stack-info">
+                      <div class="skeleton-name"><SkeletonLoader /></div>
+                      <div class="skeleton-desc"></div>
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {:else if stacks.length > 0}
+          <div class="horizontal-scroll">
+            <div class="scroll-content">
+              {#each stacks as stack}
+                <div class="stack-item">
+                  <AppStackCard
+                    {stack}
+                    href="/stacks/{stack.identifier ||
+                      stack.name?.toLowerCase().replace(/\s+/g, '-')}"
+                  />
+                </div>
+              {/each}
+            </div>
+          </div>
+        {:else}
+          <div class="placeholder-content">
+            <p class="text-muted-foreground text-sm">
+              No app stacks found yet. Create one in the Zapstore app!
+            </p>
+          </div>
+        {/if}
+      </div>
+
+      <!-- Communities Section (placeholder) -->
+      <div class="section-container">
+        <SectionHeader
+          title="Communities"
+          linkText="See all"
+          href="/communities"
+        />
+        <div class="placeholder-content">
+          <p class="text-muted-foreground text-sm">
+            Nostr communities coming soon...
+          </p>
         </div>
-      {/if}
+      </div>
+
+      <!-- Labels Section (placeholder) -->
+      <div class="section-container">
+        <SectionHeader title="Labels" linkText="See all" href="/labels" />
+        <div class="placeholder-content">
+          <p class="text-muted-foreground text-sm">
+            App labels and categories coming soon...
+          </p>
+        </div>
+      </div>
     {/if}
   </div>
 </section>
 
 <style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+  .discover-page {
+    min-height: 100vh;
+  }
+
+  .section-container {
+    margin-bottom: 40px;
+  }
+
+  /* Horizontal scroll container */
+  .horizontal-scroll {
+    /* Allow scroll to extend to edges */
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    /* Fade mask: opaque in center, transparent at edges */
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 1rem,
+      black calc(100% - 1rem),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 1rem,
+      black calc(100% - 1rem),
+      transparent 100%
+    );
+  }
+
+  .horizontal-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .horizontal-scroll {
+      margin-left: -1.5rem;
+      margin-right: -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+
+      mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 1.5rem,
+        black calc(100% - 1.5rem),
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 1.5rem,
+        black calc(100% - 1.5rem),
+        transparent 100%
+      );
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .horizontal-scroll {
+      margin-left: -2rem;
+      margin-right: -2rem;
+      padding-left: 2rem;
+      padding-right: 2rem;
+
+      mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 2rem,
+        black calc(100% - 2rem),
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 2rem,
+        black calc(100% - 2rem),
+        transparent 100%
+      );
+    }
+  }
+
+  .scroll-content {
+    display: flex;
+    gap: 16px;
+    padding-bottom: 8px; /* Space for any overflow */
+  }
+
+  /* App column (vertical stack of 3 apps) */
+  .app-column {
+    flex-shrink: 0;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Desktop: wider columns for larger cards */
+  @media (min-width: 768px) {
+    .app-column {
+      width: 320px;
+      gap: 16px;
+    }
+  }
+
+  /* Stack item (single row horizontal scroll) */
+  .stack-item {
+    flex-shrink: 0;
+    width: 280px;
+  }
+
+  @media (min-width: 768px) {
+    .stack-item {
+      width: 320px;
+    }
+  }
+
+  /* Load more button column */
+  .load-more-column {
+    flex-shrink: 0;
+    width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .load-more-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background-color: hsl(var(--gray66));
+    color: hsl(var(--white66));
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .load-more-btn:hover:not(:disabled) {
+    background-color: hsl(var(--gray44));
+    color: hsl(var(--foreground));
+  }
+
+  .load-more-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid hsl(var(--white33));
+    border-top-color: hsl(var(--foreground));
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Placeholder content for upcoming sections */
+  .placeholder-content {
+    padding: 24px;
+    background-color: hsl(var(--gray66));
+    border-radius: 16px;
+    text-align: center;
+  }
+
+  /* Skeleton loading styles */
+  .skeleton-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .skeleton-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .skeleton-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .skeleton-name {
+    width: 120px;
+    height: 18px;
+    border-radius: 8px;
     overflow: hidden;
   }
 
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+  .skeleton-desc {
+    width: 180px;
+    height: 14px;
+    border-radius: 6px;
+    background-color: hsl(var(--gray33));
+  }
+
+  /* Desktop: larger skeletons */
+  @media (min-width: 768px) {
+    .skeleton-card {
+      gap: 20px;
+    }
+
+    .skeleton-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 24px;
+    }
+
+    .skeleton-name {
+      width: 140px;
+      height: 20px;
+    }
+
+    .skeleton-desc {
+      width: 220px;
+      height: 16px;
+    }
+  }
+
+  /* Skeleton for stack cards */
+  .skeleton-stack {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .skeleton-stack-grid {
+    width: 84px;
+    height: 84px;
+    border-radius: 16px;
     overflow: hidden;
+    flex-shrink: 0;
+    background-color: hsl(var(--gray33));
+  }
+
+  .skeleton-stack-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  @media (min-width: 768px) {
+    .skeleton-stack {
+      gap: 20px;
+    }
+
+    .skeleton-stack-grid {
+      width: 104px;
+      height: 104px;
+      border-radius: 20px;
+    }
   }
 </style>

@@ -7,7 +7,7 @@
 
 <!-- Get The App Section -->
 <section
-  class="relative h-[85vh] sm:h-[75vh] md:h-[70vh] lg:h-[65vh] border-t border-border/50 overflow-hidden"
+  class="relative h-[500px] lg:h-[600px] border-t border-border/50 overflow-hidden"
 >
   <!-- Section background decoration -->
   <div

@@ -1,5 +1,5 @@
 <script>
-  import SectionHeader from "./SectionHeader.svelte";
+  import LandingSectionTitle from "./LandingSectionTitle.svelte";
   import Selector from "../Selector.svelte";
   import ForumPost from "../ForumPost.svelte";
 
@@ -140,7 +140,7 @@
 </script>
 
 <section class="border-t border-border/50 py-12 lg:py-16">
-  <SectionHeader
+  <LandingSectionTitle
     title="Our Community"
     showSeeMore={true}
     seeMoreAction={handleSeeMore}

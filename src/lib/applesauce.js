@@ -36,6 +36,7 @@ export const KIND_FILE_METADATA = 1063;
 export const KIND_ZAP_REQUEST = 9734;
 export const KIND_ZAP_RECEIPT = 9735;
 export const KIND_RELEASE = 30063;
+export const KIND_APP_STACK = 30267;
 export const KIND_APP = 32267;
 
 // Timeouts
