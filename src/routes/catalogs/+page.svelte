@@ -1,27 +1,27 @@
 <script>
   /**
-   * All Apps Page
-   * Lists all apps available on Zapstore
+   * Catalogs Page
+   * Lists all catalogs on Zapstore
    */
 </script>
 
 <svelte:head>
-  <title>All Apps — Zapstore</title>
-  <meta name="description" content="Browse all apps available on Zapstore" />
+  <title>Catalogs — Zapstore</title>
+  <meta name="description" content="Browse catalogs on Zapstore" />
 </svelte:head>
 
-<section class="all-apps-page">
+<section class="catalogs-page">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <h1 class="text-2xl md:text-3xl font-bold mb-6">All Apps</h1>
+    <h1 class="text-2xl md:text-3xl font-bold mb-6">Catalogs</h1>
 
     <div class="placeholder-content">
-      <p class="text-muted-foreground">Full app listing coming soon...</p>
+      <p class="text-muted-foreground">Catalogs coming soon...</p>
     </div>
   </div>
 </section>
 
 <style>
-  .all-apps-page {
+  .catalogs-page {
     min-height: 100vh;
   }
 

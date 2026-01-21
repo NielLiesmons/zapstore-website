@@ -35,6 +35,9 @@
   /** @type {string} - Additional CSS classes */
   export let className = "";
 
+  /** @type {boolean} - External loading state (e.g., profile data still being fetched) */
+  export let loading = false;
+
   // Size mappings (in pixels)
   const sizeMap = {
     xs: 20,
@@ -116,8 +119,27 @@
     {#if showImage}
       <!-- Image with loading state -->
       {#if !imageLoaded}
+        <!-- Show skeleton behind initial/icon while loading -->
         <div class="skeleton-container">
           <SkeletonLoader />
+        </div>
+        <div class="loading-initial-container">
+          {#if hasInitial}
+            <span class="initial">{initial}</span>
+          {:else}
+            <svg
+              class="user-icon-colored"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          {/if}
         </div>
       {/if}
       <img
@@ -129,18 +151,39 @@
         on:load={handleImageLoad}
         on:error={handleImageError}
       />
+    {:else if loading}
+      <!-- External loading state (profile data being fetched) -->
+      <div class="skeleton-container">
+        <SkeletonLoader />
+      </div>
+      <div class="loading-initial-container">
+        {#if hasInitial}
+          <span class="initial">{initial}</span>
+        {:else}
+          <svg
+            class="user-icon-colored"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        {/if}
+      </div>
     {:else if hasInitial}
-      <!-- Initial letter fallback -->
+      <!-- Initial letter fallback (no image URL, has name) -->
       <div class="fallback-container">
         <span class="initial">{initial}</span>
-        <!-- Overlay for subtle lighting effect -->
-        <span class="initial-overlay">{initial}</span>
       </div>
     {:else}
-      <!-- Generic user icon fallback -->
-      <div class="fallback-container fallback-generic">
+      <!-- User icon fallback (no image URL, no name) -->
+      <div class="fallback-container">
         <svg
-          class="user-icon"
+          class="user-icon-colored"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -164,6 +207,9 @@
     border: none;
     background: transparent;
     cursor: pointer;
+
+    /* Display */
+    display: block;
 
     /* Size */
     width: var(--size);
@@ -216,6 +262,18 @@
     overflow: hidden;
   }
 
+  /* Initial letter shown on top of skeleton while image loads */
+  .loading-initial-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    /* Same colored background as fallback - skeleton shimmer shows around edges */
+    background-color: var(--bg-color);
+  }
+
   /* Profile image */
   .profile-image {
     width: 100%;
@@ -242,10 +300,6 @@
     position: relative;
   }
 
-  .fallback-generic {
-    background-color: hsl(var(--white8));
-  }
-
   /* Initial letter */
   .initial {
     font-size: var(--font-size);
@@ -253,23 +307,30 @@
     color: var(--text-color);
     line-height: 1;
     user-select: none;
+    /* Slightly brighten for better readability on colored backgrounds */
+    filter: brightness(1.08);
   }
 
-  /* Subtle overlay effect matching Flutter's white16 overlay */
-  .initial-overlay {
-    position: absolute;
-    font-size: var(--font-size);
-    font-weight: 700;
-    color: hsl(var(--white16));
-    line-height: 1;
-    user-select: none;
-    pointer-events: none;
+  /* Light mode: slightly darken instead */
+  @media (prefers-color-scheme: light) {
+    .initial {
+      filter: brightness(0.95);
+    }
   }
 
-  /* User icon fallback */
-  .user-icon {
+  /* User icon in profile color */
+  .user-icon-colored {
     width: 60%;
     height: 60%;
-    color: hsl(var(--white33));
+    color: var(--text-color);
+    /* Same brightness adjustment as initial letter */
+    filter: brightness(1.08);
+  }
+
+  /* Light mode: slightly darken instead */
+  @media (prefers-color-scheme: light) {
+    .user-icon-colored {
+      filter: brightness(0.95);
+    }
   }
 </style>

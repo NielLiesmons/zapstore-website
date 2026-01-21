@@ -17,6 +17,7 @@
 9. [App Picture Component](#app-picture-component)
 10. [Responsive Sizing Pattern](#responsive-sizing-pattern)
 11. [Horizontal Scroll Containers](#horizontal-scroll-containers)
+12. [Timestamp Component](#timestamp-component)
 
 ---
 
@@ -1053,6 +1054,87 @@ When a scroll container extends beyond its parent (using negative margins with m
 2. **Always add fade mask**: Content should fade at the edges to indicate scrollability
 3. **Match fade to padding**: The gradient transition distance should equal the container padding
 4. **Update at breakpoints**: If padding changes at different screen sizes, update the mask gradient to match
+
+---
+
+## Timestamp Component
+
+### Overview
+
+**CRITICAL**: All timestamps across the site MUST use the `Timestamp` component. This ensures consistent relative time display and formatting logic site-wide.
+
+### Location
+
+**Component file**: `src/lib/components/Timestamp.svelte`
+
+### Display Logic
+
+The `Timestamp` component uses this unified logic for displaying times:
+
+| Time Difference | Display Format | Example |
+|-----------------|----------------|---------|
+| < 1 minute | "now" | now |
+| < 1 hour | "Xm ago" | 5m ago |
+| < 24 hours | "Xh ago" | 3h ago |
+| < 7 days | "Xd ago" | 2d ago |
+| Same year | "Mon DD" | Jan 15 |
+| Different year | "Mon DD, YYYY" | Jan 15, 2024 |
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `timestamp` | `number \| string \| Date \| null` | `null` | Unix timestamp (seconds or ms), ISO string, or Date object |
+| `size` | `'xs' \| 'sm' \| 'md'` | `'sm'` | Size variant for font size |
+| `className` | `string` | `''` | Additional CSS classes |
+
+### Size Reference
+
+| Size | Font Size | Use Case |
+|------|-----------|----------|
+| `xs` | 12px (text-xs) | Chat bubbles, compact lists |
+| `sm` | 14px (text-sm) | Default - comments, cards, forum posts |
+| `md` | 16px (text-base) | Larger displays, headers |
+
+### Usage Examples
+
+```svelte
+<script>
+  import Timestamp from "$lib/components/Timestamp.svelte";
+</script>
+
+<!-- Basic usage with unix timestamp (seconds) -->
+<Timestamp timestamp={1705312800} />
+
+<!-- With unix timestamp (milliseconds) -->
+<Timestamp timestamp={1705312800000} />
+
+<!-- With ISO string -->
+<Timestamp timestamp="2024-01-15T10:00:00Z" />
+
+<!-- With Date object -->
+<Timestamp timestamp={new Date()} />
+
+<!-- Different sizes -->
+<Timestamp timestamp={comment.createdAt} size="xs" />
+<Timestamp timestamp={post.timestamp} size="sm" />
+<Timestamp timestamp={article.publishedAt} size="md" />
+
+<!-- With custom classes -->
+<Timestamp timestamp={event.time} className="text-muted-foreground" />
+```
+
+### Standardization
+
+**CRITICAL**: All timestamps MUST use the `Timestamp` component. Do not create custom timestamp formatting functions in components. This includes:
+
+- Comment timestamps
+- Forum post timestamps
+- Article publish dates
+- Event times
+- Any other relative time display
+
+The component handles all timestamp normalization (seconds, milliseconds, ISO strings, Date objects) automatically.
 
 ---
 

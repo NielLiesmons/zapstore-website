@@ -36,12 +36,19 @@
   import AppPic from "$lib/components/AppPic.svelte";
   import AppComments from "$lib/components/AppComments.svelte";
   import ZapButton from "$lib/components/ZapButton.svelte";
+  import Timestamp from "$lib/components/Timestamp.svelte";
   import Prism from "prismjs";
   import "prismjs/components/prism-json";
+
+  // Publisher profile state
+  let publisherProfile = null;
 
   // Screenshot carousel state
   let carouselOpen = false;
   let currentImageIndex = 0;
+
+  // Description expand state
+  let descriptionExpanded = false;
 
   // Detect if on Android device
   let isAndroid = false;
@@ -254,6 +261,37 @@
     window.location.reload();
   }
 
+  // Fetch publisher profile
+  async function loadPublisherProfile(pubkey) {
+    if (pubkey) {
+      try {
+        publisherProfile = await fetchProfile(pubkey);
+      } catch (err) {
+        console.error("Error fetching publisher profile:", err);
+      }
+    }
+  }
+
+  // Load publisher profile when app changes
+  $: if (app?.pubkey) {
+    loadPublisherProfile(app.pubkey);
+  }
+
+  // Get truncated npub for fallback display
+  $: truncatedNpub = app?.npub
+    ? `${app.npub.slice(0, 12)}...${app.npub.slice(-6)}`
+    : "";
+  $: publisherName =
+    publisherProfile?.displayName || publisherProfile?.name || truncatedNpub;
+  $: publisherPictureUrl = publisherProfile?.picture || "";
+  $: publisherUrl = app?.npub ? `/p/${app.npub}` : "#";
+
+  // Hide publisher info for Zapstore-signed apps
+  $: showPublisher = app?.pubkey !== ZAPSTORE_PUBKEY;
+
+  // Determine app platforms (most apps are Android only for now)
+  $: platforms = app?.platform ? [app.platform] : ["Android"];
+
   // Build Android Intent URL for opening in app with fallback
   function getIntentUrl(slug) {
     // Android Intent URL format
@@ -297,6 +335,72 @@
     }
   }
 </script>
+
+<!-- Platform icon components -->
+{#snippet AppleIcon()}
+  <svg
+    class="platform-icon"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"
+    />
+  </svg>
+{/snippet}
+
+{#snippet AndroidIcon()}
+  <svg
+    class="platform-icon"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.463 11.463 0 00-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 003 18h18a10.78 10.78 0 00-3.4-8.52zM8.5 14c-.83 0-1.5-.67-1.5-1.5S7.67 11 8.5 11s1.5.67 1.5 1.5S9.33 14 8.5 14zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+    />
+  </svg>
+{/snippet}
+
+{#snippet WindowsIcon()}
+  <svg
+    class="platform-icon"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M3 12V6.75l6-1.32v6.48L3 12zm17-9v8.75l-10 .15V5.21L20 3zM3 13l6 .09v6.81l-6-1.15V13zm17 .25V22l-10-1.91V13.1l10 .15z"
+    />
+  </svg>
+{/snippet}
+
+{#snippet LinuxIcon()}
+  <svg
+    class="platform-icon"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587.006 1.22-.057 1.79-.179.57-.13 1.106-.345 1.542-.665a.45.45 0 00.13-.118c.053.088.12.166.2.235.44.396.936.585 1.456.678.52.094 1.063.088 1.574.043.5-.058 1.006-.13 1.379-.352.19-.11.363-.272.482-.486a1.23 1.23 0 00.148-.582c.002-.27-.073-.524-.19-.748-.058-.106-.12-.207-.179-.294l-.019-.028a4.474 4.474 0 01-.198-.32c-.142-.265-.238-.565-.268-.865-.036-.358.01-.74.138-1.107.134-.373.354-.725.652-1.027.065-.07.133-.136.204-.2a1.55 1.55 0 00-.167-.083c-.12-.057-.266-.108-.388-.19a2.233 2.233 0 01-.313-.265 3.86 3.86 0 01-.372-.408c-.096-.12-.19-.25-.278-.375a15.21 15.21 0 01-.225-.342c-.16-.266-.326-.502-.498-.705a4.06 4.06 0 00-.532-.512 2.76 2.76 0 00-.503-.307c.03-.28.04-.573.035-.87-.01-.7-.11-1.44-.333-2.088-.224-.647-.559-1.207-1.018-1.598-.456-.395-1.046-.63-1.757-.678-.707-.055-1.44.064-2.136.35-.694.288-1.352.75-1.863 1.404-.51.65-.855 1.474-.987 2.453-.13.985-.036 2.117.302 3.31.03.13.07.256.11.382-.23.135-.445.295-.644.475a5.61 5.61 0 00-.5.515c-.15.183-.28.38-.39.586a2.1 2.1 0 00-.192.655 1.86 1.86 0 00.046.702c.062.218.16.421.29.605l.016.022c-.076.12-.14.25-.19.39-.107.282-.157.585-.147.885.01.3.08.598.203.873.123.277.297.53.52.75l.032.032c.094.085.2.16.31.23a.424.424 0 00-.013.089c-.002.257.097.522.26.756.163.233.39.436.66.593l.023.013c-.142.143-.255.315-.332.51a1.67 1.67 0 00-.117.602c0 .257.063.5.17.722.106.224.258.42.444.58.189.16.408.284.65.37.24.087.505.135.784.135.273 0 .535-.046.773-.13.237-.09.454-.22.635-.4.183-.17.327-.39.42-.63.096-.24.143-.51.143-.79 0-.18-.023-.36-.073-.53a1.79 1.79 0 00-.193-.44.424.424 0 00.037-.026c.2-.154.342-.352.417-.577.075-.226.08-.474.027-.708a1.86 1.86 0 00-.198-.479z"
+    />
+  </svg>
+{/snippet}
+
+{#snippet WebIcon()}
+  <svg
+    class="platform-icon"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm7.931 9h-2.764a14.67 14.67 0 0 0-1.792-6.243A8.013 8.013 0 0 1 19.931 11zM12.53 4.027c1.035 1.364 2.427 3.78 2.627 6.973H9.03c.139-2.596.994-5.028 2.451-6.974.172-.01.344-.026.519-.026.179 0 .354.016.53.027zm-3.842.511C7.704 6.618 7.136 8.762 7.03 11H4.069a8.013 8.013 0 0 1 4.619-6.462zM4.069 13h2.974c.136 2.379.665 4.478 1.556 6.23A8.01 8.01 0 0 1 4.069 13zm7.381 6.973C10.049 18.275 9.222 15.896 9.041 13h6.113c-.208 2.773-1.117 5.196-2.603 6.972-.182.012-.364.028-.551.028-.186 0-.367-.016-.55-.027zm4.011-.772c.955-1.794 1.538-3.901 1.691-6.201h2.778a8.005 8.005 0 0 1-4.469 6.201z"
+    />
+  </svg>
+{/snippet}
 
 <svelte:window on:keydown={handleKeydown} />
 
@@ -347,161 +451,143 @@
   </div>
 {:else if app}
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- App Header -->
-    <div class="bg-card border border-border rounded-lg p-8 mb-8">
-      <!-- App Icon and Name -->
-      <div class="flex items-center gap-6 mb-6">
-        <AppPic
-          iconUrl={app.icon}
-          name={app.name}
-          identifier={app.dTag}
-          size="xl"
-          className="flex-shrink-0"
-        />
-        <div class="min-w-0 flex-1">
-          <!-- App Name + Version Pill -->
-          <div class="flex items-center gap-3 flex-wrap">
-            <h1 class="text-3xl lg:text-4xl font-black">{app.name}</h1>
-            {#if fileVersion}
-              <span
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary text-white"
-              >
-                {fileVersion}
-              </span>
-            {/if}
+    <!-- Publisher Row -->
+    {#if showPublisher}
+      <div class="publisher-row flex items-center justify-between mb-6">
+        <a
+          href={publisherUrl}
+          class="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
+          <ProfilePic
+            pictureUrl={publisherPictureUrl}
+            name={publisherName}
+            pubkey={app.pubkey}
+            size="lg"
+          />
+          <span
+            class="publisher-name text-base font-medium"
+            style="color: hsl(var(--white66));"
+          >
+            {publisherName}
+          </span>
+        </a>
+        <Timestamp timestamp={app.createdAt} size="sm" />
+      </div>
+    {/if}
+
+    <!-- App Header Row -->
+    <div class="app-header flex items-center gap-4 sm:gap-6 mb-6">
+      <!-- App Icon -->
+      <AppPic
+        iconUrl={app.icon}
+        name={app.name}
+        identifier={app.dTag}
+        size="2xl"
+        className="app-icon-responsive flex-shrink-0"
+      />
+
+      <!-- App Info -->
+      <div class="app-info flex-1 min-w-0">
+        <!-- App Name -->
+        <h1
+          class="app-name text-[1.625rem] sm:text-4xl font-black mb-2 sm:mb-3"
+          style="color: hsl(var(--white));"
+        >
+          {app.name}
+        </h1>
+
+        <!-- Platform Pills + Install Button Row -->
+        <div class="platforms-row flex items-center gap-3">
+          <!-- Scrollable Platform Pills -->
+          <div class="platforms-scroll flex-1 overflow-x-auto scrollbar-hide">
+            <div class="flex gap-2">
+              {#each platforms as platform}
+                <div
+                  class="platform-pill flex items-center gap-2 flex-shrink-0"
+                >
+                  {#if platform === "iOS" || platform === "macOS" || platform === "Mac" || platform === "apple"}
+                    {@render AppleIcon()}
+                  {:else if platform === "Android" || platform === "android"}
+                    {@render AndroidIcon()}
+                  {:else if platform === "Windows" || platform === "windows"}
+                    {@render WindowsIcon()}
+                  {:else if platform === "Linux" || platform === "linux"}
+                    {@render LinuxIcon()}
+                  {:else}
+                    {@render WebIcon()}
+                  {/if}
+                  <span
+                    class="platform-text text-sm whitespace-nowrap"
+                    style="color: hsl(var(--white66));"
+                  >
+                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  </span>
+                </div>
+              {/each}
+            </div>
           </div>
-          <!-- Published by -->
-          <div class="mt-1">
-            <ProfileInfo pubkey={app.pubkey} npub={app.npub} size="xs" />
-          </div>
+
+          <!-- Install Button -->
+          {#if isAndroid}
+            <a href={getIntentUrl(data.slug)} class="install-btn flex-shrink-0">
+              Install
+            </a>
+          {:else}
+            <button type="button" class="install-btn flex-shrink-0" disabled>
+              Install
+            </button>
+          {/if}
         </div>
       </div>
+    </div>
 
-      <!-- Zaps Section -->
+    <!-- Screenshots -->
+    {#if app.images && app.images.length > 0}
       <div
-        class="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg"
+        class="screenshots-row flex gap-3 overflow-x-auto pb-2 scrollbar-thin mb-6"
       >
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-          <!-- Zap Stats -->
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-amber-500/20 rounded-lg">
-              <Zap class="h-6 w-6 text-amber-500" />
-            </div>
-            {#if !loadingZaps && zapsData.count > 0}
-              <div>
-                <div class="text-lg font-bold text-amber-500">
-                  {formatSats(zapsData.totalSats)}
-                </div>
-                <div class="text-xs text-muted-foreground">
-                  {zapsData.count} zap{zapsData.count !== 1 ? "s" : ""}
-                </div>
-              </div>
-            {:else if loadingZaps}
-              <div class="text-sm text-muted-foreground">Loading zaps...</div>
-            {:else}
-              <div class="text-sm text-muted-foreground">No zaps yet</div>
-            {/if}
-          </div>
-
-          <!-- Zapper Avatars (deduplicated) -->
-          {#if !loadingZaps && uniqueZappers.length > 0}
-            <div class="flex items-center gap-2 flex-1">
-              <div class="text-xs text-muted-foreground">from</div>
-              <div class="flex -space-x-2 overflow-hidden">
-                {#each uniqueZappers.slice(0, 8) as zap}
-                  {@const profile = zapperProfiles.get(zap.senderPubkey)}
-                  <div
-                    class="zapper-avatar"
-                    title={profile?.displayName || profile?.name || "Anonymous"}
-                  >
-                    <ProfilePic
-                      pictureUrl={profile?.picture}
-                      name={profile?.displayName || profile?.name}
-                      pubkey={zap.senderPubkey}
-                      size="sm"
-                    />
-                  </div>
-                {/each}
-                {#if uniqueZappers.length > 8}
-                  <div
-                    class="w-7 h-7 rounded-full border-2 border-background bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground"
-                  >
-                    +{uniqueZappers.length - 8}
-                  </div>
-                {/if}
-              </div>
-            </div>
-          {/if}
-
-          <!-- Zap Button (hidden for Zapstore-signed apps unless they have existing zaps) -->
-          {#if showZapButton}
-            <div class="sm:ml-auto">
-              <ZapButton {app} size="md" on:zapReceived={handleZapReceived} />
-            </div>
-          {/if}
-        </div>
+        {#each app.images as image, index}
+          <button
+            type="button"
+            on:click={() => openCarousel(index)}
+            class="screenshot-thumb relative flex-shrink-0 overflow-hidden rounded-2xl bg-muted cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+          >
+            <img
+              src={image}
+              alt="Screenshot {index + 1}"
+              class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-200"
+              loading="lazy"
+            />
+            <div
+              class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200"
+            ></div>
+          </button>
+        {/each}
       </div>
+    {/if}
 
-      <!-- Description -->
+    <!-- Description -->
+    <div class="description-container mb-6">
       <div
-        class="text-muted-foreground mb-6 leading-relaxed prose prose-invert max-w-none"
+        class="app-description prose prose-invert max-w-none"
+        class:clamped={!descriptionExpanded}
       >
         {@html app.descriptionHtml}
       </div>
-
-      <!-- App Meta -->
-      <div class="flex flex-wrap gap-4 text-sm text-muted-foreground mb-6">
-        {#if app.category}
-          <div class="flex items-center gap-1">
-            <Tag class="h-4 w-4" />
-            <span>{app.category}</span>
-          </div>
-        {/if}
-        <div class="flex items-center gap-1">
-          <Calendar class="h-4 w-4" />
-          <span>Updated {formatDate(app.createdAt)}</span>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        {#if isAndroid}
-          <a
-            href={getIntentUrl(data.slug)}
-            class="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground shadow transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
-          >
-            <PackagePlus class="h-4 w-4 mr-2" />
-            Open in Zapstore
-          </a>
-        {/if}
-      </div>
-
-      <!-- Screenshots -->
-      {#if app.images && app.images.length > 0}
-        <div class="mt-6 flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-          {#each app.images as image, index}
-            <button
-              type="button"
-              on:click={() => openCarousel(index)}
-              class="relative flex-shrink-0 overflow-hidden rounded-lg bg-muted cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-            >
-              <img
-                src={image}
-                alt="Screenshot {index + 1}"
-                class="h-40 w-auto object-cover group-hover:scale-105 transition-transform duration-200"
-                loading="lazy"
-              />
-              <div
-                class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200"
-              ></div>
-            </button>
-          {/each}
-        </div>
+      {#if !descriptionExpanded}
+        <button
+          type="button"
+          class="read-more-btn"
+          on:click={() => (descriptionExpanded = true)}
+        >
+          Read more
+        </button>
       {/if}
-      <!-- Comments (kind 1111 replaceable) -->
-      <div class="mt-6">
-        <AppComments {app} version={fileVersion} />
-      </div>
+    </div>
+
+    <!-- Comments (kind 1111 replaceable) -->
+    <div class="mb-8">
+      <AppComments {app} version={fileVersion} />
     </div>
 
     <!-- Screenshot Carousel Modal -->
@@ -591,9 +677,9 @@
       </div>
     {/if}
 
-    <!-- App Details Sections -->
+    <!-- COMMENTED OUT: Zaps, Technical Details, Raw Event Data - will revisit later -->
+    <!--
     <div class="space-y-8">
-      <!-- Latest Release Notes -->
       {#if loadingRelease}
         <div class="bg-card border border-border rounded-lg p-6">
           <p class="text-muted-foreground">Loading release notes...</p>
@@ -637,7 +723,6 @@
         </div>
       {/if}
 
-      <!-- Technical Details -->
       <div class="bg-card border border-border rounded-lg p-6">
         <h3 class="text-lg font-semibold mb-4">Technical Details</h3>
         <dl class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -738,14 +823,12 @@
         </dl>
       </div>
 
-      <!-- Raw Data -->
       <details class="bg-card border border-border rounded-lg p-6">
         <summary
           class="text-lg font-semibold cursor-pointer hover:text-primary transition-colors"
           >Raw Event Data</summary
         >
         <div class="mt-4 space-y-6">
-          <!-- Kind 32267 - App Event -->
           <div>
             <h4 class="text-md font-semibold mb-2">App (32267)</h4>
             <div
@@ -757,7 +840,6 @@
             </div>
           </div>
 
-          <!-- Kind 30063 - Release Event -->
           {#if latestRelease}
             <div>
               <h4 class="text-md font-semibold mb-2">Release (30063)</h4>
@@ -771,7 +853,6 @@
             </div>
           {/if}
 
-          <!-- Kind 1063 - File Metadata Events -->
           {#if fileMetadata.length > 0}
             {#each fileMetadata as fileMeta, index}
               <div>
@@ -800,14 +881,131 @@
         </div>
       </details>
     </div>
+    -->
   </div>
 {/if}
 
 <style>
-  /* Zapper avatar styling for overlapping effect */
-  .zapper-avatar {
+  /* Responsive app icon - override component size */
+  :global(.app-icon-responsive) {
+    width: 80px !important;
+    height: 80px !important;
+    min-width: 80px !important;
+    min-height: 80px !important;
+  }
+
+  /* Screenshot thumbnail - matches app icon width */
+  .screenshot-thumb {
+    width: 80px;
+  }
+
+  /* Larger screens: bigger app icon and screenshots */
+  @media (min-width: 640px) {
+    :global(.app-icon-responsive) {
+      width: 96px !important;
+      height: 96px !important;
+      min-width: 96px !important;
+      min-height: 96px !important;
+    }
+
+    .screenshot-thumb {
+      width: 96px;
+    }
+  }
+
+  /* Description styling - matches comment bubble content size */
+  .app-description {
+    font-size: 0.9375rem; /* 15px - same as MessageBubble content */
+    line-height: 1.5;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  /* Slightly larger description on desktop */
+  @media (min-width: 640px) {
+    .app-description {
+      font-size: 1rem; /* 16px */
+    }
+  }
+
+  /* Line clamp for description */
+  .app-description.clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Read more button */
+  .read-more-btn {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--blurpleColor));
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .read-more-btn:hover {
+    opacity: 0.8;
+  }
+
+  /* Platform pills styling */
+  .platform-pill {
+    height: 32px;
+    padding: 0 0.875rem 0 0.5rem;
     border-radius: 9999px;
-    border: 2px solid hsl(var(--background));
+    background-color: hsl(var(--white8));
+  }
+
+  .platform-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: hsl(var(--white33));
+  }
+
+  /* Install button styling */
+  .install-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    height: 32px;
+    border-radius: 9999px;
+    background-color: hsl(var(--blurpleColor));
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .install-btn:hover:not(:disabled) {
+    background-color: hsl(var(--blurpleColor66));
+    transform: scale(1.02);
+  }
+
+  .install-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   /* Screenshot scrollbar styling */

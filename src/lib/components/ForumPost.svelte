@@ -1,6 +1,7 @@
 <script>
   import Label from "./Label.svelte";
   import ProfilePic from "./ProfilePic.svelte";
+  import Timestamp from "./Timestamp.svelte";
 
   /**
    * Forum Post Component
@@ -21,26 +22,6 @@
 
   function getDisplayName() {
     return author.name || author.npub?.slice(0, 12) + "..." || "Anonymous";
-  }
-
-  function formatDateTime(dateString) {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
   }
 </script>
 
@@ -72,12 +53,7 @@
         >
           {getDisplayName()}
         </span>
-        <span
-          class="text-xs whitespace-nowrap flex-shrink-0"
-          style="color: hsl(var(--white33));"
-        >
-          {formatDateTime(timestamp)}
-        </span>
+        <Timestamp {timestamp} size="xs" />
       </div>
     </div>
 

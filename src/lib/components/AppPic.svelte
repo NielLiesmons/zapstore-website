@@ -32,7 +32,7 @@
   /** @type {string|null|undefined} - App identifier/dTag for color generation */
   export let identifier = null;
 
-  /** @type {'xs'|'sm'|'md'|'lg'|'xl'|'2xl'} - Size preset */
+  /** @type {'xs'|'sm'|'md'|'lg'|'xl'|'2xl'|'3xl'} - Size preset */
   export let size = "md";
 
   /** @type {() => void} - Click handler */
@@ -52,10 +52,12 @@
     lg: 56,
     xl: 72,
     "2xl": 96,
+    "3xl": 120,
   };
 
   // Border radius based on size (matching Flutter logic)
   function getBorderRadius(sizeInPx) {
+    if (sizeInPx >= 120) return 32;
     if (sizeInPx >= 72) return 24;
     if (sizeInPx >= 48) return 16;
     return 8;

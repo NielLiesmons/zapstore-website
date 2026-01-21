@@ -3,7 +3,6 @@
   import { MessageSquare, Loader2, AlertCircle, LogIn } from "lucide-svelte";
   import {
     fetchAppComments,
-    formatDate,
     publishAppComment,
     fetchProfile,
     getCachedComments,
@@ -11,6 +10,7 @@
   } from "$lib/nostr.js";
   import { authStore, connect } from "$lib/stores/auth.js";
   import ProfilePic from "./ProfilePic.svelte";
+  import MessageBubble from "./MessageBubble.svelte";
 
   export let app;
   export let version = "";
@@ -69,6 +69,7 @@
   }
 
   async function loadProfiles() {
+    profilesLoading = true;
     const uniquePubkeys = [...new Set(comments.map((c) => c.pubkey))];
     const fetchPromises = uniquePubkeys.map(async (pubkey) => {
       if (!profiles[pubkey]) {
@@ -80,22 +81,14 @@
           }
         } catch (e) {
           // Silently fail for individual profile fetches
+          // Mark as "attempted" so we don't keep trying
+          profiles[pubkey] = null;
+          profiles = profiles;
         }
       }
     });
     await Promise.allSettled(fetchPromises);
-  }
-
-  function getDisplayName(pubkey, npub) {
-    const profile = profiles[pubkey];
-    if (profile?.displayName) return profile.displayName;
-    if (profile?.name) return profile.name;
-    // Fallback to truncated npub
-    return npub ? `${npub.slice(0, 12)}...` : "Anonymous";
-  }
-
-  function getAvatar(pubkey) {
-    return profiles[pubkey]?.picture || null;
+    profilesLoading = false;
   }
 
   async function handleSignIn() {
@@ -138,6 +131,26 @@
     $authStore.profile?.displayName ||
     $authStore.profile?.name ||
     ($authStore.npub ? `${$authStore.npub.slice(0, 12)}...` : "");
+
+  // Track if we're still loading profiles
+  let profilesLoading = true;
+
+  // Create a reactive version of comments with profile data
+  // This ensures re-render when profiles update
+  $: commentsWithProfiles = comments.map((comment) => {
+    const profile = profiles[comment.pubkey];
+    const hasProfile = profile !== undefined;
+    return {
+      ...comment,
+      displayName:
+        profile?.displayName ||
+        profile?.name ||
+        (comment.npub ? `${comment.npub.slice(0, 12)}...` : "Anonymous"),
+      avatarUrl: profile?.picture || null,
+      // Profile is loading if we haven't fetched profiles yet, or this specific profile hasn't loaded
+      profileLoading: profilesLoading && !hasProfile,
+    };
+  });
 </script>
 
 <div class="flex items-center gap-2 mb-4">
@@ -164,57 +177,19 @@
     No comments yet. Be the first to share feedback.
   </p>
 {:else}
-  <div class="space-y-0">
-    {#each comments as comment, i}
-      <article class="py-4 {i > 0 ? 'border-t border-border/30' : ''}">
-        <div class="flex gap-3">
-          <!-- Avatar -->
-          <a
-            href="/p/{comment.npub}"
-            class="flex-shrink-0 block hover:opacity-80 transition-opacity"
-          >
-            <ProfilePic
-              pictureUrl={getAvatar(comment.pubkey)}
-              name={getDisplayName(comment.pubkey, comment.npub)}
-              pubkey={comment.pubkey}
-              size="lg"
-            />
-          </a>
-
-          <!-- Comment body -->
-          <div class="flex-1 min-w-0 pt-0.5">
-            <!-- Author, version & timestamp -->
-            <div class="flex items-center flex-wrap gap-x-2 gap-y-1 mb-1">
-              <a
-                href="/p/{comment.npub}"
-                class="font-semibold text-sm text-foreground hover:text-primary transition-colors"
-              >
-                {getDisplayName(comment.pubkey, comment.npub)}
-              </a>
-              {#if comment.version}
-                <span class="text-xs text-muted-foreground/50">on</span>
-                <span
-                  class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-white"
-                >
-                  {comment.version}
-                </span>
-              {/if}
-              <span class="text-muted-foreground/60">·</span>
-              <time class="text-xs text-muted-foreground">
-                {formatDate(comment.createdAt)}
-              </time>
-            </div>
-
-            <!-- Comment content -->
-            <div
-              class="text-sm text-foreground/85 leading-relaxed [&>p]:m-0 [&>p+p]:mt-2"
-            >
-              {@html comment.contentHtml ||
-                "<p class='text-muted-foreground italic'>No content</p>"}
-            </div>
-          </div>
-        </div>
-      </article>
+  <div class="space-y-4">
+    {#each commentsWithProfiles as comment (comment.id)}
+      <MessageBubble
+        pictureUrl={comment.avatarUrl}
+        name={comment.displayName}
+        pubkey={comment.pubkey}
+        timestamp={comment.createdAt}
+        profileUrl="/p/{comment.npub}"
+        loading={comment.profileLoading}
+      >
+        {@html comment.contentHtml ||
+          "<p class='text-muted-foreground italic'>No content</p>"}
+      </MessageBubble>
     {/each}
   </div>
 {/if}

@@ -10,7 +10,7 @@
    *
    * @example
    * <SectionHeader title="Apps" linkText="See all" href="/apps" />
-   * <SectionHeader title="Stacks" />
+   * <SectionHeader title="Stacks" linkText="See all" href="/stacks" />
    */
 
   /** @type {string} - Section title */

@@ -151,7 +151,7 @@
               Error Loading Stack
             </h3>
             <p class="text-muted-foreground mb-4">{error}</p>
-            <a href="/apps" class="btn-primary"> Back to Discover </a>
+            <a href="/discover" class="btn-primary"> Back to Discover </a>
           </div>
         </div>
       </div>

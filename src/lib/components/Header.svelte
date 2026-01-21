@@ -92,24 +92,24 @@
 
 <header
   class={cn(
-    "sticky top-0 z-50 w-full transition-all duration-300",
+    "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
     scrolled
       ? "bg-background/60 backdrop-blur-2xl border-b border-border/50"
       : "bg-transparent border-b border-transparent",
   )}
 >
-  <nav class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-8">
-    <div class="flex items-center justify-between gap-3 sm:gap-6 py-3">
+  <nav class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-8 overflow-x-hidden">
+    <div class="flex items-center justify-between gap-2 sm:gap-6 py-3">
       <!-- Logo -->
-      <div class="header-side flex items-center flex-shrink-0">
-        <a href="/" class="flex items-center gap-3 group">
+      <div class="header-side flex items-center flex-shrink-0 min-w-0">
+        <a href="/" class="flex items-center gap-2 sm:gap-3 group">
           <svg
             width="19"
             height="32"
             viewBox="0 0 19 32"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            class="h-6 lg:h-7 w-auto"
+            class="h-6 lg:h-7 w-auto flex-shrink-0"
           >
             <defs>
               <linearGradient
@@ -135,12 +135,12 @@
       </div>
 
       <!-- Centered Search Bar -->
-      <div class="flex-1 flex justify-center px-3">
+      <div class="flex-1 flex justify-center px-2 sm:px-3 min-w-0 lg:min-w-fit">
         <button
           bind:this={searchBarRef}
           type="button"
           on:click={openSearch}
-          class="search-bar-btn search-bar-width flex items-center gap-3 px-4 h-10 relative z-10 cursor-pointer"
+          class="search-bar-btn search-bar-width flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-10 relative z-10 cursor-pointer min-w-0 lg:min-w-fit"
           style="border-color: hsl(var(--white16)); pointer-events: auto;"
         >
           <Search
@@ -151,27 +151,30 @@
             class="text-base flex-1 text-left pointer-events-none"
             style="color: hsl(var(--white33));"
           >
-            Search Any App
+            <span class="sm:hidden">Search</span>
+            <span class="hidden sm:inline">Search Any App</span>
           </span>
         </button>
       </div>
 
       <!-- Auth Section (Right) -->
-      <div class="header-side flex items-center justify-end flex-shrink-0">
+      <div
+        class="header-side flex items-center justify-end flex-shrink-0 min-w-0"
+      >
         {#if $authStore.isConnecting}
           <div class="h-10 w-10 flex items-center justify-center">
             <Loader2 class="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         {:else if $authStore.isConnected}
           <!-- My Apps Button -->
-          <a href="/my-apps" class="btn-primary-small mr-4"> My apps </a>
+          <a href="/my-apps" class="btn-primary-small mr-2 sm:mr-4">My Apps</a>
           <!-- Profile Avatar with Dropdown -->
-          <div class="relative profile-dropdown">
+          <div class="relative profile-dropdown flex items-center">
             <ProfilePic
               pictureUrl={$authStore.profile?.picture}
               name={$authStore.profile?.displayName || $authStore.profile?.name}
               pubkey={$authStore.pubkey}
-              size="lg"
+              size="md"
               onClick={toggleDropdown}
             />
 
@@ -207,7 +210,8 @@
             on:click={handleSignIn}
             class="btn-primary-small h-10 px-4"
           >
-            Get Started
+            <span class="sm:hidden">Start</span>
+            <span class="hidden sm:inline">Get Started</span>
           </button>
         {/if}
       </div>

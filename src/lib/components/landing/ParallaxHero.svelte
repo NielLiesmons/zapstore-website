@@ -693,7 +693,7 @@
       Finally, an open app store for freely sharing apps
     </p>
     <a
-      href="/apps"
+      href="/discover"
       bind:this={heroButton}
       class="btn-glass-large btn-glass-with-chevron flex items-center group"
       on:mousemove={handleMouseMove}
@@ -709,8 +709,8 @@
   </div>
 
   <!-- Developer button anchored to bottom -->
-  <button
-    type="button"
+  <a
+    href="/developers"
     bind:this={devButton}
     on:mousemove={handleDevButtonMouseMove}
     class="dev-button-bottom btn-glass-small btn-glass-green-hover flex items-center justify-center gap-2 text-sm"
@@ -719,7 +719,7 @@
       <Code2 variant="outline" size={14} color="currentColor" />
     </span>
     <span class="btn-text-white">For Developers</span>
-  </button>
+  </a>
 </section>
 
 <style>
