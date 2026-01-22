@@ -186,6 +186,16 @@
     #4245FF 0%,
     #2C29FF 100%
   );
+  --gradient-blurple66: radial-gradient(
+    circle at top left,
+    rgba(92, 95, 255, 0.66) 0%,
+    rgba(69, 66, 255, 0.66) 100%
+  );
+  --gradient-blurple33: radial-gradient(
+    circle at top left,
+    rgba(92, 95, 255, 0.33) 0%,
+    rgba(69, 66, 255, 0.33) 100%
+  );
 
   /* Gold gradient (secondary) - #FFC736 to #FFA037 */
   --gradient-gold: radial-gradient(
@@ -197,6 +207,16 @@
     circle at top left,
     #FFD24D 0%,
     #FFB050 100%
+  );
+  --gradient-gold66: radial-gradient(
+    circle at top left,
+    rgba(255, 199, 54, 0.66) 0%,
+    rgba(255, 160, 55, 0.66) 100%
+  );
+  --gradient-gold33: radial-gradient(
+    circle at top left,
+    rgba(255, 199, 54, 0.33) 0%,
+    rgba(255, 160, 55, 0.33) 100%
   );
 
   /* Rouge gradient (destructive) */
@@ -250,6 +270,16 @@
     circle at top left,
     #19DD75 0%,
     #0BBB8C 100%
+  );
+  --gradient-green66: radial-gradient(
+    circle at top left,
+    rgba(25, 221, 117, 0.66) 0%,
+    rgba(11, 187, 140, 0.66) 100%
+  );
+  --gradient-green33: radial-gradient(
+    circle at top left,
+    rgba(25, 221, 117, 0.33) 0%,
+    rgba(11, 187, 140, 0.33) 100%
   );
 
   /* Graydient (gray gradient) - for fancy gradient cards */
@@ -697,15 +727,15 @@ h5, h6 {
 
 .panel-clickable {
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
 .panel-clickable:hover {
-  transform: scale(1.01);
+  transform: scale(1.005);
 }
 
 .panel-clickable:active {
-  transform: scale(0.99);
+  transform: scale(0.995);
 }
 
 .panel-clickable:focus {

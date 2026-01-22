@@ -15,8 +15,6 @@
     PackagePlus,
     Zap,
     X,
-    ChevronLeft,
-    ChevronRight,
   } from "lucide-svelte";
   import {
     formatDate,
@@ -33,10 +31,30 @@
   } from "$lib/nostr.js";
   import ProfileInfo from "$lib/components/ProfileInfo.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
+  import ProfilePicStack from "$lib/components/ProfilePicStack.svelte";
   import AppPic from "$lib/components/AppPic.svelte";
-  import AppComments from "$lib/components/AppComments.svelte";
+  import SocialTabs from "$lib/components/SocialTabs.svelte";
   import ZapButton from "$lib/components/ZapButton.svelte";
   import Timestamp from "$lib/components/Timestamp.svelte";
+  import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
+  import InstallModal from "$lib/components/InstallModal.svelte";
+
+  // Install modal state
+  let installModalOpen = false;
+
+  // Check if this is the Zapstore app itself
+  $: isZapstoreApp =
+    app?.dTag === "zapstore" || app?.name?.toLowerCase() === "zapstore";
+
+  // Catalog for this app - currently just Zapstore
+  const catalogs = [
+    {
+      name: "Zapstore",
+      pictureUrl: "https://zapstore.dev/zapstore-icon.png",
+      pubkey:
+        "78ce6faa72264387284e647ba6938995735ec8c7d5c5a65737e55f2fe2202182", // npub10r8xl2njyepcw2zwv3a6dyufj4e4ajx86hz6v4ehu4gnpupxxp7stjt2p8
+    },
+  ];
   import Prism from "prismjs";
   import "prismjs/components/prism-json";
 
@@ -46,9 +64,38 @@
   // Screenshot carousel state
   let carouselOpen = false;
   let currentImageIndex = 0;
+  let carouselImageLoaded = false;
+
+  // Reset image loaded state when changing images
+  $: if (currentImageIndex !== undefined) {
+    carouselImageLoaded = false;
+  }
 
   // Description expand state
   let descriptionExpanded = false;
+  let isTruncated = false;
+
+  // Check if description is truncated
+  function checkTruncation(node) {
+    setTimeout(() => {
+      if (node) {
+        isTruncated = node.scrollHeight > node.clientHeight;
+      }
+    }, 0);
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (node && !descriptionExpanded) {
+        isTruncated = node.scrollHeight > node.clientHeight;
+      }
+    });
+    resizeObserver.observe(node);
+
+    return {
+      destroy() {
+        resizeObserver.disconnect();
+      },
+    };
+  }
 
   // Detect if on Android device
   let isAndroid = false;
@@ -450,28 +497,45 @@
     </div>
   </div>
 {:else if app}
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
     <!-- Publisher Row -->
     {#if showPublisher}
-      <div class="publisher-row flex items-center justify-between mb-6">
+      <div class="publisher-row flex items-center justify-between mb-4">
         <a
           href={publisherUrl}
-          class="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          class="publisher-link flex items-center gap-2.5 hover:opacity-80 transition-opacity"
         >
-          <ProfilePic
-            pictureUrl={publisherPictureUrl}
-            name={publisherName}
-            pubkey={app.pubkey}
-            size="lg"
-          />
+          <div class="publisher-pic-mobile">
+            <ProfilePic
+              pictureUrl={publisherPictureUrl}
+              name={publisherName}
+              pubkey={app.pubkey}
+              size="xs"
+            />
+          </div>
+          <div class="publisher-pic-desktop">
+            <ProfilePic
+              pictureUrl={publisherPictureUrl}
+              name={publisherName}
+              pubkey={app.pubkey}
+              size="sm"
+            />
+          </div>
           <span
-            class="publisher-name text-base font-medium"
+            class="publisher-name text-sm font-medium"
             style="color: hsl(var(--white66));"
           >
             {publisherName}
           </span>
+          <Timestamp
+            timestamp={app.createdAt}
+            size="xs"
+            className="publisher-timestamp"
+          />
         </a>
-        <Timestamp timestamp={app.createdAt} size="sm" />
+
+        <!-- Catalog stack -->
+        <ProfilePicStack profiles={catalogs} text="In Zapstore" size="sm" />
       </div>
     {/if}
 
@@ -488,15 +552,26 @@
 
       <!-- App Info -->
       <div class="app-info flex-1 min-w-0">
-        <!-- App Name -->
-        <h1
-          class="app-name text-[1.625rem] sm:text-4xl font-black mb-2 sm:mb-3"
-          style="color: hsl(var(--white));"
+        <!-- App Name Row -->
+        <div
+          class="app-name-row flex items-center justify-between mb-2 sm:mb-3"
         >
-          {app.name}
-        </h1>
+          <h1
+            class="app-name text-[1.625rem] sm:text-4xl font-black"
+            style="color: hsl(var(--white));"
+          >
+            {app.name}
+          </h1>
+          <button
+            type="button"
+            class="install-btn-desktop btn-primary flex-shrink-0"
+            on:click={() => (installModalOpen = true)}
+          >
+            Install
+          </button>
+        </div>
 
-        <!-- Platform Pills + Install Button Row -->
+        <!-- Platform Pills Row -->
         <div class="platforms-row flex items-center gap-3">
           <!-- Scrollable Platform Pills -->
           <div class="platforms-scroll flex-1 overflow-x-auto scrollbar-hide">
@@ -527,73 +602,248 @@
             </div>
           </div>
 
-          <!-- Install Button -->
-          {#if isAndroid}
-            <a href={getIntentUrl(data.slug)} class="install-btn flex-shrink-0">
-              Install
-            </a>
-          {:else}
-            <button type="button" class="install-btn flex-shrink-0" disabled>
-              Install
-            </button>
-          {/if}
+          <!-- Install button on mobile -->
+          <button
+            type="button"
+            class="install-btn-mobile btn-primary-small flex-shrink-0"
+            on:click={() => (installModalOpen = true)}
+          >
+            Install
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Screenshots -->
     {#if app.images && app.images.length > 0}
-      <div
-        class="screenshots-row flex gap-3 overflow-x-auto pb-2 scrollbar-thin mb-6"
-      >
-        {#each app.images as image, index}
-          <button
-            type="button"
-            on:click={() => openCarousel(index)}
-            class="screenshot-thumb relative flex-shrink-0 overflow-hidden rounded-2xl bg-muted cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-          >
-            <img
-              src={image}
-              alt="Screenshot {index + 1}"
-              class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-200"
-              loading="lazy"
-            />
-            <div
-              class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200"
-            ></div>
-          </button>
-        {/each}
+      <div class="screenshots-scroll mb-4">
+        <div class="screenshots-content">
+          {#each app.images as image, index}
+            <button
+              type="button"
+              on:click={() => openCarousel(index)}
+              class="screenshot-thumb relative flex-shrink-0 overflow-hidden cursor-pointer group focus:outline-none"
+            >
+              <img
+                src={image}
+                alt="Screenshot {index + 1}"
+                class="w-full h-auto object-cover"
+                loading="lazy"
+              />
+            </button>
+          {/each}
+        </div>
       </div>
     {/if}
 
     <!-- Description -->
-    <div class="description-container mb-6">
+    <div class="description-container" class:expanded={descriptionExpanded}>
       <div
         class="app-description prose prose-invert max-w-none"
-        class:clamped={!descriptionExpanded}
+        use:checkTruncation
       >
         {@html app.descriptionHtml}
       </div>
-      {#if !descriptionExpanded}
+      {#if isTruncated && !descriptionExpanded}
+        <div class="description-fade"></div>
         <button
           type="button"
           class="read-more-btn"
-          on:click={() => (descriptionExpanded = true)}
+          on:click={() => (descriptionExpanded = true)}>Read More</button
         >
-          Read more
-        </button>
       {/if}
     </div>
 
-    <!-- Comments (kind 1111 replaceable) -->
+    <!-- Info Panels: Security, Releases, Similar Apps -->
+    <div class="info-panels-container mb-4">
+      <!-- Row 1: Security + Releases (mobile) / All panels (desktop) -->
+      <div class="info-panels-main">
+        <!-- Security Panel -->
+        <button type="button" class="info-panel panel-security text-left">
+          <div class="panel-header">
+            <span
+              class="text-base font-semibold"
+              style="color: hsl(var(--foreground));">Security</span
+            >
+          </div>
+          <div class="panel-list flex flex-col">
+            <div
+              class="panel-list-item flex items-center gap-2"
+              style="color: hsl(var(--white66));"
+            >
+              <svg
+                class="flex-shrink-0"
+                width="14"
+                height="10"
+                viewBox="0 0 18 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6.2 11.2L0.7 5.7L6.2 10.95L16.7 0.7L6.2 11.2Z"
+                  stroke="hsl(var(--blurpleColor))"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span class="text-sm">Signed by developer</span>
+            </div>
+            <div
+              class="panel-list-item flex items-center gap-2"
+              style="color: hsl(var(--white66)); opacity: 0.8; transform: scale(0.95); transform-origin: left;"
+            >
+              <svg
+                class="flex-shrink-0"
+                width="14"
+                height="10"
+                viewBox="0 0 18 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6.2 11.2L0.7 5.7L6.2 10.95L16.7 0.7L6.2 11.2Z"
+                  stroke="hsl(var(--blurpleColor))"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span class="text-sm">Verified source</span>
+            </div>
+            <div
+              class="panel-list-item panel-list-item-last flex items-center gap-2"
+              style="color: hsl(var(--white66)); opacity: 0.64; transform: scale(0.9); transform-origin: left;"
+            >
+              <svg
+                class="flex-shrink-0"
+                width="14"
+                height="10"
+                viewBox="0 0 18 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6.2 11.2L0.7 5.7L6.2 10.95L16.7 0.7L6.2 11.2Z"
+                  stroke="hsl(var(--blurpleColor))"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span class="text-sm">Open source</span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Releases Panel -->
+        <button type="button" class="info-panel panel-releases text-left">
+          <div class="panel-header">
+            <span
+              class="text-base font-semibold"
+              style="color: hsl(var(--foreground));">Releases</span
+            >
+          </div>
+          <div class="panel-list flex flex-col">
+            <div class="panel-list-item flex items-center gap-2 min-w-0">
+              <span
+                class="text-sm font-medium flex-shrink-0"
+                style="color: hsl(var(--white33));"
+                >{fileVersion || "1.0.0"}</span
+              >
+              <span
+                class="text-sm truncate"
+                style="color: hsl(var(--white66)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                >{latestRelease?.notes
+                  ? latestRelease.notes.split(/[.!?\n]/)[0]?.trim()
+                  : "Latest release"}</span
+              >
+            </div>
+            <div
+              class="panel-list-item flex items-center gap-2 min-w-0"
+              style="opacity: 0.8; transform: scale(0.95); transform-origin: left;"
+            >
+              <span
+                class="text-sm font-medium flex-shrink-0"
+                style="color: hsl(var(--white33));">0.9.8</span
+              >
+              <span
+                class="text-sm truncate"
+                style="color: hsl(var(--white66)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                >Bug fixes and improvements</span
+              >
+            </div>
+            <div
+              class="panel-list-item panel-list-item-last flex items-center gap-2 min-w-0"
+              style="opacity: 0.64; transform: scale(0.9); transform-origin: left;"
+            >
+              <span
+                class="text-sm font-medium flex-shrink-0"
+                style="color: hsl(var(--white33));">0.9.7</span
+              >
+              <span
+                class="text-sm truncate"
+                style="color: hsl(var(--white66)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                >Performance updates</span
+              >
+            </div>
+          </div>
+        </button>
+
+        <!-- Similar Apps Panel (desktop only in main row) -->
+        <button
+          type="button"
+          class="info-panel panel-similar-desktop text-left"
+        >
+          <div class="panel-header">
+            <span
+              class="text-base font-semibold"
+              style="color: hsl(var(--foreground));">Suggestions</span
+            >
+          </div>
+          <p class="text-sm mb-2" style="color: hsl(var(--white66));">
+            Similar & Companion Apps you might like
+          </p>
+          <div class="similar-apps-row flex gap-2">
+            <AppPic size="xs" name="App 1" />
+            <AppPic size="xs" name="App 2" />
+            <AppPic size="xs" name="App 3" />
+            <AppPic size="xs" name="App 4" />
+          </div>
+        </button>
+      </div>
+
+      <!-- Row 2 (mobile only): Similar Apps -->
+      <button type="button" class="info-panel panel-similar-mobile text-left">
+        <div class="panel-header">
+          <span
+            class="text-base font-semibold"
+            style="color: hsl(var(--foreground));">Suggestions</span
+          >
+        </div>
+        <p class="text-sm mb-2" style="color: hsl(var(--white66));">
+          Similar & Companion Apps you might like
+        </p>
+        <div class="similar-apps-row flex gap-2">
+            <AppPic size="xs" name="App 1" />
+            <AppPic size="xs" name="App 2" />
+            <AppPic size="xs" name="App 3" />
+            <AppPic size="xs" name="App 4" />
+          </div>
+      </button>
+    </div>
+
+    <div class="divider mb-4"></div>
+
+    <!-- Social tabs (Comments, Labels, Stacks, Supporters, Details) -->
     <div class="mb-8">
-      <AppComments {app} version={fileVersion} />
+      <SocialTabs {app} version={fileVersion} {publisherProfile} />
     </div>
 
     <!-- Screenshot Carousel Modal -->
     {#if carouselOpen && app.images && app.images.length > 0}
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center"
+        class="carousel-modal bg-overlay"
         on:click={closeCarousel}
         on:keydown={handleKeydown}
         role="dialog"
@@ -601,17 +851,14 @@
         aria-label="Screenshot carousel"
         tabindex="-1"
       >
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div>
-
         <!-- Close button -->
         <button
           type="button"
           on:click={closeCarousel}
-          class="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          class="carousel-close-btn"
           aria-label="Close carousel"
         >
-          <X class="h-6 w-6" />
+          <X class="h-5 w-5" />
         </button>
 
         <!-- Navigation buttons -->
@@ -619,61 +866,82 @@
           <button
             type="button"
             on:click|stopPropagation={prevImage}
-            class="absolute left-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            class="carousel-nav-btn carousel-nav-prev"
             aria-label="Previous image"
           >
-            <ChevronLeft class="h-8 w-8" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           </button>
 
           <button
             type="button"
             on:click|stopPropagation={nextImage}
-            class="absolute right-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            class="carousel-nav-btn carousel-nav-next"
             aria-label="Next image"
           >
-            <ChevronRight class="h-8 w-8" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
           </button>
         {/if}
 
-        <!-- Main image -->
+        <!-- Main image container -->
         <div
-          class="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center"
+          class="carousel-content"
           on:click|stopPropagation
           on:keydown|stopPropagation
           role="presentation"
         >
-          <img
-            src={app.images[currentImageIndex]}
-            alt="Screenshot {currentImageIndex + 1}"
-            class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
-          />
-        </div>
+          <div class="carousel-image-wrapper">
+            {#if !carouselImageLoaded}
+              <div class="carousel-skeleton">
+                <SkeletonLoader />
+              </div>
+            {/if}
+            <img
+              src={app.images[currentImageIndex]}
+              alt="Screenshot {currentImageIndex + 1}"
+              class="carousel-image"
+              class:loaded={carouselImageLoaded}
+              on:load={() => (carouselImageLoaded = true)}
+            />
+          </div>
 
-        <!-- Image counter & dots -->
-        {#if app.images.length > 1}
-          <div
-            class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
-          >
-            <!-- Dot indicators -->
-            <div class="flex gap-2">
+          <!-- Dot indicators (below image) -->
+          {#if app.images.length > 1}
+            <div class="carousel-dots">
               {#each app.images as _, index}
                 <button
                   type="button"
                   on:click|stopPropagation={() => (currentImageIndex = index)}
-                  class="w-2.5 h-2.5 rounded-full transition-all {index ===
-                  currentImageIndex
-                    ? 'bg-white scale-110'
-                    : 'bg-white/40 hover:bg-white/60'}"
+                  class="carousel-dot {index === currentImageIndex
+                    ? 'active'
+                    : ''}"
                   aria-label="Go to screenshot {index + 1}"
                 ></button>
               {/each}
             </div>
-            <!-- Counter text -->
-            <span class="text-white/70 text-sm font-medium">
-              {currentImageIndex + 1} / {app.images.length}
-            </span>
-          </div>
-        {/if}
+          {/if}
+        </div>
       </div>
     {/if}
 
@@ -885,7 +1153,169 @@
   </div>
 {/if}
 
+<!-- Install Modal -->
+<InstallModal bind:open={installModalOpen} {app} isZapstore={isZapstoreApp} />
+
 <style>
+  /* Simple divider */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background-color: hsl(var(--white16));
+  }
+
+  /* Info panels container */
+  .info-panels-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* Main row containing Security + Releases (+ Similar on desktop) */
+  .info-panels-main {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  /* Desktop: stretch panels to same height */
+  @media (min-width: 768px) {
+    .info-panels-main {
+      align-items: stretch;
+    }
+  }
+
+  /* Panel list item spacing */
+  .panel-list-item {
+    padding: 1px 0;
+  }
+
+  .panel-list-item-last {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  /* Panel header consistent spacing */
+  .panel-header {
+    margin-bottom: 4px;
+  }
+
+  /* Suggested panel: tighter header spacing */
+  .panel-similar-desktop .panel-header,
+  .panel-similar-mobile .panel-header {
+    margin-bottom: 2px;
+  }
+
+  /* Mobile: Security 50%, Releases 50% */
+  .panel-security {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .panel-releases {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Similar panel - hidden on mobile in main row, shown in separate row */
+  .panel-similar-desktop {
+    display: none;
+  }
+
+  .panel-similar-mobile {
+    width: 100%;
+    padding-bottom: 16px;
+  }
+
+  /* Desktop layout: all three in one row */
+  @media (min-width: 768px) {
+    /* Hide mobile Similar panel */
+    .panel-similar-mobile {
+      display: none;
+    }
+
+    /* Show desktop Similar panel - content stays top-aligned */
+    .panel-similar-desktop {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      flex: 2; /* 50% */
+      min-width: 0;
+    }
+
+    /* Desktop widths: Security 25%, Releases 25%, Similar 50% */
+    .panel-security {
+      flex: 1; /* 25% */
+    }
+
+    .panel-releases {
+      flex: 1; /* 25% */
+    }
+  }
+
+  /* Info panel base styles */
+  .info-panel {
+    background-color: hsl(var(--white8));
+    border-radius: 16px;
+    padding: 8px 16px 10px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .info-panel:hover {
+    transform: scale(1.005);
+  }
+
+  .info-panel:active {
+    transform: scale(0.995);
+  }
+
+  /* Responsive install buttons */
+  .install-btn-mobile {
+    display: inline-flex;
+  }
+
+  .install-btn-desktop {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .install-btn-mobile {
+      display: none;
+    }
+
+    .install-btn-desktop {
+      display: inline-flex;
+    }
+  }
+
+  /* Publisher row responsive */
+  .publisher-pic-mobile {
+    display: block;
+  }
+
+  .publisher-pic-desktop {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .publisher-pic-mobile {
+      display: none;
+    }
+
+    .publisher-pic-desktop {
+      display: block;
+    }
+
+    .publisher-link {
+      gap: 12px;
+    }
+  }
+
+  :global(.publisher-timestamp) {
+    color: hsl(var(--white33)) !important;
+  }
+
   /* Responsive app icon - override component size */
   :global(.app-icon-responsive) {
     width: 80px !important;
@@ -894,9 +1324,97 @@
     min-height: 80px !important;
   }
 
+  /* Screenshots horizontal scroll with fade */
+  .screenshots-scroll {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 1rem,
+      black calc(100% - 1rem),
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 1rem,
+      black calc(100% - 1rem),
+      transparent 100%
+    );
+  }
+
+  .screenshots-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .screenshots-scroll {
+      margin-left: -1.5rem;
+      margin-right: -1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+
+      mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 1.5rem,
+        black calc(100% - 1.5rem),
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 1.5rem,
+        black calc(100% - 1.5rem),
+        transparent 100%
+      );
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .screenshots-scroll {
+      margin-left: -2rem;
+      margin-right: -2rem;
+      padding-left: 2rem;
+      padding-right: 2rem;
+
+      mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 2rem,
+        black calc(100% - 2rem),
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 2rem,
+        black calc(100% - 2rem),
+        transparent 100%
+      );
+    }
+  }
+
+  .screenshots-content {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 8px;
+  }
+
   /* Screenshot thumbnail - matches app icon width */
   .screenshot-thumb {
     width: 80px;
+    border-radius: 12px;
+    background-color: hsl(var(--gray33));
+    border: 0.33px solid hsl(var(--white16));
   }
 
   /* Larger screens: bigger app icon and screenshots */
@@ -910,48 +1428,238 @@
 
     .screenshot-thumb {
       width: 96px;
+      border-radius: 16px;
     }
   }
 
-  /* Description styling - matches comment bubble content size */
+  /* Screenshot Carousel Modal */
+  .carousel-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .carousel-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    padding: 8px;
+    border-radius: 50%;
+    background-color: hsl(var(--white16));
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .carousel-close-btn:hover {
+    background-color: hsl(var(--white33));
+  }
+
+  .carousel-nav-btn {
+    position: absolute;
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: hsl(var(--white16));
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .carousel-nav-btn:hover {
+    background-color: hsl(var(--white33));
+  }
+
+  /* Left chevron offset 1px to the left for visual centering */
+  .carousel-nav-prev {
+    left: 16px;
+    padding-right: 1px;
+  }
+
+  /* Right chevron offset 1px to the right for visual centering */
+  .carousel-nav-next {
+    right: 16px;
+    padding-left: 1px;
+  }
+
+  .carousel-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 90vw;
+    max-height: 90vh;
+  }
+
+  .carousel-image-wrapper {
+    position: relative;
+    max-width: 100%;
+    max-height: calc(90vh - 48px);
+    border-radius: 8px;
+    border: 0.33px solid hsl(var(--white16));
+    overflow: hidden;
+    background-color: hsl(var(--gray33));
+    box-shadow: 0 0 80px 20px hsl(var(--black33));
+  }
+
+  @media (min-width: 768px) {
+    .carousel-image-wrapper {
+      border-radius: 16px;
+    }
+  }
+
+  .carousel-skeleton {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .carousel-image {
+    display: block;
+    max-width: 100%;
+    max-height: calc(90vh - 48px);
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .carousel-image.loaded {
+    opacity: 1;
+  }
+
+  .carousel-dots {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: hsl(var(--white33));
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .carousel-dot:hover {
+    background-color: hsl(var(--white66));
+  }
+
+  .carousel-dot.active {
+    background-color: white;
+    transform: scale(1.2);
+  }
+
+  /* Description container */
+  .description-container {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+
+  .description-container:not(.expanded) .app-description {
+    max-height: 120px; /* Mobile max height */
+    overflow: hidden;
+  }
+
+  .description-container.expanded .app-description {
+    max-height: none;
+  }
+
   .app-description {
     font-size: 0.9375rem; /* 15px - same as MessageBubble content */
     line-height: 1.5;
     color: hsl(var(--foreground) / 0.85);
   }
 
-  /* Slightly larger description on desktop */
-  @media (min-width: 640px) {
+  /* Remove prose margins for tight spacing */
+  .app-description :global(p:first-child) {
+    margin-top: 0;
+  }
+
+  .app-description :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .app-description :global(p) {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  /* Larger screens */
+  @media (min-width: 768px) {
     .app-description {
       font-size: 1rem; /* 16px */
     }
+    .description-container:not(.expanded) .app-description {
+      max-height: 150px; /* Desktop max height */
+    }
   }
 
-  /* Line clamp for description */
-  .app-description.clamped {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  /* Gradient fade at bottom */
+  .description-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
+    pointer-events: none;
   }
 
   /* Read more button */
   .read-more-btn {
-    display: inline-block;
-    margin-top: 0.5rem;
-    padding: 0;
-    background: none;
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 32px;
+    padding: 0 14px;
+    background-color: hsl(var(--white8));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: none;
+    border-radius: 9999px;
     font-size: 0.875rem;
     font-weight: 500;
-    color: hsl(var(--blurpleColor));
+    color: hsl(var(--white66));
     cursor: pointer;
-    transition: opacity 0.15s ease;
+    transition: transform 0.15s ease;
   }
 
   .read-more-btn:hover {
-    opacity: 0.8;
+    transform: translateX(-50%) scale(1.025);
+  }
+
+  .read-more-btn:active {
+    transform: translateX(-50%) scale(0.98);
+  }
+
+  @media (min-width: 768px) {
+    .read-more-btn {
+      left: 0;
+      transform: none;
+    }
+
+    .read-more-btn:hover {
+      transform: scale(1.025);
+    }
+
+    .read-more-btn:active {
+      transform: scale(0.98);
+    }
   }
 
   /* Platform pills styling */
@@ -969,35 +1677,6 @@
     color: hsl(var(--white33));
   }
 
-  /* Install button styling */
-  .install-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 1rem;
-    height: 32px;
-    border-radius: 9999px;
-    background-color: hsl(var(--blurpleColor));
-    color: white;
-    font-size: 0.875rem;
-    font-weight: 600;
-    white-space: nowrap;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-
-  .install-btn:hover:not(:disabled) {
-    background-color: hsl(var(--blurpleColor66));
-    transform: scale(1.02);
-  }
-
-  .install-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   /* Scrollbar hide utility */
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -1006,29 +1685,6 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-
-  /* Screenshot scrollbar styling */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 3px;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.5);
   }
 
   /* Prism JSON syntax highlighting for dark theme */

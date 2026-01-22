@@ -1,5 +1,11 @@
 <script>
-  import { hexToColor, stringToColor } from "$lib/utils/color.js";
+  import { onMount } from "svelte";
+  import {
+    hexToColor,
+    stringToColor,
+    getProfileTextColor,
+    rgbToCssString,
+  } from "$lib/utils/color.js";
   import SkeletonLoader from "./SkeletonLoader.svelte";
 
   /**
@@ -37,6 +43,18 @@
 
   /** @type {boolean} - External loading state (e.g., profile data still being fetched) */
   export let loading = false;
+
+  // Dark mode detection
+  let isDarkMode = true;
+
+  onMount(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    isDarkMode = mediaQuery.matches;
+
+    const handleChange = (e) => (isDarkMode = e.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  });
 
   // Size mappings (in pixels)
   const sizeMap = {
@@ -83,13 +101,18 @@
     return { r: 128, g: 128, b: 128 };
   }
 
-  // Get initial letter from name
-  $: initial = name && name.trim() ? name.trim()[0].toUpperCase() : "";
+  // Check if the name is actually an npub (not a real display name)
+  $: isNpub = name && name.trim().toLowerCase().startsWith("npub");
+
+  // Get initial letter from name (but not if it's an npub)
+  $: initial =
+    name && name.trim() && !isNpub ? name.trim()[0].toUpperCase() : "";
   $: hasInitial = initial.length > 0;
 
-  // Color styles
+  // Color styles - use getProfileTextColor for text/icon readability
   $: bgColorStyle = `rgba(${profileColor.r}, ${profileColor.g}, ${profileColor.b}, 0.24)`;
-  $: textColorStyle = `rgb(${profileColor.r}, ${profileColor.g}, ${profileColor.b})`;
+  $: textColor = getProfileTextColor(profileColor, isDarkMode);
+  $: textColorStyle = rgbToCssString(textColor);
 
   // Handle image load
   function handleImageLoad() {
@@ -129,15 +152,15 @@
           {:else}
             <svg
               class="user-icon-colored"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              viewBox="0 0 16 20"
+              fill="currentColor"
             >
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
+              <path
+                d="M16 16.2353C16 18.3145 12.4183 20 8 20C3.58172 20 0 18.3145 0 16.2353C0 14.1561 3.58172 12.4706 8 12.4706C12.4183 12.4706 16 14.1561 16 16.2353Z"
+              />
+              <path
+                d="M12.8 4.70588C12.8 7.30487 10.651 9.41177 8 9.41177C5.34903 9.41177 3.2 7.30487 3.2 4.70588C3.2 2.1069 5.34903 0 8 0C10.651 0 12.8 2.1069 12.8 4.70588Z"
+              />
             </svg>
           {/if}
         </div>
@@ -162,15 +185,15 @@
         {:else}
           <svg
             class="user-icon-colored"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            viewBox="0 0 16 20"
+            fill="currentColor"
           >
-            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
+            <path
+              d="M16 16.2353C16 18.3145 12.4183 20 8 20C3.58172 20 0 18.3145 0 16.2353C0 14.1561 3.58172 12.4706 8 12.4706C12.4183 12.4706 16 14.1561 16 16.2353Z"
+            />
+            <path
+              d="M12.8 4.70588C12.8 7.30487 10.651 9.41177 8 9.41177C5.34903 9.41177 3.2 7.30487 3.2 4.70588C3.2 2.1069 5.34903 0 8 0C10.651 0 12.8 2.1069 12.8 4.70588Z"
+            />
           </svg>
         {/if}
       </div>
@@ -182,17 +205,13 @@
     {:else}
       <!-- User icon fallback (no image URL, no name) -->
       <div class="fallback-container">
-        <svg
-          class="user-icon-colored"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
+        <svg class="user-icon-colored" viewBox="0 0 16 20" fill="currentColor">
+          <path
+            d="M16 16.2353C16 18.3145 12.4183 20 8 20C3.58172 20 0 18.3145 0 16.2353C0 14.1561 3.58172 12.4706 8 12.4706C12.4183 12.4706 16 14.1561 16 16.2353Z"
+          />
+          <path
+            d="M12.8 4.70588C12.8 7.30487 10.651 9.41177 8 9.41177C5.34903 9.41177 3.2 7.30487 3.2 4.70588C3.2 2.1069 5.34903 0 8 0C10.651 0 12.8 2.1069 12.8 4.70588Z"
+          />
         </svg>
       </div>
     {/if}
@@ -244,8 +263,10 @@
     border-radius: 50%;
     border: 0.33px solid hsl(var(--white16));
 
-    /* Background */
-    background-color: hsl(var(--gray66));
+    /* Background with blur */
+    background-color: hsl(var(--gray66) / 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 
     /* Clip content to circle */
     overflow: hidden;
@@ -307,15 +328,7 @@
     color: var(--text-color);
     line-height: 1;
     user-select: none;
-    /* Slightly brighten for better readability on colored backgrounds */
-    filter: brightness(1.08);
-  }
-
-  /* Light mode: slightly darken instead */
-  @media (prefers-color-scheme: light) {
-    .initial {
-      filter: brightness(0.95);
-    }
+    /* Brightness adjustment handled by getProfileTextColor() in color.js */
   }
 
   /* User icon in profile color */
@@ -323,14 +336,6 @@
     width: 60%;
     height: 60%;
     color: var(--text-color);
-    /* Same brightness adjustment as initial letter */
-    filter: brightness(1.08);
-  }
-
-  /* Light mode: slightly darken instead */
-  @media (prefers-color-scheme: light) {
-    .user-icon-colored {
-      filter: brightness(0.95);
-    }
+    /* Brightness adjustment handled by getProfileTextColor() in color.js */
   }
 </style>

@@ -18,6 +18,7 @@
 10. [Responsive Sizing Pattern](#responsive-sizing-pattern)
 11. [Horizontal Scroll Containers](#horizontal-scroll-containers)
 12. [Timestamp Component](#timestamp-component)
+13. [Image Containers](#image-containers)
 
 ---
 
@@ -139,7 +140,13 @@ The `.panel-clickable` class adds:
 
 1. **ALWAYS use standardized button classes** - Never create custom button styles
 
-2. **CRITICAL: Primary CTA Button Sizing Rules**:
+2. **NEVER use outlines or borders on buttons** - Buttons should not have visible outlines or borders unless specifically required for a special case. This includes:
+   - No `border` property
+   - No `outline` property  
+   - No `box-shadow` used as border
+   - Exception: Glass buttons use a subtle `white8` border for the frosted effect
+
+3. **CRITICAL: Primary CTA Button Sizing Rules**:
    - **Landing page (`/` route)**: All primary CTAs MUST use `.btn-primary-large` at all screen sizes (always large)
    - **Desktop (≥768px)**: All primary CTAs MUST use `.btn-primary-large` 
    - **Mobile (<768px)**: Primary CTAs on non-landing pages should use `.btn-primary` (default size)
@@ -524,6 +531,57 @@ background-color: hsl(var(--card));
 border-color: hsl(var(--white16));
 ```
 
+### Profile Text Color Adjustment
+
+**CRITICAL**: When displaying text in a user's profile color (author names, mentions, etc.), you MUST use `getProfileTextColor()` from `$lib/utils/color.js` to adjust the color for readability.
+
+**Why?** Profile colors are generated for general use (backgrounds, avatars). When used as text color, they need brightness adjustment:
+- **Dark mode**: Brighten by 8% for better readability on dark backgrounds
+- **Light mode**: Darken by 5% for better contrast on light backgrounds
+
+**How to use:**
+
+```svelte
+<script>
+  import { onMount } from "svelte";
+  import {
+    hexToColor,
+    stringToColor,
+    getProfileTextColor,
+    rgbToCssString,
+  } from "$lib/utils/color.js";
+
+  // Dark mode detection (required)
+  let isDarkMode = true;
+  onMount(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    isDarkMode = mediaQuery.matches;
+    const handleChange = (e) => (isDarkMode = e.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  });
+
+  // Get base profile color
+  $: baseColor = pubkey ? hexToColor(pubkey) : stringToColor(name);
+  
+  // Adjust for text readability
+  $: textColor = getProfileTextColor(baseColor, isDarkMode);
+  $: colorStyle = rgbToCssString(textColor);
+</script>
+
+<span style="color: {colorStyle};">{name}</span>
+```
+
+**Available functions in `$lib/utils/color.js`:**
+
+| Function | Description |
+|----------|-------------|
+| `getProfileTextColor(rgb, isDarkMode)` | Adjusts profile color for text readability |
+| `adjustColorBrightness(rgb, factor)` | Generic brightness adjustment (factor >1 brightens, <1 darkens) |
+| `rgbToCssString(rgb)` | Converts RGB object to CSS `rgb()` string |
+
+**DO NOT** use CSS `filter: brightness()` for this purpose - use the JavaScript function instead for consistency.
+
 ---
 
 ## Typography
@@ -720,7 +778,7 @@ The component handles missing data gracefully:
 - **From pubkey**: Uses `hexToColor()` to generate a consistent color from the hex pubkey
 - **From name**: Uses `stringToColor()` to generate a color from the name string
 - **Background**: Profile color at 24% opacity
-- **Text/Icon**: Full profile color
+- **Text/Icon**: Profile color adjusted via `getProfileTextColor()` for readability (8% brighter in dark mode, 5% darker in light mode)
 
 ### Standardization
 
@@ -1135,6 +1193,76 @@ The `Timestamp` component uses this unified logic for displaying times:
 - Any other relative time display
 
 The component handles all timestamp normalization (seconds, milliseconds, ISO strings, Date objects) automatically.
+
+---
+
+## Image Containers
+
+### Overview
+
+All image thumbnails in functional UI (not landing/promotional sections) should follow consistent styling rules for a unified look.
+
+### Standard Image Container Specs
+
+| Property | Value |
+|----------|-------|
+| Border radius | 12px (mobile), 16px (desktop) |
+| Border | 0.33px solid `hsl(var(--white16))` |
+| Background | `hsl(var(--gray33))` |
+| Hover effects | None (no outline changes on hover/click) |
+
+### Important Rules
+
+1. **Thin outline only** - Use `0.33px solid hsl(var(--white16))` - no thick borders or hover state outlines
+2. **No hover outline changes** - The outline should remain constant on hover/click
+3. **Consistent with AppPic** - This matches the `AppPic` component styling for visual consistency
+4. **Responsive border radius** - Use 12px on mobile, 16px on desktop (768px breakpoint)
+
+### Example CSS
+
+```css
+.image-thumb {
+  border-radius: 12px;
+  background-color: hsl(var(--gray33));
+  border: 0.33px solid hsl(var(--white16));
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .image-thumb {
+    border-radius: 16px;
+  }
+}
+```
+
+### Lightbox/Carousel
+
+When displaying images in a full-screen lightbox:
+
+**Backdrop:**
+- Use `bg-overlay` class (same as modals) - NOT custom rgba colors
+- This uses `hsl(var(--overlay))` which adapts to color scheme
+
+**Image Container:**
+
+| Property | Value |
+|----------|-------|
+| Border radius | 8px (mobile), 16px (desktop 768px+) |
+| Border | 0.33px solid `hsl(var(--white16))` |
+| Background | `hsl(var(--gray33))` |
+| Loading state | Use `SkeletonLoader` component |
+
+**Navigation:**
+
+| Element | Spec |
+|---------|------|
+| Nav button size | 40px diameter circle |
+| Nav button background | `hsl(var(--white16))` |
+| Nav button hover | `hsl(var(--white33))` |
+| Left chevron | Offset 1px to the left (padding-right: 1px) for visual centering |
+| Right chevron | Offset 1px to the right (padding-left: 1px) for visual centering |
+| Dot indicators | 8px diameter, positioned below the image (not overlaying) |
+| Counter text | Do NOT show - only use dot indicators |
 
 ---
 

@@ -234,33 +234,58 @@
       <!-- Apps Section -->
       <div class="section-container">
         <SectionHeader title="Apps" linkText="See all" href="/apps" />
-        <div class="horizontal-scroll">
-          <div class="scroll-content">
-            {#each appColumns as column, colIndex}
-              <div class="app-column">
-                {#each column as app, cardIndex}
-                  <AppSmallCard {app} href={getAppUrl(app)} />
-                {/each}
-              </div>
-            {/each}
-
-            {#if hasMore}
-              <div class="load-more-column">
-                <button
-                  class="load-more-btn"
-                  on:click={loadMoreApps}
-                  disabled={loadingMore}
-                >
-                  {#if loadingMore}
-                    <div class="spinner"></div>
-                  {:else}
-                    <span>Load more</span>
-                  {/if}
-                </button>
-              </div>
-            {/if}
+        {#if apps.length === 0}
+          <!-- Apps loading skeleton -->
+          <div class="horizontal-scroll">
+            <div class="scroll-content">
+              {#each Array(4) as _}
+                <div class="app-column">
+                  {#each Array(3) as _}
+                    <div class="skeleton-card">
+                      <div class="skeleton-icon">
+                        <SkeletonLoader />
+                      </div>
+                      <div class="skeleton-info">
+                        <div class="skeleton-name">
+                          <SkeletonLoader />
+                        </div>
+                        <div class="skeleton-desc"></div>
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              {/each}
+            </div>
           </div>
-        </div>
+        {:else}
+          <div class="horizontal-scroll">
+            <div class="scroll-content">
+              {#each appColumns as column, colIndex}
+                <div class="app-column">
+                  {#each column as app, cardIndex}
+                    <AppSmallCard {app} href={getAppUrl(app)} />
+                  {/each}
+                </div>
+              {/each}
+
+              {#if hasMore}
+                <div class="load-more-column">
+                  <button
+                    class="load-more-btn"
+                    on:click={loadMoreApps}
+                    disabled={loadingMore}
+                  >
+                    {#if loadingMore}
+                      <div class="spinner"></div>
+                    {:else}
+                      <span>Load more</span>
+                    {/if}
+                  </button>
+                </div>
+              {/if}
+            </div>
+          </div>
+        {/if}
       </div>
 
       <!-- Stacks Section -->
@@ -269,15 +294,21 @@
         {#if stacksLoading}
           <div class="horizontal-scroll">
             <div class="scroll-content">
-              {#each Array(3) as _}
+              {#each Array(4) as _}
                 <div class="stack-item">
                   <div class="skeleton-stack">
                     <div class="skeleton-stack-grid">
                       <SkeletonLoader />
                     </div>
                     <div class="skeleton-stack-info">
-                      <div class="skeleton-name"><SkeletonLoader /></div>
-                      <div class="skeleton-desc"></div>
+                      <div class="skeleton-stack-name"><SkeletonLoader /></div>
+                      <div class="skeleton-stack-desc"></div>
+                      <div class="skeleton-stack-creator">
+                        <div class="skeleton-stack-avatar">
+                          <SkeletonLoader />
+                        </div>
+                        <div class="skeleton-stack-creator-name"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -576,6 +607,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    width: 100%;
   }
 
   .skeleton-stack-grid {
@@ -584,14 +616,52 @@
     border-radius: 16px;
     overflow: hidden;
     flex-shrink: 0;
-    background-color: hsl(var(--gray33));
   }
 
   .skeleton-stack-info {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
+  }
+
+  .skeleton-stack-name {
+    width: 100px;
+    max-width: 100%;
+    height: 16px;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .skeleton-stack-desc {
+    width: 140px;
+    max-width: 100%;
+    height: 12px;
+    border-radius: 4px;
+    background-color: hsl(var(--gray33));
+  }
+
+  .skeleton-stack-creator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .skeleton-stack-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .skeleton-stack-creator-name {
+    width: 60px;
+    height: 12px;
+    border-radius: 4px;
+    background-color: hsl(var(--gray33));
   }
 
   @media (min-width: 768px) {
@@ -603,6 +673,16 @@
       width: 104px;
       height: 104px;
       border-radius: 20px;
+    }
+
+    .skeleton-stack-name {
+      width: 120px;
+      height: 18px;
+    }
+
+    .skeleton-stack-desc {
+      width: 180px;
+      height: 14px;
     }
   }
 </style>

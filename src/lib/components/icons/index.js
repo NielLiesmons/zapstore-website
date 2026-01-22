@@ -70,6 +70,7 @@ export { default as Music } from './Music.svelte';
 export { default as Nostr } from './Nostr.svelte';
 export { default as NumberedList } from './NumberedList.svelte';
 export { default as OpenBook } from './OpenBook.svelte';
+export { default as Options } from './Options.svelte';
 export { default as OpenWith } from './OpenWith.svelte';
 export { default as Pause } from './Pause.svelte';
 export { default as Pen } from './Pen.svelte';

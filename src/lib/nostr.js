@@ -245,6 +245,69 @@ export async function fetchProfileFresh(pubkey) {
 		}
 }
 
+/**
+ * Fetches multiple profiles in a single batch request
+ * @param {string[]} pubkeys - Array of public keys to fetch
+ * @returns {Promise<Object>} Object mapping pubkey -> profile
+ */
+export async function fetchProfilesBatch(pubkeys) {
+	if (!pubkeys || pubkeys.length === 0) {
+		return {};
+	}
+
+	const results = {};
+
+	// Check cache in parallel for all pubkeys
+	const cacheResults = await Promise.all(
+		pubkeys.map(async (pubkey) => {
+			const cached = await getCachedEvent(KIND_PROFILE, pubkey);
+			return { pubkey, cached };
+		})
+	);
+
+	// Separate cached from uncached
+	const uncachedPubkeys = [];
+	for (const { pubkey, cached } of cacheResults) {
+		if (cached) {
+			results[pubkey] = cached;
+		} else {
+			uncachedPubkeys.push(pubkey);
+		}
+	}
+
+	// If all were cached, return early
+	if (uncachedPubkeys.length === 0) {
+		return results;
+	}
+
+	console.log(`[Profiles] Fetching ${uncachedPubkeys.length} profiles in parallel`);
+
+	// Fetch uncached profiles in parallel using fetchProfile (like stacks do)
+	// This is faster because fetchProfile uses fetchFirstEvent which returns
+	// immediately when the first relay responds, rather than waiting for EOSE
+	const fetchResults = await Promise.all(
+		uncachedPubkeys.map(async (pubkey) => {
+			try {
+				const profile = await fetchProfile(pubkey);
+				return { pubkey, profile };
+			} catch (e) {
+				console.warn('Failed to fetch profile for', pubkey);
+				return { pubkey, profile: null };
+			}
+		})
+	);
+
+	// Add fetched profiles to results
+	for (const { pubkey, profile } of fetchResults) {
+		if (profile) {
+			results[pubkey] = profile;
+		}
+	}
+
+	console.log(`[Profiles] Fetched ${Object.keys(results).length} profiles total`);
+	return results;
+}
+
 // ============================================================================
 // NIP-19 Encoding/Decoding
 // ============================================================================
@@ -1195,35 +1258,37 @@ export async function fetchAppComments(pubkey, appId, { limit = 200 } = {}) {
 	}
 
 	try {
-            const appAddress = `32267:${pubkey}:${appId}`;
+		const appAddress = `32267:${pubkey}:${appId}`;
 
-		// Try with uppercase A tag first (NIP-1111 root reference)
+		// Fetch both #A and #a in parallel for faster results
+		// Some relays support uppercase A (NIP-1111), others use lowercase a
 		const filterA = {
-                kinds: [KIND_COMMENT],
-                '#A': [appAddress],
-                limit
-            };
+			kinds: [KIND_COMMENT],
+			'#A': [appAddress],
+			limit
+		};
+		const filterLowerA = {
+			kinds: [KIND_COMMENT],
+			'#a': [appAddress],
+			limit
+		};
 
-		console.log('[Comments] Fetching with #A filter:', filterA, 'from relays:', COMMENT_RELAYS);
-		let events = await fetchEvents(COMMENT_RELAYS, filterA, { timeout: 15000 });
-		console.log('[Comments] Raw events from #A filter:', events.length);
+		console.log('[Comments] Fetching with #A and #a filters in parallel from:', COMMENT_RELAYS);
 		
-		// If no results, try lowercase a tag as fallback (older comments or different relay support)
-		if (events.length === 0) {
-			const filterLowerA = {
-				kinds: [KIND_COMMENT],
-				'#a': [appAddress],
-				limit
-			};
-			console.log('[Comments] No results from #A, trying #a filter:', filterLowerA);
-			events = await fetchEvents(COMMENT_RELAYS, filterLowerA, { timeout: 15000 });
-			console.log('[Comments] Raw events from #a filter:', events.length);
-		}
+		// Fetch both in parallel with shorter timeout (5s is plenty for social relays)
+		const [eventsA, eventsLowerA] = await Promise.all([
+			fetchEvents(COMMENT_RELAYS, filterA, { timeout: 5000 }),
+			fetchEvents(COMMENT_RELAYS, filterLowerA, { timeout: 5000 })
+		]);
 		
-		const comments = events.map(parseCommentEvent);
+		console.log('[Comments] Results: #A =', eventsA.length, ', #a =', eventsLowerA.length);
+		
+		// Combine results
+		const allEvents = [...eventsA, ...eventsLowerA];
+		const comments = allEvents.map(parseCommentEvent);
 		
 		// Deduplicate by event id
-                const uniqueById = new Map();
+		const uniqueById = new Map();
 		for (const comment of comments) {
 			if (!uniqueById.has(comment.id)) {
 				uniqueById.set(comment.id, comment);
@@ -1231,19 +1296,19 @@ export async function fetchAppComments(pubkey, appId, { limit = 200 } = {}) {
 		}
 
 		const finalComments = Array.from(uniqueById.values()).sort(
-                    (a, b) => b.createdAt - a.createdAt
-                );
+			(a, b) => b.createdAt - a.createdAt
+		);
 
 		console.log('[Comments] Final comments after dedup:', finalComments.length);
 		
 		cacheComments(pubkey, appId, finalComments);
-		addEventsToStore(events);
+		addEventsToStore(allEvents);
 
 		return finalComments;
-        } catch (err) {
+	} catch (err) {
 		console.error('[Comments] Error fetching comments:', err);
 		return [];
-        }
+	}
 }
 
 /**

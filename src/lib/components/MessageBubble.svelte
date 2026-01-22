@@ -1,7 +1,13 @@
 <script>
+  import { onMount } from "svelte";
   import ProfilePic from "./ProfilePic.svelte";
   import Timestamp from "./Timestamp.svelte";
-  import { hexToColor, stringToColor } from "$lib/utils/color.js";
+  import {
+    hexToColor,
+    stringToColor,
+    getProfileTextColor,
+    rgbToCssString,
+  } from "$lib/utils/color.js";
 
   /**
    * MessageBubble - A chat-like message bubble component
@@ -45,6 +51,18 @@
   /** @type {boolean} - Whether profile data is still loading */
   export let loading = false;
 
+  // Dark mode detection
+  let isDarkMode = true;
+
+  onMount(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    isDarkMode = mediaQuery.matches;
+
+    const handleChange = (e) => (isDarkMode = e.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  });
+
   // Generate profile color from pubkey or name
   $: profileColor = getProfileColor(pubkey, name);
 
@@ -67,8 +85,9 @@
     return { r: 128, g: 128, b: 128 };
   }
 
-  // Color style for name
-  $: nameColorStyle = `rgb(${profileColor.r}, ${profileColor.g}, ${profileColor.b})`;
+  // Get text-readable color (brightened in dark mode, darkened in light mode)
+  $: textColor = getProfileTextColor(profileColor, isDarkMode);
+  $: nameColorStyle = rgbToCssString(textColor);
 </script>
 
 <div class="message-bubble {className}">
@@ -156,15 +175,7 @@
     text-decoration: none;
     transition: opacity 0.15s ease;
     white-space: nowrap;
-    /* Slightly brighten text for better readability on dark backgrounds */
-    filter: brightness(1.08);
-  }
-
-  /* Light mode: slightly darken instead */
-  @media (prefers-color-scheme: light) {
-    .author-name {
-      filter: brightness(0.95);
-    }
+    /* Brightness adjustment handled by getProfileTextColor() in color.js */
   }
 
   a.author-name:hover {

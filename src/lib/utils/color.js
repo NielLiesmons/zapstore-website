@@ -353,3 +353,50 @@ export function getFileExtensionColorInt(filename) {
   return stringToColorInt(extension);
 }
 
+// ============================================
+// Profile Text Color Utilities
+// ============================================
+
+/**
+ * Adjust brightness of an RGB color
+ * @param {{r: number, g: number, b: number}} rgb - RGB color object
+ * @param {number} factor - Brightness factor (>1 brightens, <1 darkens)
+ * @returns {{r: number, g: number, b: number}} Adjusted RGB color
+ */
+export function adjustColorBrightness(rgb, factor) {
+  return {
+    r: Math.min(255, Math.max(0, Math.round(rgb.r * factor))),
+    g: Math.min(255, Math.max(0, Math.round(rgb.g * factor))),
+    b: Math.min(255, Math.max(0, Math.round(rgb.b * factor))),
+  };
+}
+
+/**
+ * Get profile color adjusted for text readability
+ * Brightens by 8% in dark mode, darkens by 5% in light mode for better contrast
+ * 
+ * USAGE: Use this for ALL profile-colored text (author names, mentions, etc.)
+ * 
+ * @param {{r: number, g: number, b: number}} rgb - Base profile color from hexToColor() or stringToColor()
+ * @param {boolean} isDarkMode - Whether dark mode is active
+ * @returns {{r: number, g: number, b: number}} Adjusted RGB color for text use
+ * 
+ * @example
+ * const baseColor = hexToColor(pubkey);
+ * const textColor = getProfileTextColor(baseColor, isDarkMode);
+ * const style = `color: ${rgbToCssString(textColor)}`;
+ */
+export function getProfileTextColor(rgb, isDarkMode) {
+  const factor = isDarkMode ? 1.08 : 0.95;
+  return adjustColorBrightness(rgb, factor);
+}
+
+/**
+ * Convert RGB color object to CSS rgb() string
+ * @param {{r: number, g: number, b: number}} rgb - RGB color object
+ * @returns {string} CSS rgb() color string (e.g., "rgb(255, 128, 64)")
+ */
+export function rgbToCssString(rgb) {
+  return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+}
+
