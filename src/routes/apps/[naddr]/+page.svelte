@@ -29,6 +29,7 @@
     cacheApp,
     parseAppSlug,
   } from "$lib/nostr.js";
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
   import ProfileInfo from "$lib/components/ProfileInfo.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
   import ProfilePicStack from "$lib/components/ProfilePicStack.svelte";
@@ -203,9 +204,9 @@
   // Load cached data and fetch fresh data client-side
   onMount(async () => {
     // Try to load cached app first for instant display
-    if (data.slug && !app) {
+    if (data.naddr && !app) {
       try {
-        const parsed = parseAppSlug(data.slug);
+        const parsed = parseAppSlug(data.naddr);
         const cachedApp = await getCachedApp(parsed.pubkey, parsed.dTag);
         if (cachedApp && !app) {
           app = cachedApp;
@@ -574,7 +575,10 @@
         <!-- Platform Pills Row -->
         <div class="platforms-row flex items-center gap-3">
           <!-- Scrollable Platform Pills -->
-          <div class="platforms-scroll flex-1 overflow-x-auto scrollbar-hide">
+          <div
+            class="platforms-scroll flex-1 overflow-x-auto scrollbar-hide"
+            use:wheelScroll
+          >
             <div class="flex gap-2">
               {#each platforms as platform}
                 <div
@@ -616,7 +620,7 @@
 
     <!-- Screenshots -->
     {#if app.images && app.images.length > 0}
-      <div class="screenshots-scroll mb-4">
+      <div class="screenshots-scroll mb-4" use:wheelScroll>
         <div class="screenshots-content">
           {#each app.images as image, index}
             <button
@@ -825,11 +829,11 @@
           Similar & Companion Apps you might like
         </p>
         <div class="similar-apps-row flex gap-2">
-            <AppPic size="xs" name="App 1" />
-            <AppPic size="xs" name="App 2" />
-            <AppPic size="xs" name="App 3" />
-            <AppPic size="xs" name="App 4" />
-          </div>
+          <AppPic size="xs" name="App 1" />
+          <AppPic size="xs" name="App 2" />
+          <AppPic size="xs" name="App 3" />
+          <AppPic size="xs" name="App 4" />
+        </div>
       </button>
     </div>
 
@@ -1259,15 +1263,6 @@
     border-radius: 16px;
     padding: 8px 16px 10px;
     cursor: pointer;
-    transition: transform 0.15s ease;
-  }
-
-  .info-panel:hover {
-    transform: scale(1.005);
-  }
-
-  .info-panel:active {
-    transform: scale(0.995);
   }
 
   /* Responsive install buttons */

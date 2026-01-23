@@ -2,6 +2,7 @@
   import LandingSectionTitle from "./LandingSectionTitle.svelte";
   import Selector from "../Selector.svelte";
   import ForumPost from "../ForumPost.svelte";
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
 
   let selectedTab = "Forum";
   const tabs = ["Forum", "Articles", "Events", "Apps"];
@@ -163,6 +164,7 @@
       role="region"
       aria-label="Forum posts"
       class="w-full overflow-x-auto scrollbar-hide"
+      use:wheelScroll
     >
       <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-2">
         <div class="flex gap-6 -mr-4 sm:-mr-6 lg:-mr-8">

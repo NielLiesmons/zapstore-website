@@ -74,7 +74,7 @@
 <style>
   .app-small-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 16px;
     padding: 0 !important;
     text-decoration: none;
@@ -116,6 +116,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding-top: 6px;
   }
 
   /* Mobile: smaller text, 1 line description */

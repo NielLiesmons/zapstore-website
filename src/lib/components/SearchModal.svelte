@@ -4,6 +4,7 @@
   import Label from "./Label.svelte";
   import ProfilePic from "./ProfilePic.svelte";
   import { ChevronRight, Magic } from "$lib/components/icons";
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
 
   export let open = false;
   export let searchQuery = "";
@@ -278,7 +279,7 @@
               />
             </button>
           </div>
-          <div class="scrollable-row scrollbar-hide">
+          <div class="scrollable-row scrollbar-hide" use:wheelScroll>
             <div class="flex gap-2">
               {#each catalogs as catalog}
                 <button
@@ -318,7 +319,7 @@
               />
             </button>
           </div>
-          <div class="scrollable-row scrollbar-hide">
+          <div class="scrollable-row scrollbar-hide" use:wheelScroll>
             <div class="flex gap-2">
               {#each categories as category}
                 <div class="flex-shrink-0">

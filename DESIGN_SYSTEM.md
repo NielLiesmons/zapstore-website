@@ -81,9 +81,9 @@
 
 The `.panel-clickable` class adds:
 - `cursor: pointer`
-- Hover: `scale(1.01)` - subtle grow effect
-- Active: `scale(0.99)` - slight press effect
 - Focus: 2px primary outline for accessibility
+
+**NOTE**: Clickable panels do NOT have scale effects. See "Hover Scale Effects" section for what elements should scale on hover.
 
 ### When to Use Each Variant
 
@@ -1113,6 +1113,44 @@ When a scroll container extends beyond its parent (using negative margins with m
 3. **Match fade to padding**: The gradient transition distance should equal the container padding
 4. **Update at breakpoints**: If padding changes at different screen sizes, update the mask gradient to match
 
+### Mouse Wheel Scroll (wheelScroll Action)
+
+**CRITICAL**: All horizontal scroll containers MUST use the `wheelScroll` Svelte action to enable mouse wheel scrolling.
+
+**Location**: `src/lib/actions/wheelScroll.js`
+
+**What it does:**
+- Converts vertical mouse wheel scrolling to horizontal scrolling when the cursor is inside the element
+- Allows normal page scrolling to resume when the horizontal scroll reaches its left/right edge
+- Does NOT hijack vertical scrolling when the cursor merely passes over the element
+
+**Usage:**
+
+```svelte
+<script>
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
+</script>
+
+<div class="horizontal-scroll" use:wheelScroll>
+  <div class="scroll-content">
+    <!-- Scrollable items -->
+  </div>
+</div>
+```
+
+**Behavior:**
+- Only activates when the cursor is hovering inside the element
+- When user scrolls with mouse wheel, content scrolls horizontally
+- When content reaches left/right boundary, normal page scrolling resumes
+- Works with both mouse wheel (`deltaY`) and horizontal trackpad gestures (`deltaX`)
+
+**Where to apply:**
+- All `.horizontal-scroll` containers
+- Screenshot galleries
+- Platform pill rows
+- Tab button rows
+- Any element with `overflow-x: auto` that users should be able to scroll with their mouse wheel
+
 ---
 
 ## Timestamp Component
@@ -1263,6 +1301,41 @@ When displaying images in a full-screen lightbox:
 | Right chevron | Offset 1px to the right (padding-left: 1px) for visual centering |
 | Dot indicators | 8px diameter, positioned below the image (not overlaying) |
 | Counter text | Do NOT show - only use dot indicators |
+
+---
+
+## Hover Scale Effects
+
+### Overview
+
+**CRITICAL**: Scale effects on hover (growing/shrinking on interaction) are ONLY allowed on specific element types. Do NOT add scale effects to elements containing significant text content.
+
+### Elements That SHOULD Have Scale Effects
+
+| Element Type | Hover | Active | Why |
+|--------------|-------|--------|-----|
+| **Buttons** (all `.btn-*` classes) | `scale(1.02)` | `scale(0.98)` | Clear interactive feedback |
+| **ProfilePic** component | `scale(1.04)` | `scale(0.96)` | Small, visual-only element |
+| **AppPic** component | `scale(1.04)` | `scale(0.96)` | Small, visual-only element |
+| **Clickable images in horizontal scroll** | `scale(1.02)` | `scale(0.98)` | Cards in carousels (e.g., app cards, screenshots) |
+
+### Elements That Should NOT Have Scale Effects
+
+| Element Type | Why |
+|--------------|-----|
+| **Panels** (`.panel-clickable`) | Contains text content that would distort |
+| **Cards with text** (e.g., `AppStackCard`) | Text-heavy elements should not scale |
+| **List items with descriptions** | Scaling text is distracting and looks broken |
+| **Any container with paragraphs/descriptions** | Text should remain stable |
+
+### Rule of Thumb
+
+**If an element contains more than a name/label (i.e., has descriptions, paragraphs, or multiple lines of text), it should NOT scale on hover.**
+
+Scale effects are for:
+- Buttons (action triggers)
+- Avatar/icon images (visual elements only)
+- Small cards in carousels where the focus is the image
 
 ---
 

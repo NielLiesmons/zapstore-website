@@ -9,6 +9,7 @@
     fetchProfilesBatch,
   } from "$lib/nostr.js";
   import { authStore, connect } from "$lib/stores/auth.js";
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
   import ProfilePic from "./ProfilePic.svelte";
   import RootComment from "./RootComment.svelte";
 
@@ -260,7 +261,7 @@
 
 <div class="social-tabs {className}">
   <!-- Tab buttons -->
-  <div class="tab-row">
+  <div class="tab-row" use:wheelScroll>
     {#each tabs as tab}
       <button
         type="button"

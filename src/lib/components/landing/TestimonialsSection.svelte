@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import LandingSectionTitle from "./LandingSectionTitle.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
 
   export let testimonials = [];
 
@@ -227,6 +228,7 @@
         aria-label="Testimonials carousel"
         class="flex gap-6 px-4 md:px-32 py-2 overflow-x-auto scrollbar-hide relative z-10"
         style="scroll-behavior: auto;"
+        use:wheelScroll
       >
         {#each columns as column, columnIndex (`col-${columnIndex}`)}
           <div class="flex flex-col gap-6 flex-shrink-0" style="width: 320px;">

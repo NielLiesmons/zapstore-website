@@ -7,7 +7,9 @@
     fetchProfile,
     getAppSlug,
     pubkeyToNpub,
+    parseStackSlug,
   } from "$lib/nostr.js";
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
   import SectionHeader from "$lib/components/SectionHeader.svelte";
   import AppSmallCard from "$lib/components/AppSmallCard.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
@@ -18,7 +20,7 @@
   let loading = true;
   let error = null;
 
-  $: stackId = $page.params.id;
+  $: stackNaddr = $page.params.naddr;
 
   onMount(async () => {
     await loadStack();
@@ -29,10 +31,25 @@
       loading = true;
       error = null;
 
-      // Fetch all stacks and find the one matching our ID
-      const allStacks = await fetchAppStacks({ limit: 100 });
+      // Parse the naddr to get pubkey and identifier
+      let stackPubkey, stackIdentifier;
+      try {
+        const parsed = parseStackSlug(stackNaddr);
+        stackPubkey = parsed.pubkey;
+        stackIdentifier = parsed.identifier;
+      } catch (parseErr) {
+        error = "Invalid stack URL";
+        loading = false;
+        return;
+      }
+
+      // Fetch all stacks and find the one matching our pubkey and identifier
+      const allStacks = await fetchAppStacks({
+        limit: 100,
+        authors: [stackPubkey],
+      });
       const foundStack = allStacks.find(
-        (s) => s.identifier === stackId || s.id === stackId,
+        (s) => s.pubkey === stackPubkey && s.identifier === stackIdentifier,
       );
 
       if (!foundStack) {
@@ -122,7 +139,7 @@
       </div>
 
       <div class="section-container">
-        <div class="horizontal-scroll">
+        <div class="horizontal-scroll" use:wheelScroll>
           <div class="scroll-content">
             {#each Array(3) as _, colIndex}
               <div class="app-column">
@@ -182,7 +199,7 @@
       <div class="section-container">
         <SectionHeader title="Apps in this stack" />
         {#if apps.length > 0}
-          <div class="horizontal-scroll">
+          <div class="horizontal-scroll" use:wheelScroll>
             <div class="scroll-content">
               {#each appColumns as column}
                 <div class="app-column">

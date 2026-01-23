@@ -16,7 +16,7 @@
    * @example
    * <AppStackCard
    *   stack={{ name: "Dev Tools", description: "...", apps: [...], creator: {...} }}
-   *   href="/stacks/dev-tools"
+   *   href="/stacks/{naddr}"
    * />
    */
 
@@ -130,15 +130,6 @@
     text-decoration: none;
     color: inherit;
     cursor: pointer;
-    transition: transform 0.15s ease;
-  }
-
-  .app-stack-card:hover {
-    transform: scale(1.01);
-  }
-
-  .app-stack-card:active {
-    transform: scale(0.99);
   }
 
   @media (min-width: 768px) {

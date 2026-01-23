@@ -4,12 +4,14 @@
     fetchApps,
     fetchApp,
     getAppSlug,
+    getStackSlug,
     cacheApp,
     fetchAppStacks,
     resolveStackApps,
     fetchProfile,
     pubkeyToNpub,
   } from "$lib/nostr.js";
+  import { wheelScroll } from "$lib/actions/wheelScroll.js";
   import SectionHeader from "$lib/components/SectionHeader.svelte";
   import AppSmallCard from "$lib/components/AppSmallCard.svelte";
   import AppStackCard from "$lib/components/AppStackCard.svelte";
@@ -188,7 +190,7 @@
       <!-- Loading State -->
       <div class="section-container">
         <SectionHeader title="Apps" linkText="See all" href="/apps" />
-        <div class="horizontal-scroll">
+        <div class="horizontal-scroll" use:wheelScroll>
           <div class="scroll-content">
             {#each Array(4) as _, colIndex}
               <div class="app-column">
@@ -236,7 +238,7 @@
         <SectionHeader title="Apps" linkText="See all" href="/apps" />
         {#if apps.length === 0}
           <!-- Apps loading skeleton -->
-          <div class="horizontal-scroll">
+          <div class="horizontal-scroll" use:wheelScroll>
             <div class="scroll-content">
               {#each Array(4) as _}
                 <div class="app-column">
@@ -258,7 +260,7 @@
             </div>
           </div>
         {:else}
-          <div class="horizontal-scroll">
+          <div class="horizontal-scroll" use:wheelScroll>
             <div class="scroll-content">
               {#each appColumns as column, colIndex}
                 <div class="app-column">
@@ -292,7 +294,7 @@
       <div class="section-container">
         <SectionHeader title="Stacks" linkText="See all" href="/stacks" />
         {#if stacksLoading}
-          <div class="horizontal-scroll">
+          <div class="horizontal-scroll" use:wheelScroll>
             <div class="scroll-content">
               {#each Array(4) as _}
                 <div class="stack-item">
@@ -316,14 +318,16 @@
             </div>
           </div>
         {:else if stacks.length > 0}
-          <div class="horizontal-scroll">
+          <div class="horizontal-scroll" use:wheelScroll>
             <div class="scroll-content">
               {#each stacks as stack}
                 <div class="stack-item">
                   <AppStackCard
                     {stack}
-                    href="/stacks/{stack.identifier ||
-                      stack.name?.toLowerCase().replace(/\s+/g, '-')}"
+                    href="/stacks/{getStackSlug(
+                      stack.pubkey,
+                      stack.identifier,
+                    )}"
                   />
                 </div>
               {/each}

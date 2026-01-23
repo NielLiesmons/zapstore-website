@@ -395,6 +395,50 @@ export function parseAppSlug(slug) {
 	return { pubkey, dTag };
 }
 
+/**
+ * Generates a stack URL slug using naddr encoding
+ * @param {string} pubkey - Hex public key
+ * @param {string} identifier - Stack d-tag identifier
+ * @returns {string} URL slug as naddr
+ */
+export function getStackSlug(pubkey, identifier) {
+	try {
+		return nip19.naddrEncode({
+			kind: KIND_APP_STACK,
+			pubkey: pubkey,
+			identifier: identifier
+		});
+	} catch (err) {
+		console.warn('Failed to encode stack naddr:', err);
+		const npub = pubkeyToNpub(pubkey);
+		return `${npub}-${identifier}`;
+	}
+}
+
+/**
+ * Parses a stack URL slug to extract pubkey and identifier
+ * @param {string} slug - URL slug (naddr format)
+ * @returns {Object} Object with pubkey and identifier properties
+ */
+export function parseStackSlug(slug) {
+	// Try to decode as naddr
+	if (slug.startsWith('naddr1')) {
+		try {
+			const decoded = nip19.decode(slug);
+			if (decoded.type === 'naddr' && decoded.data.kind === KIND_APP_STACK) {
+				return {
+					pubkey: decoded.data.pubkey,
+					identifier: decoded.data.identifier
+				};
+			}
+		} catch (err) {
+			console.warn('Failed to decode stack naddr:', err);
+		}
+	}
+	
+	throw new Error('Invalid stack URL format: must be naddr');
+}
+
 // ============================================================================
 // Markdown Rendering
 // ============================================================================

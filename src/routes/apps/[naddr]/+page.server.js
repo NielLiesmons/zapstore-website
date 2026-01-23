@@ -6,16 +6,16 @@ export const prerender = false;
 
 export async function load({ params }) {
 	try {
-		console.log('[Server] Loading app details for slug:', params.slug);
-		const slug = params.slug;
+		console.log('[Server] Loading app details for naddr:', params.naddr);
+		const naddr = params.naddr;
 		
 		let app = null;
 		let pubkey = '';
 		let dTag = '';
 		
-		// Try to parse the slug as naddr or npub format
+		// Try to parse the naddr
 		try {
-			const parsed = parseAppSlug(slug);
+			const parsed = parseAppSlug(naddr);
 			pubkey = parsed.pubkey;
 			dTag = parsed.dTag;
 			
@@ -23,10 +23,10 @@ export async function load({ params }) {
 			app = await fetchAppServer(pubkey, dTag);
 			
 		} catch (parseErr) {
-			console.log('[Server] Failed to parse slug, trying as plain d-tag:', parseErr.message);
+			console.log('[Server] Failed to parse naddr, trying as plain d-tag:', parseErr.message);
 			
-			// Fallback: treat slug as plain d-tag (appId) and resolve
-			const resolved = await fetchAppByDTagServer(slug);
+			// Fallback: treat as plain d-tag (appId) and resolve
+			const resolved = await fetchAppByDTagServer(naddr);
 			
 			if (resolved && resolved.pubkey && resolved.dTag) {
 				pubkey = resolved.pubkey;
@@ -35,15 +35,15 @@ export async function load({ params }) {
 				
 				// Redirect to canonical naddr URL
 				try {
-					const naddr = getAppSlug(pubkey, dTag);
-					if (!slug.startsWith('naddr1')) {
-						throw redirect(301, `/apps/${naddr}`);
+					const canonicalNaddr = getAppSlug(pubkey, dTag);
+					if (!naddr.startsWith('naddr1')) {
+						throw redirect(301, `/apps/${canonicalNaddr}`);
 					}
 				} catch (e) {
 					console.warn('[Server] Failed to encode naddr or redirect:', e);
 				}
 			} else {
-				console.error('[Server] App not found for slug:', slug);
+				console.error('[Server] App not found for naddr:', naddr);
 				return {
 					app: null,
 					loading: false,
@@ -68,7 +68,7 @@ export async function load({ params }) {
 		
 		return {
 			app,
-			slug: params.slug, // Pass the slug for deep linking
+			naddr: params.naddr, // Pass the naddr for deep linking
 			loading: false,
 			error: null
 		};
