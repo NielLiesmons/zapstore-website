@@ -4,12 +4,14 @@
    *
    * Features:
    * - Body scroll lock when open
-   * - Configurable max height (default 80vh), bottom-aligned when content exceeds
+   * - Configurable max height (default 80vh)
+   * - All modals hug content by default (up to maxHeight)
    * - Always bottom-aligned on mobile screens
    * - Scrollable content within modal
    * - No bottom border radius when bottom-aligned (touches screen edge)
    * - Backdrop click and Escape key to close
-   * - fillHeight option to force modal to fill to maxHeight immediately
+   * - fillHeight option to force modal to fill to maxHeight (fixed height)
+   * - wide option for page-content-width modals (e.g., comment threads)
    */
   import { fade, fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
@@ -30,12 +32,18 @@
   /** @type {number} - Z-index for the modal (default: 50) */
   export let zIndex = 50;
 
-  /** @type {string} - Max width of modal (default: max-w-lg) */
+  /** @type {string} - Max width of modal (default: max-w-lg). Ignored when `wide` is true. */
   export let maxWidth = "max-w-lg";
+
+  /** @type {boolean} - When true, modal matches page container width at each breakpoint */
+  export let wide = false;
 
   /** @type {string} - Additional CSS classes for the modal container */
   let className = "";
   export { className as class };
+
+  // Compute effective max width class
+  $: effectiveMaxWidth = wide ? "modal-wide" : maxWidth;
 
   /** @type {number} - Max height as percentage of viewport (default: 80). Used for bottom/top aligned and as threshold for switching to bottom-align */
   export let maxHeight = 80;
@@ -161,7 +169,7 @@
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
       bind:this={modalElement}
-      class="modal-container relative w-full {maxWidth} {className} border-subtle shadow-2xl overflow-hidden backdrop-blur-lg"
+      class="modal-container relative w-full {effectiveMaxWidth} {className} border-subtle shadow-2xl overflow-hidden backdrop-blur-lg"
       class:modal-top={actualAlignment === "top"}
       class:modal-center={actualAlignment === "center"}
       class:modal-bottom={actualAlignment === "bottom"}
@@ -215,7 +223,7 @@
     background: hsl(var(--gray66));
   }
 
-  /* Bottom-aligned modal */
+  /* Bottom-aligned modal - hugs content up to maxHeight */
   .modal-bottom {
     margin: 0;
     margin-top: auto;
@@ -227,6 +235,41 @@
   /* Fill height modifier - forces modal to fill to maxHeight */
   .modal-fill-height {
     height: var(--modal-max-height);
+  }
+
+  /* Wide modal - matches container breakpoints from tailwind.config.js */
+  .modal-wide {
+    max-width: 100%; /* Mobile: full width */
+  }
+
+  @media (min-width: 640px) {
+    .modal-wide {
+      max-width: 640px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .modal-wide {
+      max-width: 768px;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .modal-wide {
+      max-width: 900px;
+    }
+  }
+
+  @media (min-width: 1000px) {
+    .modal-wide {
+      max-width: 1000px;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .modal-wide {
+      max-width: 1100px;
+    }
   }
 
   /* Scrollable content area */

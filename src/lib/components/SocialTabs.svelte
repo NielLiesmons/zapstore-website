@@ -309,6 +309,7 @@
               loading={comment.profileLoading}
               replies={comment.replies}
               authorPubkey={app?.pubkey}
+              contentHtml={comment.contentHtml}
             >
               {@html comment.contentHtml ||
                 "<p class='text-muted-foreground italic'>No content</p>"}

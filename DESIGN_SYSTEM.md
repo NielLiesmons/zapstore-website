@@ -1316,17 +1316,19 @@ Use the `Modal` component (`$lib/components/Modal.svelte`) for all modal dialogs
 | `open` | boolean | `false` | Controls modal visibility (use `bind:open`) |
 | `align` | `'center'` \| `'bottom'` \| `'top'` | `'center'` | Force alignment mode |
 | `maxHeight` | number | `80` | Max height as percentage of viewport (vh) |
-| `fillHeight` | boolean | `false` | Force modal to fill to maxHeight immediately |
-| `maxWidth` | string | `'max-w-lg'` | Tailwind max-width class |
+| `fillHeight` | boolean | `false` | Force modal to fill to maxHeight (fixed height instead of hugging content) |
+| `maxWidth` | string | `'max-w-lg'` | Tailwind max-width class (ignored when `wide` is true) |
+| `wide` | boolean | `false` | Match page container width (640px→1100px at breakpoints) |
 | `zIndex` | number | `50` | Z-index for stacking modals |
 | `class` | string | `''` | Additional CSS classes for styling overrides |
 
 ### Alignment Behavior
 
-- **Center** (default): Modal is centered, sizes to content, switches to bottom-align if content exceeds `maxHeight`
-- **Bottom**: Modal is anchored to bottom of screen with top border radius only (sheet-style)
-- **Top**: Modal drops from top with bottom border radius only (dropdown-style)
-- On mobile (<640px), modals automatically switch to bottom alignment
+- **Center** (default): Modal is centered, hugs content, switches to bottom-align if content exceeds `maxHeight`
+- **Bottom**: Modal is anchored to bottom of screen with top border radius only (sheet-style). Hugs content up to `maxHeight`.
+- **Top**: Modal drops from top with bottom border radius only (dropdown-style). Hugs content up to `maxHeight`.
+- On mobile (<640px), modals automatically switch to bottom alignment (still hugs content)
+- Use `fillHeight={true}` to force any modal to fill to `maxHeight` (fixed height)
 
 ### When to Force Bottom Alignment
 
@@ -1338,14 +1340,14 @@ Use `align="bottom"` when the modal contains:
 This prevents the modal from "jumping" when content loads and triggers the alignment switch.
 
 ```svelte
-<!-- For modals with loading feeds/content -->
+<!-- For modals with loading feeds/content (hugs content) -->
 <Modal bind:open align="bottom" maxHeight={80}>
   <FeedContent />
 </Modal>
 
-<!-- For sheet-style modals that fill to maxHeight immediately -->
-<Modal bind:open align="bottom" fillHeight={true} maxHeight={80}>
-  <SheetContent />
+<!-- For wide modals like comment threads (fixed height, matches page content width) -->
+<Modal bind:open align="bottom" maxHeight={85} fillHeight={true} wide={true}>
+  <ThreadContent />
 </Modal>
 ```
 

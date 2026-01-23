@@ -1,6 +1,7 @@
 <script>
   import MessageBubble from "./MessageBubble.svelte";
   import ProfilePicStack from "./ProfilePicStack.svelte";
+  import Modal from "./Modal.svelte";
   import { stringToColor } from "$lib/utils/color.js";
 
   /**
@@ -10,6 +11,7 @@
    * - The root comment as a MessageBubble
    * - An L-shaped connector line to repliers (if any)
    * - Stacked profile pics of repliers + "Name & X others commented" text
+   * - Modal with thread view when clicking on repliers
    */
 
   /** @type {string|null} - Profile picture URL */
@@ -38,6 +40,12 @@
 
   /** @type {string} - Additional CSS classes */
   export let className = "";
+
+  /** @type {string} - HTML content of the root comment (passed via slot, captured here for modal) */
+  export let contentHtml = "";
+
+  // Modal state
+  let modalOpen = false;
 
   // Get unique repliers (by pubkey), prioritizing the app author
   $: uniqueRepliers = (() => {
@@ -75,6 +83,17 @@
 
   // Show up to 3 stacked avatars
   $: displayedRepliers = uniqueRepliers.slice(0, 3);
+
+  // Sort all replies chronologically for the modal
+  $: sortedReplies = [...replies].sort((a, b) => {
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return timeA - timeB;
+  });
+
+  function openThread() {
+    modalOpen = true;
+  }
 </script>
 
 <div class="root-comment {className}">
@@ -120,11 +139,59 @@
             ? `${featuredReplier?.displayName || "Someone"} & ${otherRepliersCount} ${otherRepliersCount === 1 ? "other" : "others"}`
             : featuredReplier?.displayName || "Someone"}
           size="sm"
+          on:click={openThread}
         />
       </div>
     </div>
   {/if}
 </div>
+
+<!-- Thread Modal -->
+<Modal
+  bind:open={modalOpen}
+  ariaLabel="Comment thread"
+  align="bottom"
+  fillHeight={true}
+  wide={true}
+  class="thread-modal"
+>
+  <div class="thread-content">
+    <!-- Root comment (repeated in modal) -->
+    <div class="thread-root">
+      <MessageBubble
+        {pictureUrl}
+        {name}
+        {pubkey}
+        {timestamp}
+        {profileUrl}
+        {loading}
+      >
+        {@html contentHtml ||
+          "<p class='text-muted-foreground italic'>No content</p>"}
+      </MessageBubble>
+    </div>
+
+    <!-- Full-width divider -->
+    <div class="thread-divider"></div>
+
+    <!-- Replies in chronological order -->
+    <div class="thread-replies">
+      {#each sortedReplies as reply (reply.id)}
+        <MessageBubble
+          pictureUrl={reply.avatarUrl}
+          name={reply.displayName}
+          pubkey={reply.pubkey}
+          timestamp={reply.createdAt}
+          profileUrl={reply.profileUrl}
+          loading={reply.profileLoading}
+        >
+          {@html reply.contentHtml ||
+            "<p class='text-muted-foreground italic'>No content</p>"}
+        </MessageBubble>
+      {/each}
+    </div>
+  </div>
+</Modal>
 
 <style>
   .root-comment {
@@ -174,5 +241,30 @@
     padding-top: 4px; /* Space above avatars/text */
     flex: 1;
     min-width: 0;
+  }
+
+  /* Thread Modal Styles */
+  .thread-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .thread-root {
+    padding: 20px;
+    padding-bottom: 16px;
+  }
+
+  .thread-divider {
+    height: 1px;
+    background-color: hsl(var(--white16));
+    /* Full width - no horizontal padding from parent */
+    margin: 0;
+  }
+
+  .thread-replies {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 20px 20px;
   }
 </style>
