@@ -355,6 +355,23 @@
     return Prism.highlight(jsonString, Prism.languages.json, "json");
   }
 
+  // Strip markdown formatting from text
+  function stripMarkdown(text) {
+    if (!text) return "";
+    return text
+      .replace(/^#{1,6}\s*/gm, "") // Remove heading markers
+      .replace(/\*\*(.+?)\*\*/g, "$1") // Remove bold **text**
+      .replace(/\*(.+?)\*/g, "$1") // Remove italic *text*
+      .replace(/__(.+?)__/g, "$1") // Remove bold __text__
+      .replace(/_(.+?)_/g, "$1") // Remove italic _text_
+      .replace(/~~(.+?)~~/g, "$1") // Remove strikethrough
+      .replace(/`(.+?)`/g, "$1") // Remove inline code
+      .replace(/^\s*[-*+]\s+/gm, "") // Remove list markers
+      .replace(/^\s*\d+\.\s+/gm, "") // Remove numbered list markers
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Remove links, keep text
+      .trim();
+  }
+
   // Handle zap received event from ZapButton
   function handleZapReceived(event) {
     const { zapReceipt } = event.detail;
@@ -759,7 +776,7 @@
                 class="text-sm truncate"
                 style="color: hsl(var(--white66)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                 >{latestRelease?.notes
-                  ? latestRelease.notes.split(/[.!?\n]/)[0]?.trim()
+                  ? stripMarkdown(latestRelease.notes.split(/[.!?\n]/)[0])
                   : "Latest release"}</span
               >
             </div>
@@ -817,24 +834,21 @@
         </button>
       </div>
 
-      <!-- Row 2 (mobile only): Similar Apps -->
-      <button type="button" class="info-panel panel-similar-mobile text-left">
-        <div class="panel-header">
-          <span
-            class="text-base font-semibold"
-            style="color: hsl(var(--foreground));">Suggestions</span
-          >
-        </div>
-        <p class="text-sm mb-2" style="color: hsl(var(--white66));">
-          Similar & Companion Apps you might like
-        </p>
-        <div class="similar-apps-row flex gap-2">
-          <AppPic size="xs" name="App 1" />
-          <AppPic size="xs" name="App 2" />
-          <AppPic size="xs" name="App 3" />
-          <AppPic size="xs" name="App 4" />
-        </div>
-      </button>
+    <!-- Row 2 (mobile only): Similar Apps -->
+    <button type="button" class="info-panel panel-similar-mobile text-left">
+      <div class="panel-header">
+        <span
+          class="text-base font-semibold"
+          style="color: hsl(var(--foreground));">Suggestions</span
+        >
+      </div>
+      <div class="similar-apps-row flex gap-2 mt-2">
+        <AppPic size="xs" name="App 1" />
+        <AppPic size="xs" name="App 2" />
+        <AppPic size="xs" name="App 3" />
+        <AppPic size="xs" name="App 4" />
+      </div>
+    </button>
     </div>
 
     <div class="divider mb-4"></div>
@@ -1210,9 +1224,9 @@
     margin-bottom: 2px;
   }
 
-  /* Mobile: Security 50%, Releases 50% */
+  /* Mobile: Security is golden ratio larger (~1.618), Releases is smaller (~1) */
   .panel-security {
-    flex: 1;
+    flex: 1.618;
     min-width: 0;
   }
 
@@ -1228,7 +1242,7 @@
 
   .panel-similar-mobile {
     width: 100%;
-    padding-bottom: 16px;
+    padding-bottom: 20px;
   }
 
   /* Desktop layout: all three in one row */
@@ -1574,7 +1588,7 @@
   }
 
   .app-description {
-    font-size: 0.9375rem; /* 15px - same as MessageBubble content */
+    font-size: 0.8125rem; /* 13px on mobile */
     line-height: 1.5;
     color: hsl(var(--foreground) / 0.85);
   }
@@ -1596,7 +1610,7 @@
   /* Larger screens */
   @media (min-width: 768px) {
     .app-description {
-      font-size: 1rem; /* 16px */
+      font-size: 0.9375rem; /* 15px on desktop */
     }
     .description-container:not(.expanded) .app-description {
       max-height: 150px; /* Desktop max height */
