@@ -19,6 +19,7 @@
 11. [Horizontal Scroll Containers](#horizontal-scroll-containers)
 12. [Timestamp Component](#timestamp-component)
 13. [Image Containers](#image-containers)
+14. [Modals](#modals)
 
 ---
 
@@ -1301,6 +1302,58 @@ When displaying images in a full-screen lightbox:
 | Right chevron | Offset 1px to the right (padding-left: 1px) for visual centering |
 | Dot indicators | 8px diameter, positioned below the image (not overlaying) |
 | Counter text | Do NOT show - only use dot indicators |
+
+---
+
+## Modals
+
+Use the `Modal` component (`$lib/components/Modal.svelte`) for all modal dialogs.
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `open` | boolean | `false` | Controls modal visibility (use `bind:open`) |
+| `align` | `'center'` \| `'bottom'` \| `'top'` | `'center'` | Force alignment mode |
+| `maxHeight` | number | `80` | Max height as percentage of viewport (vh) |
+| `fillHeight` | boolean | `false` | Force modal to fill to maxHeight immediately |
+| `maxWidth` | string | `'max-w-lg'` | Tailwind max-width class |
+| `zIndex` | number | `50` | Z-index for stacking modals |
+| `class` | string | `''` | Additional CSS classes for styling overrides |
+
+### Alignment Behavior
+
+- **Center** (default): Modal is centered, sizes to content, switches to bottom-align if content exceeds `maxHeight`
+- **Bottom**: Modal is anchored to bottom of screen with top border radius only (sheet-style)
+- **Top**: Modal drops from top with bottom border radius only (dropdown-style)
+- On mobile (<640px), modals automatically switch to bottom alignment
+
+### When to Force Bottom Alignment
+
+Use `align="bottom"` when the modal contains:
+- **Dynamic/loading content** (feeds, lists that load asynchronously)
+- **Potentially tall content** that may exceed the viewport
+- **Sheet-style UI patterns** (action sheets, pickers)
+
+This prevents the modal from "jumping" when content loads and triggers the alignment switch.
+
+```svelte
+<!-- For modals with loading feeds/content -->
+<Modal bind:open align="bottom" maxHeight={80}>
+  <FeedContent />
+</Modal>
+
+<!-- For sheet-style modals that fill to maxHeight immediately -->
+<Modal bind:open align="bottom" fillHeight={true} maxHeight={80}>
+  <SheetContent />
+</Modal>
+```
+
+### Styling
+
+- Default background: `hsl(var(--gray66))`
+- Border radius: `var(--radius-32)` (32px)
+- Use `class` prop to override background (e.g., `DownloadModal` uses gradient)
 
 ---
 

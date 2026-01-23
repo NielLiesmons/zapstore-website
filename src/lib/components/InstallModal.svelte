@@ -6,12 +6,12 @@
    * For Zapstore itself, shows the fancy promotional header.
    * For other apps, shows a similar layout.
    */
-  import { fade } from "svelte/transition";
   import { assets } from "$app/paths";
   import { Copy, ArrowRight } from "lucide-svelte";
   import { Download, ChevronRight } from "$lib/components/icons";
   import PlatformSelector from "./PlatformSelector.svelte";
   import AppPic from "./AppPic.svelte";
+  import Modal from "./Modal.svelte";
 
   /** @type {boolean} */
   export let open = false;
@@ -45,22 +45,6 @@
   $: minAndroidVersion = app?.minAndroidVersion || "Android 8.0+";
   $: sourceUrl = app?.repository || app?.sourceUrl || null;
   $: deepLink = app?.dTag ? `zapstore://app/${app.dTag}` : null;
-
-  function closeModal() {
-    open = false;
-  }
-
-  function handleKeydown(e) {
-    if (e.key === "Escape") {
-      closeModal();
-    }
-  }
-
-  function handleBackdropClick(e) {
-    if (e.target === e.currentTarget) {
-      closeModal();
-    }
-  }
 
   function handleOpenInZapstore() {
     if (deepLink) {
@@ -143,295 +127,262 @@
   }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<Modal
+  bind:open
+  ariaLabel="Download {isZapstore ? 'Zapstore' : app?.name || 'App'}"
+  maxWidth="max-w-lg"
+>
+  {#if isZapstore}
+    <!-- Zapstore: Fancy header image -->
+    <img
+      src={`${assets}/images/download-image.png`}
+      alt="Download Zapstore"
+      class="w-full h-auto object-cover"
+      loading="lazy"
+    />
+    <div class="p-6 relative" style="margin-top: -{IMAGE_TOP_HEIGHT}px;">
+      <h2 class="text-display text-4xl text-foreground text-center mb-6">
+        Download Zapstore
+      </h2>
 
-{#if open}
-  <!-- Backdrop -->
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
-  <div
-    class="fixed inset-0 z-50 bg-overlay flex items-center justify-center p-4"
-    transition:fade={{ duration: 150 }}
-    on:click={handleBackdropClick}
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="install-modal-title"
-  >
-    <!-- Modal -->
-    <div
-      class="relative w-full max-w-lg border-subtle rounded-2xl shadow-2xl overflow-hidden backdrop-blur-lg"
-      style="background: {isZapstore
-        ? 'linear-gradient(to bottom, hsl(var(--black66)), hsl(var(--gray66)))'
-        : 'hsl(var(--gray66))'};"
-      transition:fade={{ duration: 150 }}
-    >
-      {#if isZapstore}
-        <!-- Zapstore: Fancy header image -->
-        <img
-          src={`${assets}/images/download-image.png`}
-          alt="Download Zapstore"
-          class="w-full h-auto object-cover"
-          loading="lazy"
+      <!-- Platform Selector -->
+      <div class="mb-6">
+        <PlatformSelector
+          platforms={zapstorePlatforms}
+          {selectedPlatform}
+          onSelect={(platform) => (selectedPlatform = platform)}
         />
-        <div class="p-6 relative" style="margin-top: -{IMAGE_TOP_HEIGHT}px;">
-          <h2
-            id="install-modal-title"
-            class="text-display text-4xl text-foreground text-center mb-6"
-          >
-            Download Zapstore
-          </h2>
+      </div>
 
-          <!-- Platform Selector -->
-          <div class="mb-6">
-            <PlatformSelector
-              platforms={zapstorePlatforms}
-              {selectedPlatform}
-              onSelect={(platform) => (selectedPlatform = platform)}
-            />
-          </div>
-
-          <!-- Platform-specific content for Zapstore -->
-          {#if selectedPlatform === "Android"}
-            <div class="space-y-5">
-              <div
-                class="flex items-stretch rounded-xl bg-white/5 border border-border/30 overflow-hidden"
-              >
-                <div class="flex flex-col items-center gap-5 pt-5 pb-4 px-5">
-                  <img
-                    src={`${assets}/images/qr.png`}
-                    alt="QR code to download Zapstore"
-                    class="w-32 h-32 rounded-lg border border-border/40 bg-white p-1"
-                    loading="lazy"
-                  />
-                  <button
-                    type="button"
-                    class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    on:click={() =>
-                      navigator.clipboard.writeText(ZAPSTORE_APK_URL)}
-                  >
-                    <span>Download Link</span>
-                    <Copy class="w-4 h-4" />
-                  </button>
-                </div>
-                <div
-                  class="w-[1.4px] flex-shrink-0 self-stretch"
-                  style="background-color: hsl(var(--white16));"
-                ></div>
-                <div
-                  class="flex-1 flex flex-col justify-center gap-2 px-6 py-4"
-                >
-                  <p class="text-sm text-muted-foreground">
-                    Scan with your phone or download directly
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                on:click={handleDownloadZapstore}
-                disabled={downloading}
-                class="btn-primary-large w-full disabled:opacity-70 flex items-center justify-center gap-3"
-              >
-                {#if downloading}
-                  <div
-                    class="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent"
-                  ></div>
-                  Downloading...
-                {:else}
-                  <Download
-                    variant="fill"
-                    color="hsl(var(--white66))"
-                    size={20}
-                  />
-                  Download Android App
-                {/if}
-              </button>
-            </div>
-          {:else if selectedPlatform === "iOS"}
-            <div class="space-y-5">
-              <form
-                class="space-y-3"
-                on:submit|preventDefault={handleIosWaitlistSubmit}
-              >
-                <input
-                  name="contact"
-                  type="text"
-                  placeholder="you@example.com or npub1..."
-                  class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/40"
-                />
-                <button
-                  type="submit"
-                  class="btn-primary w-full"
-                  disabled={iosSubmitting}
-                >
-                  {iosSubmitting ? "Submitting..." : "Notify me"}
-                  <ArrowRight class="ml-2 h-4 w-4" />
-                </button>
-                {#if iosWaitlistStatus === "error"}
-                  <p class="text-sm text-rose-400">{iosWaitlistMessage}</p>
-                {:else if iosWaitlistStatus === "success"}
-                  <p class="text-sm text-emerald-400">{iosWaitlistMessage}</p>
-                {/if}
-              </form>
-              <p class="text-sm text-muted-foreground">
-                We're designing Zapstore iOS to bypass the App Store. Drop your
-                email or npub and we'll notify you.
-              </p>
-            </div>
-          {:else}
-            <div class="text-center py-8">
-              <p class="text-muted-foreground">
-                {selectedPlatform} downloads coming soon!
-              </p>
-            </div>
-          {/if}
-        </div>
-      {:else}
-        <!-- Other apps -->
-        <div class="p-6">
-          <!-- App icon centered -->
-          <div class="flex justify-center mb-4">
-            <AppPic
-              iconUrl={app?.icon}
-              name={app?.name}
-              identifier={app?.dTag}
-              size="xl"
-            />
-          </div>
-
-          <!-- Header same size as Zapstore modal -->
-          <h2
-            id="install-modal-title"
-            class="text-display text-4xl text-foreground text-center mb-6"
-          >
-            Download {app?.name || "App"}
-          </h2>
-
-          <!-- Platform Selector -->
-          <div class="mb-6">
-            <div class="app-platform-selector">
-              <button type="button" class="platform-btn selected">
-                Android
-              </button>
-              <button type="button" class="platform-btn disabled" disabled>
-                No other platforms
-              </button>
-            </div>
-          </div>
-
-          <!-- QR Code Container - same structure as Zapstore -->
+      <!-- Platform-specific content for Zapstore -->
+      {#if selectedPlatform === "Android"}
+        <div class="space-y-5">
           <div
-            class="flex items-stretch rounded-xl bg-white/5 border border-border/30 overflow-hidden mb-5"
+            class="flex items-stretch rounded-xl bg-white/5 border border-border/30 overflow-hidden"
           >
-            <!-- QR Code Left -->
             <div class="flex flex-col items-center gap-5 pt-5 pb-4 px-5">
               <img
                 src={`${assets}/images/qr.png`}
-                alt="QR code to open in Zapstore"
+                alt="QR code to download Zapstore"
                 class="w-32 h-32 rounded-lg border border-border/40 bg-white p-1"
                 loading="lazy"
               />
               <button
                 type="button"
                 class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                on:click={copyDeepLink}
+                on:click={() => navigator.clipboard.writeText(ZAPSTORE_APK_URL)}
               >
                 <span>Download Link</span>
-                {#if linkCopied}
-                  <svg
-                    class="w-4 h-4 text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 13l4 4L19 7"
-                    ></path>
-                  </svg>
-                {:else}
-                  <Copy class="w-4 h-4" />
-                {/if}
+                <Copy class="w-4 h-4" />
               </button>
             </div>
-
-            <!-- Vertical Divider -->
             <div
               class="w-[1.4px] flex-shrink-0 self-stretch"
               style="background-color: hsl(var(--white16));"
             ></div>
-
-            <!-- Right Column -->
-            <div class="flex-1 flex flex-col">
-              <!-- Android Version Info -->
-              <div
-                class="flex-1 flex flex-col justify-center gap-1 text-muted-foreground pl-6 pr-4 py-2"
-              >
-                <span class="flex items-center gap-2">
-                  <svg
-                    class="w-5 h-5 flex-shrink-0"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.463 11.463 0 00-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 003 18h18a10.78 10.78 0 00-3.4-8.52zM8.5 14c-.83 0-1.5-.67-1.5-1.5S7.67 11 8.5 11s1.5.67 1.5 1.5S9.33 14 8.5 14zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
-                    />
-                  </svg>
-                  <span class="text-sm">{minAndroidVersion}</span>
-                </span>
-              </div>
-
-              <!-- Horizontal Divider -->
-              <div
-                class="w-full h-[1.4px] flex-shrink-0"
-                style="background-color: hsl(var(--white16));"
-              ></div>
-
-              <!-- Source Code -->
-              {#if sourceUrl}
-                <a
-                  href={sourceUrl}
-                  class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pl-6 pr-4 py-4"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span>View Source Code</span>
-                  <ChevronRight
-                    variant="outline"
-                    strokeWidth={1.4}
-                    color="hsl(var(--white33))"
-                    size={16}
-                    className="ml-auto"
-                  />
-                </a>
-              {:else}
-                <div
-                  class="flex items-center gap-2 text-sm text-muted-foreground pl-6 pr-4 py-4"
-                >
-                  <span>Closed Source</span>
-                </div>
-              {/if}
+            <div class="flex-1 flex flex-col justify-center gap-2 px-6 py-4">
+              <p class="text-sm text-muted-foreground">
+                Scan with your phone or download directly
+              </p>
             </div>
           </div>
 
-          <!-- Action buttons -->
-          <div class="flex gap-3">
-            <a href="/download" class="get-zapstore-btn"> Direct Download </a>
+          <button
+            type="button"
+            on:click={handleDownloadZapstore}
+            disabled={downloading}
+            class="btn-primary-large w-full disabled:opacity-70 flex items-center justify-center gap-3"
+          >
+            {#if downloading}
+              <div
+                class="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent"
+              ></div>
+              Downloading...
+            {:else}
+              <Download variant="fill" color="hsl(var(--white66))" size={20} />
+              Download Android App
+            {/if}
+          </button>
+        </div>
+      {:else if selectedPlatform === "iOS"}
+        <div class="space-y-5">
+          <form
+            class="space-y-3"
+            on:submit|preventDefault={handleIosWaitlistSubmit}
+          >
+            <input
+              name="contact"
+              type="text"
+              placeholder="you@example.com or npub1..."
+              class="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:ring-2 focus:ring-primary/40"
+            />
             <button
-              type="button"
-              on:click={handleOpenInZapstore}
-              class="btn-primary-large flex-1"
+              type="submit"
+              class="btn-primary w-full"
+              disabled={iosSubmitting}
             >
-              Open in Zapstore
+              {iosSubmitting ? "Submitting..." : "Notify me"}
+              <ArrowRight class="ml-2 h-4 w-4" />
             </button>
-          </div>
+            {#if iosWaitlistStatus === "error"}
+              <p class="text-sm text-rose-400">{iosWaitlistMessage}</p>
+            {:else if iosWaitlistStatus === "success"}
+              <p class="text-sm text-emerald-400">{iosWaitlistMessage}</p>
+            {/if}
+          </form>
+          <p class="text-sm text-muted-foreground">
+            We're designing Zapstore iOS to bypass the App Store. Drop your
+            email or npub and we'll notify you.
+          </p>
+        </div>
+      {:else}
+        <div class="text-center py-8">
+          <p class="text-muted-foreground">
+            {selectedPlatform} downloads coming soon!
+          </p>
         </div>
       {/if}
     </div>
-  </div>
-{/if}
+  {:else}
+    <!-- Other apps -->
+    <div class="p-6">
+      <!-- App icon centered -->
+      <div class="flex justify-center mb-4">
+        <AppPic
+          iconUrl={app?.icon}
+          name={app?.name}
+          identifier={app?.dTag}
+          size="xl"
+        />
+      </div>
+
+      <!-- Header same size as Zapstore modal -->
+      <h2 class="text-display text-4xl text-foreground text-center mb-6">
+        Download {app?.name || "App"}
+      </h2>
+
+      <!-- Platform Selector -->
+      <div class="mb-6">
+        <div class="app-platform-selector">
+          <button type="button" class="platform-btn selected"> Android </button>
+          <button type="button" class="platform-btn disabled" disabled>
+            No other platforms
+          </button>
+        </div>
+      </div>
+
+      <!-- QR Code Container - same structure as Zapstore -->
+      <div
+        class="flex items-stretch rounded-xl bg-white/5 border border-border/30 overflow-hidden mb-5"
+      >
+        <!-- QR Code Left -->
+        <div class="flex flex-col items-center gap-5 pt-5 pb-4 px-5">
+          <img
+            src={`${assets}/images/qr.png`}
+            alt="QR code to open in Zapstore"
+            class="w-32 h-32 rounded-lg border border-border/40 bg-white p-1"
+            loading="lazy"
+          />
+          <button
+            type="button"
+            class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            on:click={copyDeepLink}
+          >
+            <span>Download Link</span>
+            {#if linkCopied}
+              <svg
+                class="w-4 h-4 text-green-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            {:else}
+              <Copy class="w-4 h-4" />
+            {/if}
+          </button>
+        </div>
+
+        <!-- Vertical Divider -->
+        <div
+          class="w-[1.4px] flex-shrink-0 self-stretch"
+          style="background-color: hsl(var(--white16));"
+        ></div>
+
+        <!-- Right Column -->
+        <div class="flex-1 flex flex-col">
+          <!-- Android Version Info -->
+          <div
+            class="flex-1 flex flex-col justify-center gap-1 text-muted-foreground pl-6 pr-4 py-2"
+          >
+            <span class="flex items-center gap-2">
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.463 11.463 0 00-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 003 18h18a10.78 10.78 0 00-3.4-8.52zM8.5 14c-.83 0-1.5-.67-1.5-1.5S7.67 11 8.5 11s1.5.67 1.5 1.5S9.33 14 8.5 14zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+                />
+              </svg>
+              <span class="text-sm">{minAndroidVersion}</span>
+            </span>
+          </div>
+
+          <!-- Horizontal Divider -->
+          <div
+            class="w-full h-[1.4px] flex-shrink-0"
+            style="background-color: hsl(var(--white16));"
+          ></div>
+
+          <!-- Source Code -->
+          {#if sourceUrl}
+            <a
+              href={sourceUrl}
+              class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pl-6 pr-4 py-4"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span>View Source Code</span>
+              <ChevronRight
+                variant="outline"
+                strokeWidth={1.4}
+                color="hsl(var(--white33))"
+                size={16}
+                className="ml-auto"
+              />
+            </a>
+          {:else}
+            <div
+              class="flex items-center gap-2 text-sm text-muted-foreground pl-6 pr-4 py-4"
+            >
+              <span>Closed Source</span>
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex gap-3">
+        <a href="/download" class="get-zapstore-btn"> Direct Download </a>
+        <button
+          type="button"
+          on:click={handleOpenInZapstore}
+          class="btn-primary-large flex-1"
+        >
+          Open in Zapstore
+        </button>
+      </div>
+    </div>
+  {/if}
+</Modal>
 
 <style>
   .get-zapstore-btn {

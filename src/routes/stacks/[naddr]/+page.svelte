@@ -10,10 +10,22 @@
     parseStackSlug,
   } from "$lib/nostr.js";
   import { wheelScroll } from "$lib/actions/wheelScroll.js";
-  import SectionHeader from "$lib/components/SectionHeader.svelte";
   import AppSmallCard from "$lib/components/AppSmallCard.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
+  import ProfilePicStack from "$lib/components/ProfilePicStack.svelte";
+  import SocialTabs from "$lib/components/SocialTabs.svelte";
+  import Timestamp from "$lib/components/Timestamp.svelte";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
+
+  // Catalog for this stack - currently just Zapstore
+  const catalogs = [
+    {
+      name: "Zapstore",
+      pictureUrl: "https://zapstore.dev/zapstore-icon.png",
+      pubkey:
+        "78ce6faa72264387284e647ba6938995735ec8c7d5c5a65737e55f2fe2202182",
+    },
+  ];
 
   let stack = null;
   let apps = [];
@@ -129,13 +141,15 @@
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
     {#if loading}
       <!-- Loading State -->
-      <div class="stack-header-skeleton">
-        <div class="skeleton-title"><SkeletonLoader /></div>
-        <div class="skeleton-desc"></div>
-        <div class="skeleton-creator">
+      <div class="skeleton-publisher-row">
+        <div class="skeleton-publisher">
           <div class="skeleton-avatar"><SkeletonLoader /></div>
           <div class="skeleton-name-small"></div>
         </div>
+      </div>
+      <div class="stack-header-skeleton">
+        <div class="skeleton-title"><SkeletonLoader /></div>
+        <div class="skeleton-desc"></div>
       </div>
 
       <div class="section-container">
@@ -173,31 +187,57 @@
         </div>
       </div>
     {:else if stack}
+      <!-- Publisher Row -->
+      {#if stack.creator}
+        <div class="publisher-row flex items-center justify-between mb-4">
+          <a
+            href="/p/{stack.creator.npub}"
+            class="publisher-link flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+          >
+            <div class="publisher-pic-mobile">
+              <ProfilePic
+                pictureUrl={stack.creator.picture}
+                name={stack.creator.name}
+                pubkey={stack.creator.pubkey}
+                size="xs"
+              />
+            </div>
+            <div class="publisher-pic-desktop">
+              <ProfilePic
+                pictureUrl={stack.creator.picture}
+                name={stack.creator.name}
+                pubkey={stack.creator.pubkey}
+                size="sm"
+              />
+            </div>
+            <span
+              class="publisher-name text-sm font-medium"
+              style="color: hsl(var(--white66));"
+            >
+              {stack.creator.name || "Anonymous"}
+            </span>
+            <Timestamp
+              timestamp={stack.createdAt}
+              size="xs"
+              className="publisher-timestamp"
+            />
+          </a>
+
+          <!-- Catalog stack -->
+          <ProfilePicStack profiles={catalogs} text="In Zapstore" size="sm" />
+        </div>
+      {/if}
+
       <!-- Stack Header -->
       <div class="stack-header">
         <h1 class="stack-title">{stack.name}</h1>
         {#if stack.description}
           <p class="stack-description">{stack.description}</p>
         {/if}
-
-        {#if stack.creator}
-          <a href="/p/{stack.creator.npub}" class="creator-link">
-            <ProfilePic
-              pictureUrl={stack.creator.picture}
-              name={stack.creator.name}
-              pubkey={stack.creator.pubkey}
-              size="sm"
-            />
-            <span class="creator-name"
-              >by {stack.creator.name || "Anonymous"}</span
-            >
-          </a>
-        {/if}
       </div>
 
       <!-- Apps Section -->
       <div class="section-container">
-        <SectionHeader title="Apps in this stack" />
         {#if apps.length > 0}
           <div class="horizontal-scroll" use:wheelScroll>
             <div class="scroll-content">
@@ -218,6 +258,26 @@
           </div>
         {/if}
       </div>
+
+      <div class="divider mb-4"></div>
+
+      <!-- Social tabs (Comments, Labels, etc.) -->
+      <div class="mb-8">
+        <SocialTabs
+          app={{
+            pubkey: stack.pubkey,
+            dTag: stack.identifier,
+            id: stack.id,
+          }}
+          publisherProfile={stack.creator
+            ? {
+                displayName: stack.creator.name,
+                name: stack.creator.name,
+                picture: stack.creator.picture,
+              }
+            : null}
+        />
+      </div>
     {/if}
   </div>
 </section>
@@ -225,6 +285,40 @@
 <style>
   .stack-page {
     min-height: 100vh;
+  }
+
+  /* Simple divider */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background-color: hsl(var(--white16));
+  }
+
+  /* Publisher row responsive */
+  .publisher-pic-mobile {
+    display: block;
+  }
+
+  .publisher-pic-desktop {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .publisher-pic-mobile {
+      display: none;
+    }
+
+    .publisher-pic-desktop {
+      display: block;
+    }
+
+    .publisher-link {
+      gap: 12px;
+    }
+  }
+
+  :global(.publisher-timestamp) {
+    color: hsl(var(--white33)) !important;
   }
 
   /* Stack Header */
@@ -243,25 +337,8 @@
   .stack-description {
     font-size: 1rem;
     color: hsl(var(--white66));
-    margin: 0 0 16px 0;
+    margin: 0;
     line-height: 1.5;
-  }
-
-  .creator-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    transition: opacity 0.15s ease;
-  }
-
-  .creator-link:hover {
-    opacity: 0.8;
-  }
-
-  .creator-name {
-    font-size: 0.875rem;
-    color: hsl(var(--white33));
   }
 
   @media (min-width: 768px) {
@@ -275,7 +352,7 @@
   }
 
   .section-container {
-    margin-bottom: 40px;
+    margin-bottom: 24px;
   }
 
   /* Horizontal scroll container */
@@ -386,27 +463,14 @@
   }
 
   /* Skeleton styles */
-  .stack-header-skeleton {
-    margin-bottom: 32px;
-  }
-
-  .skeleton-title {
-    width: 200px;
-    height: 32px;
-    border-radius: 8px;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
-
-  .skeleton-desc {
-    width: 300px;
-    height: 20px;
-    border-radius: 6px;
-    background-color: hsl(var(--gray33));
+  .skeleton-publisher-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 16px;
   }
 
-  .skeleton-creator {
+  .skeleton-publisher {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -422,6 +486,25 @@
   .skeleton-name-small {
     width: 100px;
     height: 16px;
+    border-radius: 6px;
+    background-color: hsl(var(--gray33));
+  }
+
+  .stack-header-skeleton {
+    margin-bottom: 32px;
+  }
+
+  .skeleton-title {
+    width: 200px;
+    height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .skeleton-desc {
+    width: 300px;
+    height: 20px;
     border-radius: 6px;
     background-color: hsl(var(--gray33));
   }
