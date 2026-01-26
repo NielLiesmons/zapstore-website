@@ -33,7 +33,7 @@
         >
       </h2>
       <p class="section-description max-w-2xl mx-auto mt-7">
-        Users, valuing devs.<br />No middlemen.
+        Users, valuing devs. No middlemen.
       </p>
     </div>
 

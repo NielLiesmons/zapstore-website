@@ -5,7 +5,7 @@
   import GetTheAppSection from "$lib/components/landing/GetTheAppSection.svelte";
   import TestimonialsSection from "$lib/components/landing/TestimonialsSection.svelte";
   import ZapTheAppSection from "$lib/components/landing/ZapTheAppSection.svelte";
-  import CommunitySection from "$lib/components/landing/CommunitySection.svelte";
+  // import CommunitySection from "$lib/components/landing/CommunitySection.svelte";
   import DeveloperSection from "$lib/components/landing/DeveloperSection.svelte";
   import DifferenceSection from "$lib/components/landing/DifferenceSection.svelte";
   import RoadmapSection from "$lib/components/landing/RoadmapSection.svelte";
@@ -43,7 +43,7 @@
 <ZapTheAppSection />
 
 <!-- Community Section -->
-<CommunitySection />
+<!-- <CommunitySection /> -->
 
 <!-- Roadmap Section -->
 <RoadmapSection />

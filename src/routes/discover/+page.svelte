@@ -369,7 +369,7 @@
   }
 
   .section-container {
-    margin-bottom: 40px;
+    margin-bottom: 24px;
   }
 
   /* Horizontal scroll container */

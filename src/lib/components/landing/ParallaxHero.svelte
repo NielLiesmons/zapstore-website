@@ -40,73 +40,97 @@
   // Rotation is in degrees
   // Parallax speed and opacity are automatically calculated based on size
   // Spread over full width and height, filling corners and center, extending beyond bottom edge
+  // 
+  // Main featured apps (biggest, center): primal, damus, yakihonne, wormhole, zapstore-developer
+  // Secondary apps: antennapod, blue-wallet, breezy, flare, grimoire, mulvad, newpipe, organic-maps, ridestr, vexl, zapstream
   export let iconConfigs = [
+    // === FEATURED APPS (large, prominent positions) ===
+    // Mulvad - upper left
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/mulvad.png`,
       x: -400,
       y: -170,
       size: 2.1,
       rotationX: 12,
       rotationY: -15,
     },
+    // Yakihonne - upper right
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/yakihonne.png`,
       x: 380,
       y: -190,
       size: 2.1,
       rotationX: 20,
       rotationY: 14,
     },
+    // Grimoire - lower left
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/grimoire.svg`,
       x: -456,
       y: 150,
       size: 2,
       rotationX: -20,
       rotationY: -20,
     },
+    // Zapstore Developer - lower right
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/zapstore-developer.svg`,
       x: 470,
       y: 160,
       size: 2.1,
       rotationX: -16,
       rotationY: 16,
     },
+    // Primal - TOP CENTER (most prominent, directly under header)
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/primal.png`,
       x: -105,
       y: -310,
       size: 1.9,
       rotationX: 25,
       rotationY: -22,
     },
-    // Icons 6-80: cycling through the first 5 URLs
-    // URL cycle: [0] chachi, [1] satellite, [2] zapstore1, [3] zapstore2, [4] blossom
+    // === MIDDLE ICONS (between big ones, easy to edit) ===
+    // Wormhole - middle left (between upper-left and lower-left big icons)
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/wormhole.png`,
+      x: -380,
+      y: -10,
+      size: 1.3,
+      rotationX: 18,
+      rotationY: 20,
+    },
+    // Vexl - middle right (between upper-right and lower-right big icons)
+    {
+      imageUrl: `/images/parallax-apps/vexl.png`,
+      x: 380,
+      y: -10,
+      size: 1.2,
+      rotationX: 16,
+      rotationY: -18,
+    },
+    // === SECONDARY APPS (medium-large, fill out the corners) ===
+    // Zapstream - bottom left corner
+    {
+      imageUrl: `/images/parallax-apps/zapstream.svg`,
       x: -580,
       y: 450,
       size: 2.4,
       rotationX: 15,
       rotationY: 20,
     },
+    // Flare - bottom right corner
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/flare.svg`,
       x: 600,
       y: 380,
       size: 2.4,
       rotationX: 15,
       rotationY: -20,
     },
-    // Icons 8-80: literal grid with standard jumps, explosion effect from center
-    // Grid spacing: 120px horizontal, 100px vertical
-    // Center zone (-200 to +200): extra density for explosion effect
-    // Grid columns: -840, -720, -600, -480, -360, -240, -120, 0, 120, 240, 360, 480, 600, 720, 840
-    // Grid rows: -400, -300, -200, -100, 0, 100, 200, 300, 400, 500, 600
-    // Grid-based icons - outer edges first
+    // === GRID ICONS (outer edges, cycling through all apps) ===
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/antennapod.png`,
       x: -840,
       y: -400,
       size: 1.6,
@@ -114,7 +138,7 @@
       rotationY: 25,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/blue-wallet.png`,
       x: 840,
       y: -400,
       size: 1.5,
@@ -122,7 +146,7 @@
       rotationY: -22,
     },
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/breezy.png`,
       x: -840,
       y: 600,
       size: 1.4,
@@ -130,7 +154,7 @@
       rotationY: 18,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/grimoire.svg`,
       x: 840,
       y: 600,
       size: 1.3,
@@ -138,7 +162,7 @@
       rotationY: -20,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/mulvad.png`,
       x: -720,
       y: -300,
       size: 1.8,
@@ -146,7 +170,7 @@
       rotationY: -15,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/newpipe.png`,
       x: 720,
       y: -300,
       size: 1.8,
@@ -154,7 +178,7 @@
       rotationY: 15,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/organic-maps.png`,
       x: -720,
       y: 500,
       size: 1.7,
@@ -162,7 +186,7 @@
       rotationY: 25,
     },
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/ridestr.png`,
       x: 720,
       y: 500,
       size: 1.7,
@@ -170,7 +194,7 @@
       rotationY: -25,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/damus.png`,
       x: -600,
       y: -200,
       size: 1.6,
@@ -178,7 +202,7 @@
       rotationY: -18,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/antennapod.png`,
       x: 600,
       y: -200,
       size: 1.6,
@@ -186,7 +210,7 @@
       rotationY: 18,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/blue-wallet.png`,
       x: -600,
       y: 400,
       size: 1.5,
@@ -194,29 +218,24 @@
       rotationY: -12,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/breezy.png`,
       x: 600,
       y: 400,
       size: 1.4,
       rotationX: -10,
       rotationY: 15,
     },
-    // Removed icons too close to first 5 icons (x: -480 to -360 and 360 to 480 area)
-    // Removed most center zone icons (x: -120 to +120, y: -200 to +400) to reduce crowding
     // More grid positions - continuing outer grid
-    // Removed icon at -840, -300 (too close to -840, -400 and -720, -300)
-    // Removed a few outer left/right icons
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/grimoire.svg`,
       x: -840,
       y: 0,
       size: 1.2,
       rotationX: 16,
       rotationY: 22,
     },
-    // Removed one more outer left icon
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/mulvad.png`,
       x: 840,
       y: 300,
       size: 0.95,
@@ -224,7 +243,7 @@
       rotationY: -16,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/newpipe.png`,
       x: -720,
       y: -100,
       size: 0.9,
@@ -232,7 +251,7 @@
       rotationY: 15,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/organic-maps.png`,
       x: 720,
       y: -100,
       size: 0.85,
@@ -240,7 +259,7 @@
       rotationY: -14,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/ridestr.png`,
       x: -720,
       y: 100,
       size: 0.8,
@@ -248,7 +267,7 @@
       rotationY: 12,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/vexl.png`,
       x: 720,
       y: 100,
       size: 0.75,
@@ -256,7 +275,7 @@
       rotationY: -10,
     },
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/zapstream.svg`,
       x: -600,
       y: -300,
       size: 0.7,
@@ -264,7 +283,7 @@
       rotationY: 8,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/flare.svg`,
       x: 600,
       y: -300,
       size: 0.65,
@@ -272,7 +291,7 @@
       rotationY: -6,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/damus.png`,
       x: -600,
       y: 500,
       size: 0.6,
@@ -280,7 +299,7 @@
       rotationY: 25,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/yakihonne.png`,
       x: 600,
       y: 500,
       size: 0.55,
@@ -288,23 +307,7 @@
       rotationY: -23,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
-      x: -380,
-      y: -10,
-      size: 1.3,
-      rotationX: 18,
-      rotationY: 20,
-    },
-    {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
-      x: 380,
-      y: -10,
-      size: 1.2,
-      rotationX: 16,
-      rotationY: -18,
-    },
-    {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/antennapod.png`,
       x: -480,
       y: 400,
       size: 1.1,
@@ -312,7 +315,7 @@
       rotationY: 16,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/blue-wallet.png`,
       x: 480,
       y: 400,
       size: 1.0,
@@ -320,7 +323,7 @@
       rotationY: -14,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/breezy.png`,
       x: -360,
       y: -400,
       size: 0.95,
@@ -328,7 +331,7 @@
       rotationY: 12,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/grimoire.svg`,
       x: 360,
       y: -400,
       size: 0.9,
@@ -336,7 +339,7 @@
       rotationY: -10,
     },
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/mulvad.png`,
       x: -360,
       y: 300,
       size: 0.85,
@@ -344,7 +347,7 @@
       rotationY: 8,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/newpipe.png`,
       x: 360,
       y: 300,
       size: 0.8,
@@ -352,7 +355,7 @@
       rotationY: -6,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/organic-maps.png`,
       x: -240,
       y: -400,
       size: 0.75,
@@ -360,7 +363,7 @@
       rotationY: 4,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/ridestr.png`,
       x: 240,
       y: -400,
       size: 0.7,
@@ -368,7 +371,7 @@
       rotationY: -2,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/vexl.png`,
       x: -240,
       y: 0,
       size: 0.65,
@@ -376,7 +379,7 @@
       rotationY: 2,
     },
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/zapstream.svg`,
       x: 240,
       y: 0,
       size: 0.6,
@@ -384,18 +387,16 @@
       rotationY: -1,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/flare.svg`,
       x: -240,
       y: 300,
       size: 0.55,
       rotationX: 1,
       rotationY: 1,
     },
-    // Removed most center zone explosion icons to reduce crowding
-    // Removed smaller outer grid icons and remaining center zone icons
-    // Additional icons in safe areas (far from first 5 icons)
+    // Additional icons in safe areas (far from featured apps)
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/damus.png`,
       x: -840,
       y: -200,
       size: 0.6,
@@ -403,7 +404,7 @@
       rotationY: -5,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/yakihonne.png`,
       x: 840,
       y: -200,
       size: 0.6,
@@ -411,7 +412,7 @@
       rotationY: 5,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/wormhole.png`,
       x: -840,
       y: 200,
       size: 0.6,
@@ -419,7 +420,7 @@
       rotationY: -4,
     },
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/zapstore-developer.svg`,
       x: 840,
       y: 200,
       size: 0.6,
@@ -427,16 +428,16 @@
       rotationY: 4,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/primal.png`,
       x: -600,
       y: -400,
       size: 0.55,
       rotationX: 3,
       rotationY: -3,
     },
-    // Five small icons in center zone - spread out further from center
+    // Small icons in center zone - spread out from center
     {
-      imageUrl: `https://cdn.zapstore.dev/445aa6a39feeeee6be4aac4fe46b29cb57ebc70abd75e481c58f2145bbe5439f`,
+      imageUrl: `/images/parallax-apps/antennapod.png`,
       x: -190,
       y: -180,
       size: 0.5,
@@ -444,7 +445,7 @@
       rotationY: -2,
     },
     {
-      imageUrl: `https://blossom.primal.net/0444bf8f340786d7021050a216f0401e51656d8ec3c32c04e94c8c46a1cdb5ce.png`,
+      imageUrl: `/images/parallax-apps/blue-wallet.png`,
       x: 190,
       y: -180,
       size: 0.5,
@@ -452,7 +453,7 @@
       rotationY: 2,
     },
     {
-      imageUrl: `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://chachi.chat/&size=256`,
+      imageUrl: `/images/parallax-apps/breezy.png`,
       x: -190,
       y: 180,
       size: 0.5,
@@ -460,7 +461,7 @@
       rotationY: -1,
     },
     {
-      imageUrl: `https://cdn.satellite.earth/cb72c77cd77b6de306e30092eb66edf2271afb85a05852e19e94188d8b83c520.png`,
+      imageUrl: `/images/parallax-apps/grimoire.svg`,
       x: 190,
       y: 180,
       size: 0.5,
@@ -468,7 +469,7 @@
       rotationY: 1,
     },
     {
-      imageUrl: `https://cdn.zapstore.dev/1199867abd495cf2315d84880763f2ea44badfa2a32831d25b8e62c72a491e05`,
+      imageUrl: `/images/parallax-apps/mulvad.png`,
       x: 0,
       y: -190,
       size: 0.5,

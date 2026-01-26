@@ -203,8 +203,9 @@
                     </svg>
                     <span class="menu-logo-text">Zapstore</span>
                   </a>
+                  <!-- Profile pic only on mobile (visible in header on desktop) -->
                   {#if $authStore.isConnected}
-                    <a href="/p/{$authStore.npub}" class="menu-user-pic" on:click={closeMenu}>
+                    <a href="/p/{$authStore.npub}" class="menu-user-pic menu-user-pic-mobile-only" on:click={closeMenu}>
                       <ProfilePic
                         pictureUrl={$authStore.profile?.picture}
                         name={$authStore.profile?.displayName || $authStore.profile?.name}
@@ -273,7 +274,7 @@
 
           <!-- Page title -->
           {#if pageTitle}
-            <span class="page-title font-semibold text-lg tracking-tight">{pageTitle}</span>
+            <span class="page-title font-semibold text-lg lg:text-xl tracking-tight ml-2">{pageTitle}</span>
           {/if}
         {:else}
           <!-- Landing variant: Logo + text that opens menu -->
@@ -323,9 +324,64 @@
               <div class="menu-backdrop" on:click={closeMenu}></div>
             {/if}
 
-            <!-- Menu dropdown (no logo/search rows for landing) -->
+            <!-- Menu dropdown -->
             {#if menuOpen}
               <div class="menu-dropdown menu-dropdown-landing">
+                <!-- Logo section (mobile only for landing variant) -->
+                <div class="menu-header-row menu-header-mobile-only">
+                  <a href="/" class="menu-logo" on:click={closeMenu}>
+                    <svg
+                      width="19"
+                      height="32"
+                      viewBox="0 0 19 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="menu-logo-icon"
+                    >
+                      <defs>
+                        <linearGradient
+                          id="menu-logo-gradient-landing"
+                          x1="0%"
+                          y1="0%"
+                          x2="100%"
+                          y2="100%"
+                        >
+                          <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
+                          <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M18.8379 13.9711L8.84956 0.356086C8.30464 -0.386684 7.10438 0.128479 7.30103 1.02073L9.04686 8.94232C9.16268 9.46783 8.74887 9.96266 8.19641 9.9593L0.871032 9.91477C0.194934 9.91066 -0.223975 10.6293 0.126748 11.1916L7.69743 23.3297C7.99957 23.8141 7.73264 24.4447 7.16744 24.5816L5.40958 25.0076C4.70199 25.179 4.51727 26.0734 5.10186 26.4974L12.4572 31.8326C12.9554 32.194 13.6711 31.9411 13.8147 31.3529L15.8505 23.0152C16.0137 22.3465 15.3281 21.7801 14.6762 22.0452L13.0661 22.7001C12.5619 22.9052 11.991 22.6092 11.8849 22.0877L10.7521 16.5224C10.6486 16.014 11.038 15.5365 11.5704 15.5188L18.1639 15.2998C18.8529 15.2769 19.2383 14.517 18.8379 13.9711Z"
+                        fill="url(#menu-logo-gradient-landing)"
+                      />
+                    </svg>
+                    <span class="menu-logo-text">Zapstore</span>
+                  </a>
+                  {#if $authStore.isConnected}
+                    <a href="/p/{$authStore.npub}" class="menu-user-pic" on:click={closeMenu}>
+                      <ProfilePic
+                        pictureUrl={$authStore.profile?.picture}
+                        name={$authStore.profile?.displayName || $authStore.profile?.name}
+                        pubkey={$authStore.pubkey}
+                        size="md"
+                      />
+                    </a>
+                  {/if}
+                </div>
+
+                <!-- Search bar button (mobile only for landing variant) -->
+                <button
+                  type="button"
+                  class="menu-search-btn menu-search-mobile-only"
+                  on:click={openMenuSearch}
+                >
+                  <Search
+                    class="h-5 w-5 flex-shrink-0"
+                    style="color: hsl(var(--white33));"
+                  />
+                  <span class="menu-search-text">Search Any App</span>
+                </button>
+
                 <!-- Discover section -->
                 <div class="menu-section">
                   <a href="/discover" class="menu-section-link" on:click={closeMenu}>Discover</a>
@@ -371,8 +427,8 @@
         {/if}
       </div>
 
-      <!-- Centered Search Bar -->
-      <div class="flex-1 flex justify-center px-2 sm:px-3 min-w-0 lg:min-w-fit">
+      <!-- Centered Search Bar (hidden on mobile) -->
+      <div class="header-search-container hidden sm:flex flex-1 justify-center px-2 sm:px-3 min-w-0 lg:min-w-fit">
         <button
           bind:this={searchBarRef}
           type="button"
@@ -388,8 +444,7 @@
             class="text-base flex-1 text-left pointer-events-none"
             style="color: hsl(var(--white33));"
           >
-            <span class="sm:hidden">Search</span>
-            <span class="hidden sm:inline">Search Any App</span>
+            Search Any App
           </span>
         </button>
       </div>
@@ -627,6 +682,29 @@
   .menu-search-text {
     color: hsl(var(--white33));
     font-size: 1rem;
+  }
+
+  /* Mobile-only elements in menu */
+  .menu-search-mobile-only {
+    display: flex;
+  }
+
+  .menu-user-pic-mobile-only {
+    display: block;
+  }
+
+  @media (min-width: 768px) {
+    .menu-search-mobile-only {
+      display: none;
+    }
+
+    .menu-user-pic-mobile-only {
+      display: none;
+    }
+
+    .menu-header-mobile-only {
+      display: none;
+    }
   }
 
   /* Menu sections */
