@@ -8,6 +8,7 @@
     Search,
     User,
   } from "lucide-svelte";
+  import { Menu, Cross } from "$lib/components/icons";
   import { cn } from "$lib/utils";
   import { assets } from "$app/paths";
   import { onMount } from "svelte";
@@ -15,11 +16,20 @@
   import SearchModal from "./SearchModal.svelte";
   import ProfilePic from "./ProfilePic.svelte";
 
+  /** @type {"landing" | "browse"} - Header variant */
+  export let variant = "landing";
+
+  /** @type {string} - Page title for browse variant */
+  export let pageTitle = "";
+
   let scrolled = false;
   let dropdownOpen = false;
   let searchOpen = false;
   let searchQuery = "";
   let searchBarRef;
+  let menuOpen = false;
+  let menuContainer;
+  let menuButton;
 
   // Categories and platforms for the search overlay
   const categories = [
@@ -38,6 +48,9 @@
     if (dropdownOpen && !event.target.closest(".profile-dropdown")) {
       dropdownOpen = false;
     }
+    if (menuOpen && menuContainer && !menuContainer.contains(event.target)) {
+      menuOpen = false;
+    }
   }
 
   function openSearch(e) {
@@ -45,6 +58,20 @@
       e.stopPropagation();
       e.preventDefault();
     }
+    searchOpen = true;
+  }
+
+  function toggleMenu(e) {
+    if (e) e.stopPropagation();
+    menuOpen = !menuOpen;
+  }
+
+  function closeMenu() {
+    menuOpen = false;
+  }
+
+  function openMenuSearch() {
+    menuOpen = false;
     searchOpen = true;
   }
 
@@ -92,46 +119,256 @@
 
 <header
   class={cn(
-    "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+    "header fixed top-0 left-0 right-0 z-50 transition-all duration-300",
     scrolled
       ? "bg-background/60 backdrop-blur-2xl border-b border-border/50"
       : "bg-transparent border-b border-transparent",
   )}
 >
-  <nav class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-8 overflow-x-hidden">
-    <div class="flex items-center justify-between gap-2 sm:gap-6 py-3">
-      <!-- Logo -->
+  <nav class={cn(
+    "container mx-auto h-full",
+    variant === "browse" ? "pl-1 pr-4 sm:pl-3 sm:pr-6 md:pl-5 md:pr-8" : "px-4 sm:px-6 md:px-8 lg:px-8"
+  )}>
+    <div class="flex items-center justify-between gap-2 sm:gap-6 h-full">
+      <!-- Left: Logo or Menu + Page Title -->
       <div class="header-side flex items-center flex-shrink-0 min-w-0">
-        <a href="/" class="flex items-center gap-2 sm:gap-3 group">
-          <svg
-            width="19"
-            height="32"
-            viewBox="0 0 19 32"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 lg:h-7 w-auto flex-shrink-0"
+        {#if variant === "browse"}
+          <!-- Browse variant: Menu button + Page title -->
+          <div
+            class="menu-container"
+            bind:this={menuContainer}
+            role="navigation"
+            aria-label="Main menu"
           >
-            <defs>
-              <linearGradient
-                id="logo-gradient"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="100%"
+            <button
+              type="button"
+              class="menu-button"
+              class:menu-button-open={menuOpen}
+              bind:this={menuButton}
+              on:click|stopPropagation={toggleMenu}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+            >
+              {#if menuOpen}
+                <Cross
+                  variant="outline"
+                  color="hsl(var(--white66))"
+                  size={14}
+                />
+              {:else}
+                <Menu
+                  variant="outline"
+                  color="hsl(var(--white33))"
+                  size={16}
+                />
+              {/if}
+            </button>
+
+            <!-- Menu backdrop (mobile only) -->
+            {#if menuOpen}
+              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+              <div class="menu-backdrop" on:click={closeMenu}></div>
+            {/if}
+
+            <!-- Menu dropdown -->
+            {#if menuOpen}
+              <div class="menu-dropdown">
+                <!-- Logo section with optional user profile -->
+                <div class="menu-header-row">
+                  <a href="/" class="menu-logo" on:click={closeMenu}>
+                    <svg
+                      width="19"
+                      height="32"
+                      viewBox="0 0 19 32"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="menu-logo-icon"
+                    >
+                      <defs>
+                        <linearGradient
+                          id="menu-logo-gradient"
+                          x1="0%"
+                          y1="0%"
+                          x2="100%"
+                          y2="100%"
+                        >
+                          <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
+                          <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M18.8379 13.9711L8.84956 0.356086C8.30464 -0.386684 7.10438 0.128479 7.30103 1.02073L9.04686 8.94232C9.16268 9.46783 8.74887 9.96266 8.19641 9.9593L0.871032 9.91477C0.194934 9.91066 -0.223975 10.6293 0.126748 11.1916L7.69743 23.3297C7.99957 23.8141 7.73264 24.4447 7.16744 24.5816L5.40958 25.0076C4.70199 25.179 4.51727 26.0734 5.10186 26.4974L12.4572 31.8326C12.9554 32.194 13.6711 31.9411 13.8147 31.3529L15.8505 23.0152C16.0137 22.3465 15.3281 21.7801 14.6762 22.0452L13.0661 22.7001C12.5619 22.9052 11.991 22.6092 11.8849 22.0877L10.7521 16.5224C10.6486 16.014 11.038 15.5365 11.5704 15.5188L18.1639 15.2998C18.8529 15.2769 19.2383 14.517 18.8379 13.9711Z"
+                        fill="url(#menu-logo-gradient)"
+                      />
+                    </svg>
+                    <span class="menu-logo-text">Zapstore</span>
+                  </a>
+                  {#if $authStore.isConnected}
+                    <a href="/p/{$authStore.npub}" class="menu-user-pic" on:click={closeMenu}>
+                      <ProfilePic
+                        pictureUrl={$authStore.profile?.picture}
+                        name={$authStore.profile?.displayName || $authStore.profile?.name}
+                        pubkey={$authStore.pubkey}
+                        size="md"
+                      />
+                    </a>
+                  {/if}
+                </div>
+
+                <!-- Search bar button -->
+                <button
+                  type="button"
+                  class="menu-search-btn"
+                  on:click={openMenuSearch}
+                >
+                  <Search
+                    class="h-5 w-5 flex-shrink-0"
+                    style="color: hsl(var(--white33));"
+                  />
+                  <span class="menu-search-text">Search Any App</span>
+                </button>
+
+                <!-- Discover section -->
+                <div class="menu-section">
+                  <a href="/discover" class="menu-section-link" on:click={closeMenu}>Discover</a>
+                  <nav class="menu-subnav">
+                    <a href="/discover" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Apps</a>
+                    <a href="/stacks" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Stacks</a>
+                    <a href="/catalogs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Catalogs</a>
+                  </nav>
+                </div>
+
+                <!-- Developers section -->
+                <div class="menu-section">
+                  <a href="/developers" class="menu-section-link" on:click={closeMenu}>Developers</a>
+                  <nav class="menu-subnav">
+                    <a href="/publish" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Publish</a>
+                    <a href="/pro" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Pro</a>
+                    <a href="/docs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Docs</a>
+                    <a href="/reachkit" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>ReachKit</a>
+                  </nav>
+                </div>
+
+                <!-- The App section -->
+                <div class="menu-section">
+                  <a href="/app" class="menu-section-link" on:click={closeMenu}>The App</a>
+                  <nav class="menu-subnav">
+                    <a href="/about" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>About</a>
+                    <a href="/download" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Download</a>
+                  </nav>
+                </div>
+
+                {#if !$authStore.isConnected}
+                  <div class="menu-divider"></div>
+                  <!-- Get Started button (only when not logged in) -->
+                  <div class="menu-cta-wrapper">
+                    <a href="/get-started" class="btn-primary w-full" on:click={closeMenu}>
+                      Get Started
+                    </a>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
+
+          <!-- Page title -->
+          {#if pageTitle}
+            <span class="page-title font-semibold text-lg tracking-tight">{pageTitle}</span>
+          {/if}
+        {:else}
+          <!-- Landing variant: Logo + text that opens menu -->
+          <div
+            class="menu-container logo-menu-container"
+            bind:this={menuContainer}
+            role="navigation"
+            aria-label="Main menu"
+          >
+            <button
+              type="button"
+              on:click|stopPropagation={toggleMenu}
+              class="logo-button flex items-center gap-2 sm:gap-3"
+              class:menu-open={menuOpen}
+            >
+              <svg
+                width="19"
+                height="32"
+                viewBox="0 0 19 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 lg:h-7 w-auto flex-shrink-0"
               >
-                <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
-                <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M18.8379 13.9711L8.84956 0.356086C8.30464 -0.386684 7.10438 0.128479 7.30103 1.02073L9.04686 8.94232C9.16268 9.46783 8.74887 9.96266 8.19641 9.9593L0.871032 9.91477C0.194934 9.91066 -0.223975 10.6293 0.126748 11.1916L7.69743 23.3297C7.99957 23.8141 7.73264 24.4447 7.16744 24.5816L5.40958 25.0076C4.70199 25.179 4.51727 26.0734 5.10186 26.4974L12.4572 31.8326C12.9554 32.194 13.6711 31.9411 13.8147 31.3529L15.8505 23.0152C16.0137 22.3465 15.3281 21.7801 14.6762 22.0452L13.0661 22.7001C12.5619 22.9052 11.991 22.6092 11.8849 22.0877L10.7521 16.5224C10.6486 16.014 11.038 15.5365 11.5704 15.5188L18.1639 15.2998C18.8529 15.2769 19.2383 14.517 18.8379 13.9711Z"
-              fill="url(#logo-gradient)"
-            />
-          </svg>
-          <span class="font-semibold text-lg lg:text-xl tracking-tight"
-            >Zapstore</span
-          >
-        </a>
+                <defs>
+                  <linearGradient
+                    id="logo-gradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
+                    <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M18.8379 13.9711L8.84956 0.356086C8.30464 -0.386684 7.10438 0.128479 7.30103 1.02073L9.04686 8.94232C9.16268 9.46783 8.74887 9.96266 8.19641 9.9593L0.871032 9.91477C0.194934 9.91066 -0.223975 10.6293 0.126748 11.1916L7.69743 23.3297C7.99957 23.8141 7.73264 24.4447 7.16744 24.5816L5.40958 25.0076C4.70199 25.179 4.51727 26.0734 5.10186 26.4974L12.4572 31.8326C12.9554 32.194 13.6711 31.9411 13.8147 31.3529L15.8505 23.0152C16.0137 22.3465 15.3281 21.7801 14.6762 22.0452L13.0661 22.7001C12.5619 22.9052 11.991 22.6092 11.8849 22.0877L10.7521 16.5224C10.6486 16.014 11.038 15.5365 11.5704 15.5188L18.1639 15.2998C18.8529 15.2769 19.2383 14.517 18.8379 13.9711Z"
+                  fill="url(#logo-gradient)"
+                />
+              </svg>
+              <span class="font-semibold text-lg lg:text-xl tracking-tight">Zapstore</span>
+            </button>
+
+            <!-- Menu backdrop (mobile only) -->
+            {#if menuOpen}
+              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+              <div class="menu-backdrop" on:click={closeMenu}></div>
+            {/if}
+
+            <!-- Menu dropdown (no logo/search rows for landing) -->
+            {#if menuOpen}
+              <div class="menu-dropdown menu-dropdown-landing">
+                <!-- Discover section -->
+                <div class="menu-section">
+                  <a href="/discover" class="menu-section-link" on:click={closeMenu}>Discover</a>
+                  <nav class="menu-subnav">
+                    <a href="/discover" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Apps</a>
+                    <a href="/stacks" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Stacks</a>
+                    <a href="/catalogs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Catalogs</a>
+                  </nav>
+                </div>
+
+                <!-- Developers section -->
+                <div class="menu-section">
+                  <a href="/developers" class="menu-section-link" on:click={closeMenu}>Developers</a>
+                  <nav class="menu-subnav">
+                    <a href="/publish" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Publish</a>
+                    <a href="/pro" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Pro</a>
+                    <a href="/docs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Docs</a>
+                    <a href="/reachkit" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>ReachKit</a>
+                  </nav>
+                </div>
+
+                <!-- The App section -->
+                <div class="menu-section">
+                  <a href="/app" class="menu-section-link" on:click={closeMenu}>The App</a>
+                  <nav class="menu-subnav">
+                    <a href="/about" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>About</a>
+                    <a href="/download" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Download</a>
+                  </nav>
+                </div>
+
+                {#if !$authStore.isConnected}
+                  <div class="menu-divider"></div>
+                  <!-- Get Started button (only when not logged in) -->
+                  <div class="menu-cta-wrapper">
+                    <a href="/get-started" class="btn-primary w-full" on:click={closeMenu}>
+                      Get Started
+                    </a>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {/if}
       </div>
 
       <!-- Centered Search Bar -->
@@ -140,7 +377,7 @@
           bind:this={searchBarRef}
           type="button"
           on:click={openSearch}
-          class="search-bar-btn search-bar-width flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-10 relative z-10 cursor-pointer min-w-0 lg:min-w-fit"
+          class="search-bar-btn search-bar-width flex items-center gap-2 sm:gap-3 pl-2.5 pr-3 sm:pl-3 sm:pr-4 h-10 relative z-10 cursor-pointer min-w-0 lg:min-w-fit"
           style="border-color: hsl(var(--white16)); pointer-events: auto;"
         >
           <Search
@@ -221,3 +458,225 @@
 
 <!-- Search Modal - rendered outside header to escape constraints -->
 <SearchModal bind:open={searchOpen} bind:searchQuery {categories} {platforms} />
+
+<style>
+  /* Header height */
+  .header {
+    height: 64px;
+  }
+
+  /* Logo button (landing variant) */
+  .logo-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .logo-button.menu-open {
+    opacity: 0.5;
+  }
+
+  /* Menu container */
+  .menu-container {
+    position: relative;
+  }
+
+  /* Menu button (browse variant) */
+  .menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background-color 0.15s ease;
+  }
+
+  .menu-button:hover,
+  .menu-button-open {
+    background-color: hsl(var(--gray66));
+  }
+
+  .menu-button :global(svg) {
+    pointer-events: none;
+  }
+
+  /* Page title */
+  .page-title {
+    color: hsl(var(--white));
+  }
+
+  /* Menu backdrop (mobile only) */
+  .menu-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background-color: hsl(var(--overlay));
+    z-index: 99;
+  }
+
+  @media (min-width: 768px) {
+    .menu-backdrop {
+      display: none;
+    }
+  }
+
+  /* Menu dropdown - mobile: full-height sheet from left */
+  .menu-dropdown {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 75%;
+    max-width: 320px;
+    height: 100vh;
+    background-color: hsl(var(--gray66));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 0.33px solid hsl(var(--white16));
+    border-radius: 0;
+    padding: 16px 12px 12px 12px;
+    z-index: 100;
+    box-shadow: 8px 0 32px hsl(var(--black33));
+    overflow-y: auto;
+  }
+
+  /* Desktop: dropdown positioned below button */
+  @media (min-width: 768px) {
+    .menu-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 280px;
+      max-width: none;
+      height: auto;
+      border: 0.33px solid hsl(var(--white16));
+      border-radius: 12px 32px 32px 32px;
+      box-shadow: 0 8px 32px hsl(var(--black33));
+      padding: 16px 12px 12px 12px;
+      overflow-y: visible;
+    }
+  }
+
+  /* Menu header row with logo and user pic */
+  .menu-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  /* Logo section in menu - same height as profile pic (38px) */
+  .menu-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 38px;
+    padding: 0 8px 0 6px;
+    flex: 1;
+    text-decoration: none;
+    border-radius: 16px;
+    transition: background-color 0.15s ease;
+  }
+
+  .menu-logo:hover {
+    background-color: hsl(var(--white8));
+  }
+
+  .menu-logo-icon {
+    height: 22px;
+    width: auto;
+    flex-shrink: 0;
+  }
+
+  .menu-logo-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: hsl(var(--white));
+  }
+
+  /* User profile pic in menu */
+  .menu-user-pic {
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  /* Search bar button in menu */
+  .menu-search-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: 12px 0;
+    padding: 8px 16px 8px 12px;
+    background-color: hsl(var(--white8));
+    border: 0.33px solid hsl(var(--white16));
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .menu-search-btn:hover {
+    background-color: hsl(var(--white16));
+  }
+
+  .menu-search-text {
+    color: hsl(var(--white33));
+    font-size: 1rem;
+  }
+
+  /* Menu sections */
+  .menu-section {
+    margin-bottom: 4px;
+  }
+
+  /* Section link (big clickable item) */
+  .menu-section-link {
+    display: block;
+    padding: 6px 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: hsl(var(--white));
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background-color 0.15s ease;
+  }
+
+  .menu-section-link:hover {
+    background-color: hsl(var(--white8));
+  }
+
+  /* Sub navigation */
+  .menu-subnav {
+    display: flex;
+    flex-direction: column;
+    padding-left: 10px;
+  }
+
+  .menu-sublink {
+    padding: 6px 12px;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: background-color 0.15s ease;
+  }
+
+  .menu-sublink:hover {
+    background-color: hsl(var(--white8));
+  }
+
+  /* Menu divider */
+  .menu-divider {
+    height: 1px;
+    background-color: hsl(var(--white16));
+    margin: 12px 0;
+  }
+
+  /* CTA wrapper */
+  .menu-cta-wrapper {
+    padding: 0 4px;
+  }
+</style>

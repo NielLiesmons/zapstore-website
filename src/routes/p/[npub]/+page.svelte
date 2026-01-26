@@ -14,6 +14,7 @@
   import NostrContent from "$lib/components/NostrContent.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
   import AppPic from "$lib/components/AppPic.svelte";
+  import DetailHeader from "$lib/components/DetailHeader.svelte";
 
   let developer = null;
   let apps = [];
@@ -113,6 +114,19 @@
   {/if}
 </svelte:head>
 
+<!-- Contextual header with back button and profile info -->
+{#if developer}
+  <DetailHeader
+    publisherPic={developer.picture}
+    publisherName={developer.displayName || developer.name}
+    publisherPubkey={pubkey}
+    publisherUrl="/p/{npub}"
+    showPublisher={true}
+  />
+{:else if !loading && !error}
+  <DetailHeader showPublisher={false} />
+{/if}
+
 {#if loading}
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
     <div class="flex items-center justify-center py-24">
@@ -141,7 +155,7 @@
     </div>
   </div>
 {:else}
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
     <!-- Profile Header -->
     <div class="bg-card border border-border rounded-lg p-8 mb-8">
       <div class="flex items-center gap-6 mb-6">

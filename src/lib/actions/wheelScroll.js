@@ -5,15 +5,19 @@
  * and they use the mouse wheel, it scrolls horizontally instead of vertically.
  * 
  * Only activates when:
+ * - Screen width is >= 768px (desktop only)
  * - The scroll starts within the element (cursor is inside)
  * - The element has horizontal overflow (can actually scroll)
  * 
  * Does NOT activate when:
+ * - Screen is smaller than 768px (mobile/tablet)
  * - User is scrolling vertically and cursor just passes over the element
  * 
  * Usage:
  * <div use:wheelScroll class="horizontal-scroll">...</div>
  */
+
+const DESKTOP_BREAKPOINT = 768;
 
 /**
  * @param {HTMLElement} node - The scrollable element
@@ -31,6 +35,9 @@ export function wheelScroll(node) {
   }
 
   function onWheel(e) {
+    // Disable on mobile/tablet screens
+    if (window.innerWidth < DESKTOP_BREAKPOINT) return;
+    
     // Only handle if cursor is inside the element
     if (!isHovering) return;
     

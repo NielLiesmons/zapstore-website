@@ -1116,7 +1116,7 @@ When a scroll container extends beyond its parent (using negative margins with m
 
 ### Mouse Wheel Scroll (wheelScroll Action)
 
-**CRITICAL**: All horizontal scroll containers MUST use the `wheelScroll` Svelte action to enable mouse wheel scrolling.
+**CRITICAL**: All horizontal scroll containers MUST use the `wheelScroll` Svelte action to enable mouse wheel scrolling on desktop.
 
 **Location**: `src/lib/actions/wheelScroll.js`
 
@@ -1124,6 +1124,7 @@ When a scroll container extends beyond its parent (using negative margins with m
 - Converts vertical mouse wheel scrolling to horizontal scrolling when the cursor is inside the element
 - Allows normal page scrolling to resume when the horizontal scroll reaches its left/right edge
 - Does NOT hijack vertical scrolling when the cursor merely passes over the element
+- **Desktop only**: Automatically disabled on screens smaller than 768px
 
 **Usage:**
 
@@ -1140,6 +1141,7 @@ When a scroll container extends beyond its parent (using negative margins with m
 ```
 
 **Behavior:**
+- **Only activates on desktop (≥768px)** - disabled on mobile/tablet
 - Only activates when the cursor is hovering inside the element
 - When user scrolls with mouse wheel, content scrolls horizontally
 - When content reaches left/right boundary, normal page scrolling resumes

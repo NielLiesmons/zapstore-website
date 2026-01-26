@@ -64,6 +64,7 @@ export { default as List } from './List.svelte';
 export { default as Location } from './Location.svelte';
 export { default as Magic } from './Magic.svelte';
 export { default as Mail } from './Mail.svelte';
+export { default as Menu } from './Menu.svelte';
 export { default as Mic } from './Mic.svelte';
 export { default as Mints } from './Mints.svelte';
 export { default as Music } from './Music.svelte';

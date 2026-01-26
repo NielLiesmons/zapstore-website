@@ -39,6 +39,7 @@
   import Timestamp from "$lib/components/Timestamp.svelte";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
   import InstallModal from "$lib/components/InstallModal.svelte";
+  import DetailHeader from "$lib/components/DetailHeader.svelte";
 
   // Install modal state
   let installModalOpen = false;
@@ -334,8 +335,8 @@
   $: publisherPictureUrl = publisherProfile?.picture || "";
   $: publisherUrl = app?.npub ? `/p/${app.npub}` : "#";
 
-  // Hide publisher info for Zapstore-signed apps
-  $: showPublisher = app?.pubkey !== ZAPSTORE_PUBKEY;
+  // Always show publisher info (including Zapstore indexer)
+  $: showPublisher = true;
 
   // Determine app platforms (most apps are Android only for now)
   $: platforms = app?.platform ? [app.platform] : ["Android"];
@@ -515,47 +516,19 @@
     </div>
   </div>
 {:else if app}
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
-    <!-- Publisher Row -->
-    {#if showPublisher}
-      <div class="publisher-row flex items-center justify-between mb-4">
-        <a
-          href={publisherUrl}
-          class="publisher-link flex items-center gap-2.5 hover:opacity-80 transition-opacity"
-        >
-          <div class="publisher-pic-mobile">
-            <ProfilePic
-              pictureUrl={publisherPictureUrl}
-              name={publisherName}
-              pubkey={app.pubkey}
-              size="xs"
-            />
-          </div>
-          <div class="publisher-pic-desktop">
-            <ProfilePic
-              pictureUrl={publisherPictureUrl}
-              name={publisherName}
-              pubkey={app.pubkey}
-              size="sm"
-            />
-          </div>
-          <span
-            class="publisher-name text-sm font-medium"
-            style="color: hsl(var(--white66));"
-          >
-            {publisherName}
-          </span>
-          <Timestamp
-            timestamp={app.createdAt}
-            size="xs"
-            className="publisher-timestamp"
-          />
-        </a>
+  <!-- Contextual header with back button, publisher info, and catalog -->
+  <DetailHeader
+    publisherPic={publisherPictureUrl}
+    {publisherName}
+    publisherPubkey={app.pubkey}
+    {publisherUrl}
+    timestamp={app.createdAt}
+    {catalogs}
+    catalogText="In Zapstore"
+    {showPublisher}
+  />
 
-        <!-- Catalog stack -->
-        <ProfilePicStack profiles={catalogs} text="In Zapstore" size="sm" />
-      </div>
-    {/if}
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
 
     <!-- App Header Row -->
     <div class="app-header flex items-center gap-4 sm:gap-6 mb-6">
@@ -1298,33 +1271,6 @@
     }
   }
 
-  /* Publisher row responsive */
-  .publisher-pic-mobile {
-    display: block;
-  }
-
-  .publisher-pic-desktop {
-    display: none;
-  }
-
-  @media (min-width: 768px) {
-    .publisher-pic-mobile {
-      display: none;
-    }
-
-    .publisher-pic-desktop {
-      display: block;
-    }
-
-    .publisher-link {
-      gap: 12px;
-    }
-  }
-
-  :global(.publisher-timestamp) {
-    color: hsl(var(--white33)) !important;
-  }
-
   /* Responsive app icon - override component size */
   :global(.app-icon-responsive) {
     width: 80px !important;
@@ -1680,8 +1626,8 @@
   }
 
   .platform-icon {
-    width: 1rem;
-    height: 1rem;
+    width: 1.25rem;
+    height: 1.25rem;
     flex-shrink: 0;
     color: hsl(var(--white33));
   }

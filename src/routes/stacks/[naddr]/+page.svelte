@@ -16,6 +16,7 @@
   import SocialTabs from "$lib/components/SocialTabs.svelte";
   import Timestamp from "$lib/components/Timestamp.svelte";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
+  import DetailHeader from "$lib/components/DetailHeader.svelte";
 
   // Catalog for this stack - currently just Zapstore
   const catalogs = [
@@ -137,8 +138,28 @@
   />
 </svelte:head>
 
+<!-- Contextual header with back button, creator info, and catalog -->
+{#if stack?.creator}
+  <DetailHeader
+    publisherPic={stack.creator.picture}
+    publisherName={stack.creator.name}
+    publisherPubkey={stack.creator.pubkey}
+    publisherUrl="/p/{stack.creator.npub}"
+    timestamp={stack.createdAt}
+    {catalogs}
+    catalogText="In Zapstore"
+    showPublisher={true}
+  />
+{:else if stack}
+  <DetailHeader
+    {catalogs}
+    catalogText="In Zapstore"
+    showPublisher={false}
+  />
+{/if}
+
 <section class="stack-page">
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6">
     {#if loading}
       <!-- Loading State -->
       <div class="skeleton-publisher-row">
@@ -187,47 +208,6 @@
         </div>
       </div>
     {:else if stack}
-      <!-- Publisher Row -->
-      {#if stack.creator}
-        <div class="publisher-row flex items-center justify-between mb-4">
-          <a
-            href="/p/{stack.creator.npub}"
-            class="publisher-link flex items-center gap-2.5 hover:opacity-80 transition-opacity"
-          >
-            <div class="publisher-pic-mobile">
-              <ProfilePic
-                pictureUrl={stack.creator.picture}
-                name={stack.creator.name}
-                pubkey={stack.creator.pubkey}
-                size="xs"
-              />
-            </div>
-            <div class="publisher-pic-desktop">
-              <ProfilePic
-                pictureUrl={stack.creator.picture}
-                name={stack.creator.name}
-                pubkey={stack.creator.pubkey}
-                size="sm"
-              />
-            </div>
-            <span
-              class="publisher-name text-sm font-medium"
-              style="color: hsl(var(--white66));"
-            >
-              {stack.creator.name || "Anonymous"}
-            </span>
-            <Timestamp
-              timestamp={stack.createdAt}
-              size="xs"
-              className="publisher-timestamp"
-            />
-          </a>
-
-          <!-- Catalog stack -->
-          <ProfilePicStack profiles={catalogs} text="In Zapstore" size="sm" />
-        </div>
-      {/if}
-
       <!-- Stack Header -->
       <div class="stack-header">
         <h1 class="stack-title">{stack.name}</h1>
@@ -292,33 +272,6 @@
     width: 100%;
     height: 1px;
     background-color: hsl(var(--white16));
-  }
-
-  /* Publisher row responsive */
-  .publisher-pic-mobile {
-    display: block;
-  }
-
-  .publisher-pic-desktop {
-    display: none;
-  }
-
-  @media (min-width: 768px) {
-    .publisher-pic-mobile {
-      display: none;
-    }
-
-    .publisher-pic-desktop {
-      display: block;
-    }
-
-    .publisher-link {
-      gap: 12px;
-    }
-  }
-
-  :global(.publisher-timestamp) {
-    color: hsl(var(--white33)) !important;
   }
 
   /* Stack Header */

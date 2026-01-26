@@ -170,7 +170,7 @@
       <!-- Search Bar -->
       <div class="p-3 pb-1">
         <div
-          class="search-bar-btn flex items-center gap-3 px-4 h-10 transition-all duration-200 focus-within:shadow-[0_0_80px_hsl(var(--blurpleColor)/0.2),0_0_160px_hsl(var(--blurpleColor)/0.15),0_0_240px_hsl(var(--blurpleColor)/0.12),0_0_320px_hsl(var(--blurpleColor)/0.08)]"
+          class="search-bar-btn flex items-center gap-3 pl-3 pr-4 h-10 transition-all duration-200 focus-within:shadow-[0_0_80px_hsl(var(--blurpleColor)/0.2),0_0_160px_hsl(var(--blurpleColor)/0.15),0_0_240px_hsl(var(--blurpleColor)/0.12),0_0_320px_hsl(var(--blurpleColor)/0.08)]"
           style="border-color: hsl(var(--white16)); background-color: hsl(var(--black16));"
         >
           <Search class="h-5 w-5 text-muted-foreground flex-shrink-0" />

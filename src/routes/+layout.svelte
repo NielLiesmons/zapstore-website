@@ -7,6 +7,36 @@
 
   // ReachKit has its own layout with header/footer
   $: isReachKit = $page.url.pathname.startsWith("/developers/reachkit");
+
+  // Detail pages use their own contextual header (DetailHeader)
+  $: isDetailPage =
+    /^\/apps\/[^/]+$/.test($page.url.pathname) ||
+    /^\/stacks\/[^/]+$/.test($page.url.pathname) ||
+    /^\/p\/[^/]+$/.test($page.url.pathname);
+
+  // Landing page uses the default header variant
+  $: isLandingPage = $page.url.pathname === "/";
+
+  // Browse pages use the "browse" variant with page title
+  $: headerVariant = isLandingPage ? "landing" : "browse";
+
+  // Map paths to page titles for browse variant
+  const pageTitles = {
+    "/discover": "Discover",
+    "/apps": "Apps",
+    "/stacks": "Stacks",
+    "/catalogs": "Catalogs",
+    "/labels": "Labels",
+    "/developers": "Developers",
+    "/publish": "Publish",
+    "/docs": "Docs",
+    "/blog": "Blog",
+    "/my-apps": "My Apps",
+  };
+
+  $: pageTitle = pageTitles[$page.url.pathname] || 
+    ($page.url.pathname.startsWith("/docs/") ? "Docs" : 
+     $page.url.pathname.startsWith("/blog/") ? "Blog" : "");
 </script>
 
 <NavigationProgress />
@@ -22,8 +52,10 @@
     <div class="fixed inset-0 bg-dither pointer-events-none opacity-40"></div>
 
     <div class="relative z-10 flex flex-col min-h-screen">
-      <Header />
-      <main class="flex-1 pt-16">
+      {#if !isDetailPage}
+        <Header variant={headerVariant} {pageTitle} />
+      {/if}
+      <main class="flex-1" class:pt-16={!isDetailPage}>
         <slot />
       </main>
       <Footer />
