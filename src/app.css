@@ -801,8 +801,8 @@ h5, h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* ~42px total height with 18px font */
-  padding: 12px 24px;
+  height: 42px;
+  padding: 0 24px;
   font-size: 16px;
   font-weight: 500;
   color: hsl(var(--primary-foreground));
@@ -813,6 +813,7 @@ h5, h6 {
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   transform: scale(1);
+  box-sizing: border-box;
 }
 
 .btn-primary-large:hover {
@@ -826,11 +827,11 @@ h5, h6 {
   transform: scale(0.98);
 }
 
-/* Responsive: Scale down large primary button to 38px height on smaller devices */
-@media (max-width: 1023px) {
+/* Responsive: Scale down large primary button to 38px on mobile */
+@media (max-width: 767px) {
   .btn-primary-large {
-    /* ~38px total height with 16px font */
-    padding: 8px 18px;
+    height: 38px;
+    padding: 0 18px;
   }
 }
 
@@ -903,8 +904,8 @@ h5, h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* ~42px total height with 16px font */
-  padding: 12px 24px;
+  height: 42px;
+  padding: 0 24px;
   font-size: 16px;
   font-weight: 500;
   color: hsl(var(--foreground));
@@ -914,6 +915,7 @@ h5, h6 {
   cursor: pointer;
   transition: transform 0.2s ease;
   transform: scale(1);
+  box-sizing: border-box;
 }
 
 .btn-secondary-large:hover {
@@ -924,12 +926,11 @@ h5, h6 {
   transform: scale(0.98);
 }
 
-/* Responsive: Scale down large secondary button to 38px height on smaller devices */
-@media (max-width: 1023px) {
+/* Responsive: Scale down large secondary button to 38px on mobile */
+@media (max-width: 767px) {
   .btn-secondary-large {
-    /* ~38px total height with 16px font */
-    padding: 10px 22px;
-    font-size: 16px;
+    height: 38px;
+    padding: 0 18px;
   }
 }
 
@@ -1034,6 +1035,17 @@ h5, h6 {
   background-color: hsl(var(--black33));
 }
 
+/* Modal secondary button variant (black33 background + white66 text)
+   Use this for secondary buttons inside modals for better contrast */
+.btn-secondary-modal,
+.btn-secondary-large.btn-secondary-modal,
+.btn-secondary.btn-secondary-modal,
+.btn-secondary-small.btn-secondary-modal,
+.btn-secondary-xs.btn-secondary-modal {
+  background-color: hsl(var(--black33));
+  color: hsl(var(--white66));
+}
+
 /* Extra small primary button */
 .btn-primary-xs {
   display: inline-flex;
@@ -1073,8 +1085,8 @@ h5, h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* ~42px total height with 18px font */
-  padding: 12px 24px;
+  height: 42px;
+  padding: 0 24px;
   font-size: 16px;
   font-weight: 500;
   color: hsl(var(--foreground));
@@ -1088,6 +1100,7 @@ h5, h6 {
   transform: scale(1);
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .btn-glass-large::before {
@@ -1124,11 +1137,11 @@ h5, h6 {
   gap: 12px;
 }
 
-/* Responsive: Scale down large glass button to 38px height on smaller devices */
-@media (max-width: 1023px) {
+/* Responsive: Scale down large glass button to 38px on mobile */
+@media (max-width: 767px) {
   .btn-glass-large {
-    /* ~38px total height with 16px font */
-    padding: 8px 18px;
+    height: 38px;
+    padding: 0 18px;
   }
   
   .btn-glass-large.btn-glass-with-chevron {

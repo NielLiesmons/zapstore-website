@@ -15,6 +15,8 @@
   import { authStore, connect, disconnect } from "$lib/stores/auth.js";
   import SearchModal from "./SearchModal.svelte";
   import ProfilePic from "./ProfilePic.svelte";
+  import GetStartedModal from "./GetStartedModal.svelte";
+  import SpinKeyModal from "./SpinKeyModal.svelte";
 
   /** @type {"landing" | "browse"} - Header variant */
   export let variant = "landing";
@@ -30,6 +32,11 @@
   let menuOpen = false;
   let menuContainer;
   let menuButton;
+
+  // Onboarding modal state
+  let getStartedModalOpen = false;
+  let spinKeyModalOpen = false;
+  let onboardingProfileName = "";
 
   // Categories and platforms for the search overlay
   const categories = [
@@ -115,20 +122,60 @@
     e.stopPropagation();
     dropdownOpen = !dropdownOpen;
   }
+
+  // Onboarding flow handlers
+  function openGetStartedModal() {
+    menuOpen = false;
+    getStartedModalOpen = true;
+  }
+
+  function handleGetStartedStart(event) {
+    onboardingProfileName = event.detail.profileName;
+    // Open spin modal immediately, then close get started modal
+    spinKeyModalOpen = true;
+    // Small delay to let spin modal appear before closing get started
+    setTimeout(() => {
+      getStartedModalOpen = false;
+    }, 50);
+  }
+
+  function handleGetStartedConnected() {
+    // User connected with existing key
+    getStartedModalOpen = false;
+  }
+
+  function handleSpinComplete(event) {
+    const { nsec, secretKeyHex, pubkey, profileName } = event.detail;
+    console.log("Key generated for:", profileName);
+    console.log("Pubkey:", pubkey);
+    // TODO: Store the key securely and create the profile
+    // For now, just close the modal
+    spinKeyModalOpen = false;
+    // Could show a success message or redirect
+  }
+
+  function handleUseExistingKey() {
+    spinKeyModalOpen = false;
+    getStartedModalOpen = true;
+  }
 </script>
 
 <header
   class={cn(
     "header fixed top-0 left-0 right-0 z-50 transition-all duration-300",
     scrolled
-      ? "bg-background/60 backdrop-blur-2xl border-b border-border/50"
+      ? "bg-background/60 border-b border-border/50"
       : "bg-transparent border-b border-transparent",
   )}
 >
-  <nav class={cn(
-    "container mx-auto h-full",
-    variant === "browse" ? "pl-1 pr-4 sm:pl-3 sm:pr-6 md:pl-5 md:pr-8" : "px-4 sm:px-6 md:px-8 lg:px-8"
-  )}>
+  <nav
+    class={cn(
+      "container mx-auto h-full",
+      variant === "browse"
+        ? "pl-1 pr-4 sm:pl-3 sm:pr-6 md:pl-5 md:pr-8"
+        : "px-4 sm:px-6 md:px-8 lg:px-8",
+    )}
+  >
     <div class="flex items-center justify-between gap-2 sm:gap-6 h-full">
       <!-- Left: Logo or Menu + Page Title -->
       <div class="header-side flex items-center flex-shrink-0 min-w-0">
@@ -152,15 +199,11 @@
               {#if menuOpen}
                 <Cross
                   variant="outline"
-                  color="hsl(var(--white66))"
+                  color="hsl(var(--white33))"
                   size={14}
                 />
               {:else}
-                <Menu
-                  variant="outline"
-                  color="hsl(var(--white33))"
-                  size={16}
-                />
+                <Menu variant="outline" color="hsl(var(--white33))" size={16} />
               {/if}
             </button>
 
@@ -192,8 +235,14 @@
                           x2="100%"
                           y2="100%"
                         >
-                          <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
-                          <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
+                          <stop
+                            offset="0%"
+                            style="stop-color: hsl(252, 100%, 72%);"
+                          />
+                          <stop
+                            offset="100%"
+                            style="stop-color: hsl(241, 100%, 68%);"
+                          />
                         </linearGradient>
                       </defs>
                       <path
@@ -205,10 +254,15 @@
                   </a>
                   <!-- Profile pic only on mobile (visible in header on desktop) -->
                   {#if $authStore.isConnected}
-                    <a href="/p/{$authStore.npub}" class="menu-user-pic menu-user-pic-mobile-only" on:click={closeMenu}>
+                    <a
+                      href="/p/{$authStore.npub}"
+                      class="menu-user-pic menu-user-pic-mobile-only"
+                      on:click={closeMenu}
+                    >
                       <ProfilePic
                         pictureUrl={$authStore.profile?.picture}
-                        name={$authStore.profile?.displayName || $authStore.profile?.name}
+                        name={$authStore.profile?.displayName ||
+                          $authStore.profile?.name}
                         pubkey={$authStore.pubkey}
                         size="md"
                       />
@@ -231,31 +285,77 @@
 
                 <!-- Discover section -->
                 <div class="menu-section">
-                  <a href="/discover" class="menu-section-link" on:click={closeMenu}>Discover</a>
+                  <a
+                    href="/discover"
+                    class="menu-section-link"
+                    on:click={closeMenu}>Discover</a
+                  >
                   <nav class="menu-subnav">
-                    <a href="/discover" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Apps</a>
-                    <a href="/stacks" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Stacks</a>
-                    <a href="/catalogs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Catalogs</a>
+                    <a
+                      href="/discover"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Apps</a
+                    >
+                    <a
+                      href="/stacks"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Stacks</a
+                    >
+                    <a
+                      href="/catalogs"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Catalogs</a
+                    >
                   </nav>
                 </div>
 
                 <!-- Developers section -->
                 <div class="menu-section">
-                  <a href="/developers" class="menu-section-link" on:click={closeMenu}>Developers</a>
+                  <a
+                    href="/developers"
+                    class="menu-section-link"
+                    on:click={closeMenu}>Developers</a
+                  >
                   <nav class="menu-subnav">
-                    <a href="/publish" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Publish</a>
-                    <a href="/pro" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Pro</a>
-                    <a href="/docs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Docs</a>
-                    <a href="/reachkit" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>ReachKit</a>
+                    <a
+                      href="/publish"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Publish</a
+                    >
+                    <a
+                      href="/pro"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Pro</a
+                    >
+                    <a
+                      href="/docs"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Docs</a
+                    >
+                    <a
+                      href="/reachkit"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>ReachKit</a
+                    >
                   </nav>
                 </div>
 
                 <!-- The App section -->
                 <div class="menu-section">
-                  <a href="/app" class="menu-section-link" on:click={closeMenu}>The App</a>
+                  <a href="/app" class="menu-section-link" on:click={closeMenu}
+                    >The App</a
+                  >
                   <nav class="menu-subnav">
-                    <a href="/about" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>About</a>
-                    <a href="/download" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Download</a>
+                    <a
+                      href="/about"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>About</a
+                    >
+                    <a
+                      href="/download"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Download</a
+                    >
                   </nav>
                 </div>
 
@@ -263,9 +363,13 @@
                   <div class="menu-divider"></div>
                   <!-- Get Started button (only when not logged in) -->
                   <div class="menu-cta-wrapper">
-                    <a href="/get-started" class="btn-primary w-full" on:click={closeMenu}>
+                    <button
+                      type="button"
+                      class="btn-primary w-full"
+                      on:click={openGetStartedModal}
+                    >
                       Get Started
-                    </a>
+                    </button>
                   </div>
                 {/if}
               </div>
@@ -274,7 +378,10 @@
 
           <!-- Page title -->
           {#if pageTitle}
-            <span class="page-title font-semibold text-lg lg:text-xl tracking-tight ml-2">{pageTitle}</span>
+            <span
+              class="page-title font-semibold text-lg lg:text-xl tracking-tight ml-2"
+              >{pageTitle}</span
+            >
           {/if}
         {:else}
           <!-- Landing variant: Logo + text that opens menu -->
@@ -306,8 +413,14 @@
                     x2="100%"
                     y2="100%"
                   >
-                    <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
-                    <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
+                    <stop
+                      offset="0%"
+                      style="stop-color: hsl(252, 100%, 72%);"
+                    />
+                    <stop
+                      offset="100%"
+                      style="stop-color: hsl(241, 100%, 68%);"
+                    />
                   </linearGradient>
                 </defs>
                 <path
@@ -315,7 +428,9 @@
                   fill="url(#logo-gradient)"
                 />
               </svg>
-              <span class="font-semibold text-lg lg:text-xl tracking-tight">Zapstore</span>
+              <span class="font-semibold text-lg lg:text-xl tracking-tight"
+                >Zapstore</span
+              >
             </button>
 
             <!-- Menu backdrop (mobile only) -->
@@ -346,8 +461,14 @@
                           x2="100%"
                           y2="100%"
                         >
-                          <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
-                          <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
+                          <stop
+                            offset="0%"
+                            style="stop-color: hsl(252, 100%, 72%);"
+                          />
+                          <stop
+                            offset="100%"
+                            style="stop-color: hsl(241, 100%, 68%);"
+                          />
                         </linearGradient>
                       </defs>
                       <path
@@ -358,10 +479,15 @@
                     <span class="menu-logo-text">Zapstore</span>
                   </a>
                   {#if $authStore.isConnected}
-                    <a href="/p/{$authStore.npub}" class="menu-user-pic" on:click={closeMenu}>
+                    <a
+                      href="/p/{$authStore.npub}"
+                      class="menu-user-pic"
+                      on:click={closeMenu}
+                    >
                       <ProfilePic
                         pictureUrl={$authStore.profile?.picture}
-                        name={$authStore.profile?.displayName || $authStore.profile?.name}
+                        name={$authStore.profile?.displayName ||
+                          $authStore.profile?.name}
                         pubkey={$authStore.pubkey}
                         size="md"
                       />
@@ -384,31 +510,77 @@
 
                 <!-- Discover section -->
                 <div class="menu-section">
-                  <a href="/discover" class="menu-section-link" on:click={closeMenu}>Discover</a>
+                  <a
+                    href="/discover"
+                    class="menu-section-link"
+                    on:click={closeMenu}>Discover</a
+                  >
                   <nav class="menu-subnav">
-                    <a href="/discover" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Apps</a>
-                    <a href="/stacks" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Stacks</a>
-                    <a href="/catalogs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Catalogs</a>
+                    <a
+                      href="/discover"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Apps</a
+                    >
+                    <a
+                      href="/stacks"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Stacks</a
+                    >
+                    <a
+                      href="/catalogs"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Catalogs</a
+                    >
                   </nav>
                 </div>
 
                 <!-- Developers section -->
                 <div class="menu-section">
-                  <a href="/developers" class="menu-section-link" on:click={closeMenu}>Developers</a>
+                  <a
+                    href="/developers"
+                    class="menu-section-link"
+                    on:click={closeMenu}>Developers</a
+                  >
                   <nav class="menu-subnav">
-                    <a href="/publish" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Publish</a>
-                    <a href="/pro" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Pro</a>
-                    <a href="/docs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Docs</a>
-                    <a href="/reachkit" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>ReachKit</a>
+                    <a
+                      href="/publish"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Publish</a
+                    >
+                    <a
+                      href="/pro"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Pro</a
+                    >
+                    <a
+                      href="/docs"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Docs</a
+                    >
+                    <a
+                      href="/reachkit"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>ReachKit</a
+                    >
                   </nav>
                 </div>
 
                 <!-- The App section -->
                 <div class="menu-section">
-                  <a href="/app" class="menu-section-link" on:click={closeMenu}>The App</a>
+                  <a href="/app" class="menu-section-link" on:click={closeMenu}
+                    >The App</a
+                  >
                   <nav class="menu-subnav">
-                    <a href="/about" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>About</a>
-                    <a href="/download" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Download</a>
+                    <a
+                      href="/about"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>About</a
+                    >
+                    <a
+                      href="/download"
+                      class="menu-sublink text-sm font-medium text-white/66"
+                      on:click={closeMenu}>Download</a
+                    >
                   </nav>
                 </div>
 
@@ -416,9 +588,13 @@
                   <div class="menu-divider"></div>
                   <!-- Get Started button (only when not logged in) -->
                   <div class="menu-cta-wrapper">
-                    <a href="/get-started" class="btn-primary w-full" on:click={closeMenu}>
+                    <button
+                      type="button"
+                      class="btn-primary w-full"
+                      on:click={openGetStartedModal}
+                    >
                       Get Started
-                    </a>
+                    </button>
                   </div>
                 {/if}
               </div>
@@ -428,7 +604,9 @@
       </div>
 
       <!-- Centered Search Bar (hidden on mobile) -->
-      <div class="header-search-container hidden sm:flex flex-1 justify-center px-2 sm:px-3 min-w-0 lg:min-w-fit">
+      <div
+        class="header-search-container hidden sm:flex flex-1 justify-center px-2 sm:px-3 min-w-0 lg:min-w-fit"
+      >
         <button
           bind:this={searchBarRef}
           type="button"
@@ -499,7 +677,7 @@
           <!-- Get Started Button -->
           <button
             type="button"
-            on:click={handleSignIn}
+            on:click={openGetStartedModal}
             class="btn-primary-small h-10 px-4"
           >
             <span class="sm:hidden">Start</span>
@@ -514,10 +692,33 @@
 <!-- Search Modal - rendered outside header to escape constraints -->
 <SearchModal bind:open={searchOpen} bind:searchQuery {categories} {platforms} />
 
+<!-- Onboarding Modals -->
+<GetStartedModal 
+  bind:open={getStartedModalOpen}
+  on:start={handleGetStartedStart}
+  on:connected={handleGetStartedConnected}
+/>
+
+<SpinKeyModal
+  bind:open={spinKeyModalOpen}
+  profileName={onboardingProfileName}
+  on:spinComplete={handleSpinComplete}
+  on:useExistingKey={handleUseExistingKey}
+/>
+
 <style>
-  /* Header height */
+  /* Header height and blur */
   .header {
     height: 64px;
+  }
+
+  .header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    z-index: -1;
   }
 
   /* Logo button (landing variant) */
@@ -589,12 +790,12 @@
     width: 75%;
     max-width: 320px;
     height: 100vh;
-    background-color: hsl(var(--gray66));
+    background-color: hsla(240, 6%, 18%, 0.8);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-right: 0.33px solid hsl(var(--white16));
     border-radius: 0;
-    padding: 16px 12px 12px 12px;
+    padding: 12px;
     z-index: 100;
     box-shadow: 8px 0 32px hsl(var(--black33));
     overflow-y: auto;
@@ -612,7 +813,7 @@
       border: 0.33px solid hsl(var(--white16));
       border-radius: 12px 32px 32px 32px;
       box-shadow: 0 8px 32px hsl(var(--black33));
-      padding: 16px 12px 12px 12px;
+      padding: 12px;
       overflow-y: visible;
     }
   }

@@ -113,16 +113,24 @@ The `.panel-clickable` class adds:
 ### Available Button Types
 
 #### Primary Buttons (Blurple Gradient)
-- `.btn-primary-large` - Large primary button (~42px height, 16px font)
+- `.btn-primary-large` - Large primary button (42px desktop, 38px mobile, 16px font)
 - `.btn-primary` - Default primary button (~38px height, 16px font)
 - `.btn-primary-small` - Small primary button (32px height, 14px font, pill shape)
 - `.btn-primary-xs` - Extra small primary button (24px height, 12px font, pill shape)
 
 #### Secondary Buttons (Gray66 Background)
-- `.btn-secondary-large` - Large secondary button (~42px height, 16px font)
+- `.btn-secondary-large` - Large secondary button (42px desktop, 38px mobile, 16px font)
 - `.btn-secondary` - Default secondary button (~38px height, 16px font)
 - `.btn-secondary-small` - Small secondary button (32px height, 14px font, pill shape)
 - `.btn-secondary-xs` - Extra small secondary button (24px height, 12px font, pill shape)
+
+#### Glass Buttons (Backdrop Blur with Border)
+- `.btn-glass-large` - Large glass button (42px desktop, 38px mobile, 16px font)
+- `.btn-glass` - Default glass button (~38px height, 16px font)
+- `.btn-glass-small` - Small glass button (32px height, 14px font)
+- `.btn-glass-xs` - Extra small glass button (24px height, 12px font, pill shape)
+
+**Note**: Large buttons (`-large` variants) scale down from 42px to 38px on mobile (<768px) for a more compact layout.
 
 #### Glass Buttons (Backdrop Blur with Border)
 - `.btn-glass-large` - Large glass button (~42px height, 16px font)
@@ -1358,6 +1366,32 @@ This prevents the modal from "jumping" when content loads and triggers the align
 - Default background: `hsl(var(--gray66))`
 - Border radius: `var(--radius-32)` (32px)
 - Use `class` prop to override background (e.g., `DownloadModal` uses gradient)
+
+### Button Usage in Modals
+
+**CRITICAL**: Buttons inside modals follow specific rules:
+
+1. **Use large button sizes** - All CTA and secondary buttons in modals should use `-large` variants:
+   - Primary CTA: `btn-primary-large`
+   - Secondary options: `btn-secondary-large`
+
+2. **Secondary buttons use modal variant** - Secondary buttons in modals must use the `btn-secondary-modal` modifier class for proper contrast:
+   - Background: `black33` (darker than default `gray66`)
+   - Text color: `white66` (softer than default `foreground`)
+
+```svelte
+<!-- Primary CTA in modal -->
+<button class="btn-primary-large w-full">
+  Start
+</button>
+
+<!-- Secondary option in modal -->
+<button class="btn-secondary-large btn-secondary-modal w-full">
+  Already have an account?
+</button>
+```
+
+This ensures proper visual hierarchy and contrast against the modal's `gray66` background.
 
 ---
 

@@ -529,7 +529,6 @@
   />
 
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
-
     <!-- App Header Row -->
     <div class="app-header flex items-center gap-4 sm:gap-6 mb-6">
       <!-- App Icon -->
@@ -795,33 +794,30 @@
               style="color: hsl(var(--foreground));">Suggestions</span
             >
           </div>
-          <p class="text-sm mb-2" style="color: hsl(var(--white66));">
-            Similar & Companion Apps you might like
-          </p>
           <div class="similar-apps-row flex gap-2">
-            <AppPic size="xs" name="App 1" />
-            <AppPic size="xs" name="App 2" />
-            <AppPic size="xs" name="App 3" />
-            <AppPic size="xs" name="App 4" />
+            <AppPic size="md" name="App 1" />
+            <AppPic size="md" name="App 2" />
+            <AppPic size="md" name="App 3" />
+            <AppPic size="md" name="App 4" />
           </div>
         </button>
       </div>
 
-    <!-- Row 2 (mobile only): Similar Apps -->
-    <button type="button" class="info-panel panel-similar-mobile text-left">
-      <div class="panel-header">
-        <span
-          class="text-base font-semibold"
-          style="color: hsl(var(--foreground));">Suggestions</span
-        >
-      </div>
-      <div class="similar-apps-row flex gap-2 mt-2">
-        <AppPic size="xs" name="App 1" />
-        <AppPic size="xs" name="App 2" />
-        <AppPic size="xs" name="App 3" />
-        <AppPic size="xs" name="App 4" />
-      </div>
-    </button>
+      <!-- Row 2 (mobile only): Similar Apps -->
+      <button type="button" class="info-panel panel-similar-mobile text-left">
+        <div class="panel-header">
+          <span
+            class="text-base font-semibold"
+            style="color: hsl(var(--foreground));">Suggestions</span
+          >
+        </div>
+        <div class="similar-apps-row flex gap-2 mt-2">
+          <AppPic size="xs" name="App 1" />
+          <AppPic size="xs" name="App 2" />
+          <AppPic size="xs" name="App 3" />
+          <AppPic size="xs" name="App 4" />
+        </div>
+      </button>
     </div>
 
     <div class="divider mb-4"></div>
@@ -1191,12 +1187,6 @@
     margin-bottom: 4px;
   }
 
-  /* Suggested panel: tighter header spacing */
-  .panel-similar-desktop .panel-header,
-  .panel-similar-mobile .panel-header {
-    margin-bottom: 2px;
-  }
-
   /* Mobile: Security is golden ratio larger (~1.618), Releases is smaller (~1) */
   .panel-security {
     flex: 1.618;
@@ -1225,22 +1215,22 @@
       display: none;
     }
 
-    /* Show desktop Similar panel - content stays top-aligned */
+    /* Show desktop Similar panel - icons row at bottom */
     .panel-similar-desktop {
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      flex: 2; /* 50% */
+      justify-content: space-between;
+      flex: 1; /* Equal width */
       min-width: 0;
     }
 
-    /* Desktop widths: Security 25%, Releases 25%, Similar 50% */
+    /* Desktop widths: all panels equal */
     .panel-security {
-      flex: 1; /* 25% */
+      flex: 1;
     }
 
     .panel-releases {
-      flex: 1; /* 25% */
+      flex: 1;
     }
   }
 
@@ -1250,6 +1240,11 @@
     border-radius: 16px;
     padding: 8px 16px 10px;
     cursor: pointer;
+  }
+
+  /* Extra bottom padding for Suggestions panel on desktop */
+  .panel-similar-desktop {
+    padding-bottom: 16px;
   }
 
   /* Responsive install buttons */

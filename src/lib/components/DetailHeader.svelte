@@ -81,7 +81,7 @@
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     document.addEventListener("click", handleClickOutside);
-    
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("click", handleClickOutside);
@@ -109,11 +109,13 @@
   class={cn(
     "detail-header fixed top-0 left-0 right-0 z-50 transition-all duration-300",
     scrolled
-      ? "bg-background/60 backdrop-blur-2xl border-b border-border/50"
+      ? "bg-background/60 border-b border-border/50"
       : "bg-transparent border-b border-transparent",
   )}
 >
-  <nav class="container mx-auto pl-1 pr-4 sm:pl-3 sm:pr-6 md:pl-5 md:pr-8 h-full">
+  <nav
+    class="container mx-auto pl-1 pr-4 sm:pl-3 sm:pr-6 md:pl-5 md:pr-8 h-full"
+  >
     <div class="flex items-center justify-between gap-3 h-full">
       <!-- Left: Menu button + Publisher info -->
       <div class="flex items-center gap-2 min-w-0 flex-1">
@@ -134,17 +136,9 @@
             aria-expanded={menuOpen}
           >
             {#if menuOpen}
-              <Cross
-                variant="outline"
-                color="hsl(var(--white66))"
-                size={14}
-              />
+              <Cross variant="outline" color="hsl(var(--white33))" size={14} />
             {:else}
-              <Menu
-                variant="outline"
-                color="hsl(var(--white33))"
-                size={16}
-              />
+              <Menu variant="outline" color="hsl(var(--white33))" size={16} />
             {/if}
           </button>
 
@@ -176,8 +170,14 @@
                         x2="100%"
                         y2="100%"
                       >
-                        <stop offset="0%" style="stop-color: hsl(252, 100%, 72%);" />
-                        <stop offset="100%" style="stop-color: hsl(241, 100%, 68%);" />
+                        <stop
+                          offset="0%"
+                          style="stop-color: hsl(252, 100%, 72%);"
+                        />
+                        <stop
+                          offset="100%"
+                          style="stop-color: hsl(241, 100%, 68%);"
+                        />
                       </linearGradient>
                     </defs>
                     <path
@@ -188,10 +188,15 @@
                   <span class="menu-logo-text">Zapstore</span>
                 </a>
                 {#if $authStore.isConnected}
-                  <a href="/p/{$authStore.npub}" class="menu-user-pic" on:click={closeMenu}>
+                  <a
+                    href="/p/{$authStore.npub}"
+                    class="menu-user-pic"
+                    on:click={closeMenu}
+                  >
                     <ProfilePic
                       pictureUrl={$authStore.profile?.picture}
-                      name={$authStore.profile?.displayName || $authStore.profile?.name}
+                      name={$authStore.profile?.displayName ||
+                        $authStore.profile?.name}
                       pubkey={$authStore.pubkey}
                       size="md"
                     />
@@ -214,31 +219,77 @@
 
               <!-- Discover section -->
               <div class="menu-section">
-                <a href="/discover" class="menu-section-link" on:click={closeMenu}>Discover</a>
+                <a
+                  href="/discover"
+                  class="menu-section-link"
+                  on:click={closeMenu}>Discover</a
+                >
                 <nav class="menu-subnav">
-                  <a href="/discover" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Apps</a>
-                  <a href="/stacks" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Stacks</a>
-                  <a href="/catalogs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Catalogs</a>
+                  <a
+                    href="/discover"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>Apps</a
+                  >
+                  <a
+                    href="/stacks"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>Stacks</a
+                  >
+                  <a
+                    href="/catalogs"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>Catalogs</a
+                  >
                 </nav>
               </div>
 
               <!-- Developers section -->
               <div class="menu-section">
-                <a href="/developers" class="menu-section-link" on:click={closeMenu}>Developers</a>
+                <a
+                  href="/developers"
+                  class="menu-section-link"
+                  on:click={closeMenu}>Developers</a
+                >
                 <nav class="menu-subnav">
-                  <a href="/publish" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Publish</a>
-                  <a href="/pro" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Pro</a>
-                  <a href="/docs" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Docs</a>
-                  <a href="/reachkit" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>ReachKit</a>
+                  <a
+                    href="/publish"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>Publish</a
+                  >
+                  <a
+                    href="/pro"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>Pro</a
+                  >
+                  <a
+                    href="/docs"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>Docs</a
+                  >
+                  <a
+                    href="/reachkit"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>ReachKit</a
+                  >
                 </nav>
               </div>
 
               <!-- The App section -->
               <div class="menu-section">
-                <a href="/app" class="menu-section-link" on:click={closeMenu}>The App</a>
+                <a href="/app" class="menu-section-link" on:click={closeMenu}
+                  >The App</a
+                >
                 <nav class="menu-subnav">
-                  <a href="/about" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>About</a>
-                  <a href="/download" class="menu-sublink text-sm font-medium text-white/66" on:click={closeMenu}>Download</a>
+                  <a
+                    href="/about"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>About</a
+                  >
+                  <a
+                    href="/download"
+                    class="menu-sublink text-sm font-medium text-white/66"
+                    on:click={closeMenu}>Download</a
+                  >
                 </nav>
               </div>
 
@@ -246,7 +297,11 @@
                 <div class="menu-divider"></div>
                 <!-- Get Started button (only when not logged in) -->
                 <div class="menu-cta-wrapper">
-                  <a href="/get-started" class="btn-primary w-full" on:click={closeMenu}>
+                  <a
+                    href="/get-started"
+                    class="btn-primary w-full"
+                    on:click={closeMenu}
+                  >
                     Get Started
                   </a>
                 </div>
@@ -271,7 +326,11 @@
               {publisherName || "Anonymous"}
             </span>
             {#if timestamp}
-              <Timestamp {timestamp} size="xs" className="publisher-timestamp" />
+              <Timestamp
+                {timestamp}
+                size="xs"
+                className="publisher-timestamp"
+              />
             {/if}
           </a>
         {/if}
@@ -297,6 +356,15 @@
   /* Fixed header height - exactly 64px to match main header */
   :global(.detail-header) {
     height: 64px;
+  }
+
+  :global(.detail-header)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    z-index: -1;
   }
 
   .header-spacer {
@@ -364,12 +432,12 @@
     width: 75%;
     max-width: 320px;
     height: 100vh;
-    background-color: hsl(var(--gray66));
+    background-color: hsla(240, 6%, 18%, 0.8);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-right: 0.33px solid hsl(var(--white16));
     border-radius: 0;
-    padding: 16px 12px 12px 12px;
+    padding: 12px;
     z-index: 100;
     box-shadow: 8px 0 32px hsl(var(--black33));
     overflow-y: auto;
@@ -387,7 +455,7 @@
       border: 0.33px solid hsl(var(--white16));
       border-radius: 12px 32px 32px 32px;
       box-shadow: 0 8px 32px hsl(var(--black33));
-      padding: 16px 12px 12px 12px;
+      padding: 12px;
       overflow-y: visible;
     }
   }
@@ -512,7 +580,9 @@
     padding: 6px 12px;
     text-decoration: none;
     border-radius: 12px;
-    transition: background-color 0.15s ease, opacity 0.15s ease;
+    transition:
+      background-color 0.15s ease,
+      opacity 0.15s ease;
   }
 
   .menu-sublink:hover {
