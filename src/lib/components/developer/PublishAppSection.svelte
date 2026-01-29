@@ -74,10 +74,23 @@
 
 <section
   bind:this={sectionElement}
-  class="relative min-h-[60vh] flex items-center justify-center overflow-hidden border-t border-border/50"
+  class="relative min-h-[60vh] flex items-center justify-center overflow-hidden"
 >
-  <!-- 3D Grid Background -->
-  <div class="absolute inset-0 z-0 grid-background"></div>
+  <!-- Blurple gradient background -->
+  <div class="absolute inset-0 z-0">
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] gradient-orb bg-primary/15"
+      style="filter: blur(120px);"
+    ></div>
+    <div
+      class="absolute top-1/3 left-1/4 w-[400px] h-[400px] gradient-orb bg-accent/10"
+      style="animation-delay: -4s; filter: blur(100px);"
+    ></div>
+    <div
+      class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] gradient-orb bg-primary/10"
+      style="animation-delay: -2s; filter: blur(100px);"
+    ></div>
+  </div>
 
   <!-- Left chain -->
   <img
@@ -112,7 +125,7 @@
       <br class="mb-6" />
       <span
         class="text-3xl sm:text-4xl lg:text-4xl xl:text-5xl"
-        style="background: radial-gradient(circle at top left, #19DD75 0%, #0BBB8C 100%); -webkit-background-clip: text; background-clip: text; color: transparent;"
+        style="background: var(--gradient-blurple-light); -webkit-background-clip: text; background-clip: text; color: transparent;"
       >
         Without Permission
       </span>
@@ -121,68 +134,32 @@
       Break free from the chains of centralized app stores.<br />Publish your
       app in the open.
     </p>
-    <button
-      type="button"
+    <a
+      href="/docs/publish"
       bind:this={developerButton}
       on:mousemove={handleButtonMouseMove}
-      class="btn-glass-large btn-glass-green flex items-center gap-3 mx-auto"
+      class="btn-glass-large btn-glass-blurple flex items-center gap-3 mx-auto"
     >
-      <Code2 variant="outline" color="#19DD75" size={16} />
-      For Developers
-    </button>
+      <Code2 variant="outline" color="hsl(var(--blurpleColor))" size={16} />
+      Start Publishing
+    </a>
   </div>
 </section>
 
 <style>
-  .grid-background {
-    perspective: 1000px;
-    perspective-origin: center center;
-    overflow: hidden;
+  .gradient-orb {
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: float 20s ease-in-out infinite;
   }
 
-  .grid-background::before,
-  .grid-background::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0.3;
-    background-image: 
-      /* Horizontal lines */
-      linear-gradient(rgb(25 221 117 / 0.4) 1px, transparent 1px),
-      /* Vertical lines */
-        linear-gradient(90deg, rgb(25 221 117 / 0.4) 1px, transparent 1px);
-    background-size: 100px 100px;
-    background-position: center center;
-    transform-style: preserve-3d;
-  }
-
-  .grid-background::before {
-    transform: rotateX(60deg) translateZ(-200px) scale(2);
-    animation: gridMove1 20s linear infinite;
-  }
-
-  .grid-background::after {
-    transform: rotateX(60deg) translateZ(-400px) scale(3);
-    background-size: 150px 150px;
-    animation: gridMove2 25s linear infinite;
-    opacity: 0.2;
-  }
-
-  @keyframes gridMove1 {
-    0% {
-      transform: rotateX(60deg) translateZ(-200px) scale(2) translateY(0);
-    }
+  @keyframes float {
+    0%,
     100% {
-      transform: rotateX(60deg) translateZ(-200px) scale(2) translateY(100px);
+      transform: translate(0, 0) scale(1);
     }
-  }
-
-  @keyframes gridMove2 {
-    0% {
-      transform: rotateX(60deg) translateZ(-400px) scale(3) translateY(0);
-    }
-    100% {
-      transform: rotateX(60deg) translateZ(-400px) scale(3) translateY(150px);
+    50% {
+      transform: translate(30px, -30px) scale(1.1);
     }
   }
 </style>
