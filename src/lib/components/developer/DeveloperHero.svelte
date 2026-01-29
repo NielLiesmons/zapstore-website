@@ -31,7 +31,7 @@
     <p
       class="text-lg sm:text-xl text-muted-foreground max-w-lg mb-10 sm:mb-12 lg:mb-16"
     >
-      Reliable tools for shipping apps and community interaction
+      Reliable tools for shipping apps and interacting with communities of users.
     </p>
   </div>
 

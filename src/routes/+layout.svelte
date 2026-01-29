@@ -6,7 +6,7 @@
   import NavigationProgress from "$lib/components/NavigationProgress.svelte";
 
   // ReachKit has its own layout with header/footer
-  $: isReachKit = $page.url.pathname.startsWith("/developers/reachkit");
+  $: isReachKit = $page.url.pathname.startsWith("/studio/reachkit");
 
   // Detail pages use their own contextual header (DetailHeader)
   $: isDetailPage =
@@ -27,7 +27,7 @@
     "/stacks": "Stacks",
     "/catalogs": "Catalogs",
     "/labels": "Labels",
-    "/developers": "Developers",
+    "/studio": "Studio",
     "/publish": "Publish",
     "/docs": "Docs",
     "/blog": "Blog",

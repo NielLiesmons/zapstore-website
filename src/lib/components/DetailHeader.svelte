@@ -257,9 +257,9 @@
               <!-- Developers section -->
               <div class="menu-section">
                 <a
-                  href="/developers"
+                  href="/studio"
                   class="menu-section-link"
-                  on:click={closeMenu}>Developers</a
+                  on:click={closeMenu}>Studio</a
                 >
                 <nav class="menu-subnav">
                   <a

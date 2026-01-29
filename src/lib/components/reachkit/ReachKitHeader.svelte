@@ -44,7 +44,7 @@
 					</a>
 					
 					<!-- ReachKit Logo -->
-					<a href="/developers/reachkit" class="flex items-center gap-2.5 group">
+					<a href="/studio/reachkit" class="flex items-center gap-2.5 group">
 						<svg width="28" height="28" viewBox="0 0 32 32" fill="none" class="transition-transform duration-300 group-hover:scale-105">
 							<defs>
 								<linearGradient id="header-reachkit-gradient" x1="0%" y1="0%" x2="100%" y2="100%">

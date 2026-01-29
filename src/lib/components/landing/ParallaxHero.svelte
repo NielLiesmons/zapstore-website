@@ -676,9 +676,9 @@
     </a>
   </div>
 
-  <!-- Developer button anchored to bottom -->
+  <!-- Studio button anchored to bottom -->
   <a
-    href="/developers"
+    href="/studio"
     bind:this={devButton}
     on:mousemove={handleDevButtonMouseMove}
     class="dev-button-bottom btn-glass-small btn-glass-blurple-hover flex items-center justify-center text-sm"

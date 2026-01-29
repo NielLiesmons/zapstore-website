@@ -42,7 +42,7 @@
       </div>
       <!-- CTA Button - 32px from bottom edge -->
       <a
-        href="/developers"
+        href="/studio"
         bind:this={ctaButton}
         on:mousemove={handleMouseMove}
         class="absolute bottom-8 left-1/2 transform -translate-x-1/2 btn-glass-large btn-glass-with-chevron flex items-center group z-40"

@@ -9,7 +9,7 @@
   <title>Developers — Zapstore</title>
   <meta
     name="description"
-    content="A purpose-built developer suite. Reliable tools for shipping apps and community interaction."
+    content="A purpose-built developer suite. Reliable tools for shipping apps and interacting with communities of users"
   />
 </svelte:head>
 

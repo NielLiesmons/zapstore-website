@@ -34,15 +34,15 @@
         <ul class="space-y-3">
           <li>
             <a
-              href="/developers"
+              href="/studio"
               class="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Developers
+              Studio
             </a>
           </li>
           <li>
             <a
-              href="/developers/reachkit"
+              href="/studio/reachkit"
               class="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
             >
               ReachKit
