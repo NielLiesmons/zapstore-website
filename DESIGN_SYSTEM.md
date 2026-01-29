@@ -12,14 +12,16 @@
 4. [Loading States & Skeleton Loader](#loading-states--skeleton-loader)
 5. [Color System](#color-system)
 6. [Typography](#typography)
-7. [Selector Component](#selector-component)
-8. [Profile Picture Component](#profile-picture-component)
-9. [App Picture Component](#app-picture-component)
-10. [Responsive Sizing Pattern](#responsive-sizing-pattern)
-11. [Horizontal Scroll Containers](#horizontal-scroll-containers)
-12. [Timestamp Component](#timestamp-component)
-13. [Image Containers](#image-containers)
-14. [Modals](#modals)
+7. [Borders & Outlines](#borders--outlines)
+8. [Dividers](#dividers)
+9. [Selector Component](#selector-component)
+10. [Profile Picture Component](#profile-picture-component)
+11. [App Picture Component](#app-picture-component)
+12. [Responsive Sizing Pattern](#responsive-sizing-pattern)
+13. [Horizontal Scroll Containers](#horizontal-scroll-containers)
+14. [Timestamp Component](#timestamp-component)
+15. [Image Containers](#image-containers)
+16. [Modals](#modals)
 
 ---
 
@@ -339,7 +341,9 @@ All icon components accept these props:
 
 Common CSS variables for icons:
 - `hsl(var(--foreground))` - Default text color
-- `hsl(var(--white16))` - Subtle (16% opacity white)
+- `hsl(var(--white8))` - Very subtle (8% opacity white)
+- `hsl(var(--white11))` - Dividers (11% opacity white)
+- `hsl(var(--white16))` - Subtle borders (16% opacity white)
 - `hsl(var(--white33))` - Medium (33% opacity white)
 - `hsl(var(--white66))` - Strong (66% opacity white)
 - `hsl(var(--primary))` - Primary accent color
@@ -515,11 +519,23 @@ Always use `rounded-xl` (12px) for text skeleton containers.
 
 The project uses HSL color variables defined in `src/app.css`:
 
-- `--white`, `--white66`, `--white33`, `--white16`, `--white8`, `--white4` - White variants with opacity
+- `--white`, `--white66`, `--white33`, `--white16`, `--white11`, `--white8`, `--white4` - White variants with opacity
 - `--black`, `--black66`, `--black33`, `--black16`, `--black8` - Black variants with opacity
 - `--gray`, `--gray66`, `--gray44`, `--gray33` - Gray variants with opacity
 - `--blurpleColor`, `--blurpleColor66`, `--blurpleColor33` - Primary blurple color
 - `--goldColor`, `--goldColor66` - Secondary gold color
+
+### White Opacity Scale
+
+| Variable | Opacity | Use Case |
+|----------|---------|----------|
+| `--white` | 100% | Pure white text |
+| `--white66` | 66% | Secondary text |
+| `--white33` | 33% | Tertiary text, timestamps |
+| `--white16` | 16% | Element borders |
+| `--white11` | 11% | Dividers |
+| `--white8` | 8% | Subtle backgrounds |
+| `--white4` | 4% | Very subtle backgrounds |
 
 ### Semantic Colors
 
@@ -597,8 +613,47 @@ border-color: hsl(var(--white16));
 
 ### Font Families
 
-- **Inter** - Primary body and heading font
-- **Geist Mono** - Code/monospace font
+- **Inter** (`--font-sans`) - Primary body and heading font
+- **Courier Prime** (`--font-mono`) - Code/monospace font (Google Font)
+
+**CSS Variables:**
+```css
+--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+--font-mono: 'Courier Prime', 'Courier New', monospace;
+```
+
+**Usage:**
+```css
+font-family: var(--font-mono);  /* For code blocks */
+font-family: var(--font-sans);  /* For body text */
+```
+
+### Code Syntax Highlighting (JSON)
+
+Code blocks use proper JSON parsing with syntax highlighting:
+
+| Element | Color Variable | Example |
+|---------|---------------|---------|
+| Keys | `--blurpleLightColor` | `"repository"` |
+| Values (strings, numbers, bools) | `--foreground` | `"https://..."`, `123`, `true` |
+| Punctuation (`:`, `"`, `,`) | `--white66` | `: " ,` |
+| Curly braces `{}` | `--goldColor` | `{ }` |
+| Square brackets `[]` | `--goldColor66` | `[ ]` |
+
+**Example output:**
+```
+{
+  "repository": "https://github.com/user/repo",
+  "count": 42
+}
+```
+Where `repository` is blurple, `https://...` is white, and punctuation is muted.
+
+**Important:** Do NOT use monospace/code fonts for:
+- npubs and nevents (these are identifiers, not code)
+- User-facing IDs
+
+Only use `--font-mono` for actual code content (JSON, programming languages, etc.)
 
 ### Font Sizes
 
@@ -613,6 +668,105 @@ border-color: hsl(var(--white16));
 - 600 - Semibold for smaller headings
 - 500 - Medium for buttons and emphasis
 - 400 - Regular for body text
+
+---
+
+## Borders & Outlines
+
+### Overview
+
+**CRITICAL RULE**: All borders and outlines in this design system MUST be **centered** (not inside or outside the element). This ensures visual consistency across all components.
+
+### Border Specs
+
+- **Thickness**: `0.33px` for thin element borders (ProfilePic, AppPic, cards, inputs)
+- **Color**: `white16` for standard borders, `white33` for emphasized borders
+- **Style**: Always `solid`
+
+### Implementation
+
+For thin borders on rounded elements, use the CSS `border` property:
+
+```css
+border: 0.33px solid hsl(var(--white16));
+```
+
+### Border Colors
+
+| Color | Use Case |
+|-------|----------|
+| `white16` | Default borders (cards, inputs, profile pics) |
+| `white33` | Emphasized borders (focused inputs, highlighted elements) |
+| `white11` | Dividers (see Dividers section) |
+
+### Important Rules
+
+1. **NEVER use borders thicker than 0.33px** for element outlines (panels, cards, profile pics)
+2. **NEVER use `outline` property** for visual borders - use `border` instead
+3. **ALWAYS use `hsl(var(--colorName))` syntax** for border colors
+
+---
+
+## Dividers
+
+### Overview
+
+Dividers are thin horizontal or vertical lines used to separate content sections. They provide visual hierarchy without adding heavy visual weight.
+
+### Divider Specs
+
+- **Thickness**: `1.4px` (both horizontal and vertical)
+- **Color**: `white11` (11% white opacity)
+- **No margins by default** - add spacing with wrapper elements or explicit margin
+
+### Available Classes
+
+```css
+/* Horizontal divider */
+.divider {
+  width: 100%;
+  height: 1.4px;
+  background-color: hsl(var(--white11));
+}
+
+/* Vertical divider */
+.divider-vertical {
+  width: 1.4px;
+  height: 100%;
+  background-color: hsl(var(--white11));
+}
+```
+
+### Usage Examples
+
+```svelte
+<!-- Simple horizontal divider -->
+<div class="divider"></div>
+
+<!-- Divider with margin -->
+<div class="divider my-4"></div>
+
+<!-- Vertical divider in a flex container -->
+<div class="flex items-center gap-4">
+  <span>Item 1</span>
+  <div class="divider-vertical h-4"></div>
+  <span>Item 2</span>
+</div>
+```
+
+### Important Rules
+
+1. **ALWAYS use `1.4px` height** for dividers - never 1px or other values
+2. **ALWAYS use `white11` color** for dividers - never white16 or other values
+3. **Use `.divider` class** when possible instead of custom styles
+4. **For menu dividers**, add appropriate vertical margin (typically `12px 0`)
+
+### Dividers vs Borders
+
+| Element | Use |
+|---------|-----|
+| **Dividers** (`1.4px`, `white11`) | Content separation (between sections, menu items) |
+| **Borders** (`0.33px`, `white16`) | Element outlines (cards, inputs, profile pics) |
 
 ---
 

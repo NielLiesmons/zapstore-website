@@ -1,19 +1,15 @@
 <script>
   import { ChevronRight } from "$lib/components/icons";
 
-  let openFeedButton;
+  let ctaButton;
 
   function handleMouseMove(event) {
-    if (!openFeedButton) return;
-    const rect = openFeedButton.getBoundingClientRect();
+    if (!ctaButton) return;
+    const rect = ctaButton.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
-    openFeedButton.style.setProperty("--mouse-x", `${mouseX}px`);
-    openFeedButton.style.setProperty("--mouse-y", `${mouseY}px`);
-  }
-
-  function handleOpenFeed() {
-    // TODO: Navigate to feed
+    ctaButton.style.setProperty("--mouse-x", `${mouseX}px`);
+    ctaButton.style.setProperty("--mouse-y", `${mouseY}px`);
   }
 </script>
 
@@ -22,57 +18,49 @@
     <!-- Center text -->
     <div class="relative z-20 text-center mb-8">
       <h2 class="section-title text-display-lg leading-tight">
-        <span class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl"
-          ><span
-            class="hash-gradient"
-            >#</span
-          ><span
-            class="section-title-gradient"
-            >ZapTheApp</span
-          ></span
+        <span
+          class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl section-title-gradient"
         >
+          Release with ease
+        </span>
       </h2>
       <p class="section-description max-w-2xl mx-auto mt-7">
-        Users, valuing devs. No middlemen. No nonsense.
+        Publish apps directly to users without gatekeepers. <br />Get insights,
+        monetize and build community.
       </p>
     </div>
 
-    <!-- Feed container -->
+    <!-- Preview container -->
     <div
-      class="feed-content rounded-t-[32px] relative overflow-hidden feed-container-border feed-bg"
+      class="preview-content rounded-t-[32px] relative overflow-hidden preview-container-border preview-bg"
     >
-      <!-- Content placeholder -->
-      <div class="h-64"></div>
-      <!-- Open Feed Button - 32px from bottom edge -->
-      <button
-        type="button"
-        bind:this={openFeedButton}
-        on:click={handleOpenFeed}
+      <!-- Preview image placeholder -->
+      <div class="h-64 flex items-center justify-center">
+        <span class="text-sm text-muted-foreground"
+          >Developer suite preview</span
+        >
+      </div>
+      <!-- CTA Button - 32px from bottom edge -->
+      <a
+        href="/developers"
+        bind:this={ctaButton}
         on:mousemove={handleMouseMove}
         class="absolute bottom-8 left-1/2 transform -translate-x-1/2 btn-glass-large btn-glass-with-chevron flex items-center group z-40"
       >
-        Open Feed
+        Start Publishing
         <ChevronRight
           variant="outline"
           color="hsl(var(--white33))"
           size={18}
           className="transition-transform group-hover:translate-x-0.5"
         />
-      </button>
+      </a>
     </div>
   </div>
 </section>
 
 <style>
-  .hash-gradient {
-    background: var(--gradient-white-blurple);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    opacity: 0.66;
-  }
-
-  .feed-bg {
+  .preview-bg {
     background: linear-gradient(
       to bottom,
       hsl(var(--gray33)) 0%,
@@ -80,7 +68,7 @@
     );
   }
 
-  .feed-container-border {
+  .preview-container-border {
     border: var(--border-base) solid hsl(var(--white8));
   }
 </style>

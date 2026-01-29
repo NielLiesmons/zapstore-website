@@ -368,8 +368,8 @@
   }
 
   .divider {
-    height: 1px;
-    background-color: hsl(var(--white16));
+    height: 1.4px;
+    background-color: hsl(var(--white11));
     width: 100%;
   }
 

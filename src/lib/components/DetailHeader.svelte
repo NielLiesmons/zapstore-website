@@ -151,7 +151,7 @@
           <!-- Menu dropdown -->
           {#if menuOpen}
             <div class="menu-dropdown">
-              <!-- Logo section with optional user profile -->
+              <!-- Logo section with user profile -->
               <div class="menu-header-row">
                 <a href="/" class="menu-logo" on:click={closeMenu}>
                   <svg
@@ -190,16 +190,27 @@
                 {#if $authStore.isConnected}
                   <a
                     href="/p/{$authStore.npub}"
-                    class="menu-user-pic"
+                    class="menu-user-pic-btn"
                     on:click={closeMenu}
                   >
-                    <ProfilePic
-                      pictureUrl={$authStore.profile?.picture}
-                      name={$authStore.profile?.displayName ||
-                        $authStore.profile?.name}
-                      pubkey={$authStore.pubkey}
-                      size="md"
-                    />
+                    <span class="menu-user-pic-mobile">
+                      <ProfilePic
+                        pictureUrl={$authStore.profile?.picture}
+                        name={$authStore.profile?.displayName ||
+                          $authStore.profile?.name}
+                        pubkey={$authStore.pubkey}
+                        size="md"
+                      />
+                    </span>
+                    <span class="menu-user-pic-desktop">
+                      <ProfilePic
+                        pictureUrl={$authStore.profile?.picture}
+                        name={$authStore.profile?.displayName ||
+                          $authStore.profile?.name}
+                        pubkey={$authStore.pubkey}
+                        size="sm"
+                      />
+                    </span>
                   </a>
                 {/if}
               </div>
@@ -498,17 +509,40 @@
     letter-spacing: -0.01em;
   }
 
-  /* User profile pic in menu */
-  .menu-user-pic {
+  /* Profile pic button in menu - square, matches Zapstore button height */
+  .menu-user-pic-btn {
     display: flex;
-    padding: 0;
-    border-radius: 50%;
-    transition: opacity 0.15s ease;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 16px;
     flex-shrink: 0;
+    transition: background-color 0.15s ease;
+    text-decoration: none;
   }
 
-  .menu-user-pic:hover {
-    opacity: 0.8;
+  .menu-user-pic-btn:hover {
+    background-color: hsl(var(--white8));
+  }
+
+  /* Responsive profile pic sizes in menu */
+  .menu-user-pic-mobile {
+    display: flex;
+  }
+
+  .menu-user-pic-desktop {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .menu-user-pic-mobile {
+      display: none;
+    }
+
+    .menu-user-pic-desktop {
+      display: flex;
+    }
   }
 
   /* Search bar button in menu */
@@ -538,8 +572,8 @@
 
   /* Menu divider */
   .menu-divider {
-    height: 1px;
-    background-color: hsl(var(--white8));
+    height: 1.4px;
+    background-color: hsl(var(--white11));
     margin: 12px 0;
   }
 

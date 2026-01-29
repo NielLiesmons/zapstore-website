@@ -34,9 +34,13 @@
     "/my-apps": "My Apps",
   };
 
-  $: pageTitle = pageTitles[$page.url.pathname] || 
-    ($page.url.pathname.startsWith("/docs/") ? "Docs" : 
-     $page.url.pathname.startsWith("/blog/") ? "Blog" : "");
+  $: pageTitle =
+    pageTitles[$page.url.pathname] ||
+    ($page.url.pathname.startsWith("/docs/")
+      ? "Docs"
+      : $page.url.pathname.startsWith("/blog/")
+        ? "Blog"
+        : "");
 </script>
 
 <NavigationProgress />
@@ -58,7 +62,9 @@
       <main class="flex-1" class:pt-16={!isDetailPage}>
         <slot />
       </main>
-      <Footer />
+      {#if !isDetailPage}
+        <Footer />
+      {/if}
     </div>
   </div>
 {/if}

@@ -35,14 +35,15 @@
   import ProfilePicStack from "$lib/components/ProfilePicStack.svelte";
   import AppPic from "$lib/components/AppPic.svelte";
   import SocialTabs from "$lib/components/SocialTabs.svelte";
+  import BottomBar from "$lib/components/BottomBar.svelte";
   import ZapButton from "$lib/components/ZapButton.svelte";
   import Timestamp from "$lib/components/Timestamp.svelte";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
-  import InstallModal from "$lib/components/InstallModal.svelte";
+  import DownloadModal from "$lib/components/DownloadModal.svelte";
   import DetailHeader from "$lib/components/DetailHeader.svelte";
 
-  // Install modal state
-  let installModalOpen = false;
+  // Download modal state
+  let downloadModalOpen = false;
 
   // Check if this is the Zapstore app itself
   $: isZapstoreApp =
@@ -555,9 +556,9 @@
           <button
             type="button"
             class="install-btn-desktop btn-primary flex-shrink-0"
-            on:click={() => (installModalOpen = true)}
+            on:click={() => (downloadModalOpen = true)}
           >
-            Install
+            Download
           </button>
         </div>
 
@@ -595,13 +596,13 @@
             </div>
           </div>
 
-          <!-- Install button on mobile -->
+          <!-- Download button on mobile -->
           <button
             type="button"
             class="install-btn-mobile btn-primary-small flex-shrink-0"
-            on:click={() => (installModalOpen = true)}
+            on:click={() => (downloadModalOpen = true)}
           >
-            Install
+            Download
           </button>
         </div>
       </div>
@@ -820,9 +821,7 @@
       </button>
     </div>
 
-    <div class="divider mb-4"></div>
-
-    <!-- Social tabs (Comments, Labels, Stacks, Supporters, Details) -->
+    <!-- Social tabs (Comments, Labels, Stacks, Details) -->
     <div class="mb-8">
       <SocialTabs {app} version={fileVersion} {publisherProfile} />
     </div>
@@ -1140,17 +1139,15 @@
   </div>
 {/if}
 
-<!-- Install Modal -->
-<InstallModal bind:open={installModalOpen} {app} isZapstore={isZapstoreApp} />
+<!-- Download Modal -->
+<DownloadModal bind:open={downloadModalOpen} {app} isZapstore={isZapstoreApp} />
+
+<!-- Bottom Bar -->
+{#if app}
+  <BottomBar appName={app.name || ""} contentType="app" />
+{/if}
 
 <style>
-  /* Simple divider */
-  .divider {
-    width: 100%;
-    height: 1px;
-    background-color: hsl(var(--white16));
-  }
-
   /* Info panels container */
   .info-panels-container {
     display: flex;

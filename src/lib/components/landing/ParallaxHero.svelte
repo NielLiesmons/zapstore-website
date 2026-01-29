@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { assets } from "$app/paths";
-  import { ChevronRight, Code2 } from "$lib/components/icons";
+  import { ChevronRight } from "$lib/components/icons";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
 
   let heroButton;
@@ -40,17 +40,17 @@
   // Rotation is in degrees
   // Parallax speed and opacity are automatically calculated based on size
   // Spread over full width and height, filling corners and center, extending beyond bottom edge
-  // 
-  // Main featured apps (biggest, center): primal, damus, yakihonne, wormhole, zapstore-developer
-  // Secondary apps: antennapod, blue-wallet, breezy, flare, grimoire, mulvad, newpipe, organic-maps, ridestr, vexl, zapstream
+  //
+  // Main featured apps (biggest, center): primal, bitwarden, yakihonne, wormhole, bitchat
+  // Secondary apps: antennapod, blue-wallet, breezy, flare, grimoire, fountain, newpipe, organic-maps, ridestr, electrum, zapstream
   export let iconConfigs = [
     // === FEATURED APPS (large, prominent positions) ===
-    // Mulvad - upper left
+    // Zapstore Studio - upper left
     {
-      imageUrl: `/images/parallax-apps/mulvad.png`,
+      imageUrl: `/images/parallax-apps/zapstore-studio.svg`,
       x: -400,
       y: -170,
-      size: 2.1,
+      size: 1.9,
       rotationX: 12,
       rotationY: -15,
     },
@@ -59,7 +59,7 @@
       imageUrl: `/images/parallax-apps/yakihonne.png`,
       x: 380,
       y: -190,
-      size: 2.1,
+      size: 2.0,
       rotationX: 20,
       rotationY: 14,
     },
@@ -67,17 +67,17 @@
     {
       imageUrl: `/images/parallax-apps/grimoire.svg`,
       x: -456,
-      y: 150,
-      size: 2,
+      y: 155,
+      size: 2.0,
       rotationX: -20,
       rotationY: -20,
     },
-    // Zapstore Developer - lower right
+    // Bitwarden - lower right
     {
-      imageUrl: `/images/parallax-apps/zapstore-developer.svg`,
+      imageUrl: `/images/parallax-apps/bitwarden.png`,
       x: 470,
       y: 160,
-      size: 2.1,
+      size: 1.9,
       rotationX: -16,
       rotationY: 16,
     },
@@ -94,40 +94,22 @@
     // Wormhole - middle left (between upper-left and lower-left big icons)
     {
       imageUrl: `/images/parallax-apps/wormhole.png`,
-      x: -380,
-      y: -10,
+      x: -360,
+      y: 0,
       size: 1.3,
-      rotationX: 18,
-      rotationY: 20,
+      rotationX: -18,
+      rotationY: -20,
     },
-    // Vexl - middle right (between upper-right and lower-right big icons)
+    // Bitchat - middle right (between upper-right and lower-right big icons)
     {
-      imageUrl: `/images/parallax-apps/vexl.png`,
-      x: 380,
+      imageUrl: `/images/parallax-apps/bitchat.png`,
+      x: 360,
       y: -10,
       size: 1.2,
       rotationX: 16,
-      rotationY: -18,
+      rotationY: 18,
     },
     // === SECONDARY APPS (medium-large, fill out the corners) ===
-    // Zapstream - bottom left corner
-    {
-      imageUrl: `/images/parallax-apps/zapstream.svg`,
-      x: -580,
-      y: 450,
-      size: 2.4,
-      rotationX: 15,
-      rotationY: 20,
-    },
-    // Flare - bottom right corner
-    {
-      imageUrl: `/images/parallax-apps/flare.svg`,
-      x: 600,
-      y: 380,
-      size: 2.4,
-      rotationX: 15,
-      rotationY: -20,
-    },
     // === GRID ICONS (outer edges, cycling through all apps) ===
     {
       imageUrl: `/images/parallax-apps/antennapod.png`,
@@ -162,7 +144,7 @@
       rotationY: -20,
     },
     {
-      imageUrl: `/images/parallax-apps/mulvad.png`,
+      imageUrl: `/images/parallax-apps/electrum.png`,
       x: -720,
       y: -300,
       size: 1.8,
@@ -170,7 +152,7 @@
       rotationY: -15,
     },
     {
-      imageUrl: `/images/parallax-apps/newpipe.png`,
+      imageUrl: `/images/parallax-apps/vendata.svg`,
       x: 720,
       y: -300,
       size: 1.8,
@@ -178,7 +160,7 @@
       rotationY: 15,
     },
     {
-      imageUrl: `/images/parallax-apps/organic-maps.png`,
+      imageUrl: `/images/parallax-apps/rocket.svg`,
       x: -720,
       y: 500,
       size: 1.7,
@@ -186,7 +168,7 @@
       rotationY: 25,
     },
     {
-      imageUrl: `/images/parallax-apps/ridestr.png`,
+      imageUrl: `/images/parallax-apps/lowent.svg`,
       x: 720,
       y: 500,
       size: 1.7,
@@ -194,7 +176,7 @@
       rotationY: -25,
     },
     {
-      imageUrl: `/images/parallax-apps/damus.png`,
+      imageUrl: `/images/parallax-apps/vendata.svg`,
       x: -600,
       y: -200,
       size: 1.6,
@@ -202,28 +184,12 @@
       rotationY: -18,
     },
     {
-      imageUrl: `/images/parallax-apps/antennapod.png`,
+      imageUrl: `/images/parallax-apps/electrum.png`,
       x: 600,
       y: -200,
       size: 1.6,
       rotationX: 18,
       rotationY: 18,
-    },
-    {
-      imageUrl: `/images/parallax-apps/blue-wallet.png`,
-      x: -600,
-      y: 400,
-      size: 1.5,
-      rotationX: 12,
-      rotationY: -12,
-    },
-    {
-      imageUrl: `/images/parallax-apps/breezy.png`,
-      x: 600,
-      y: 400,
-      size: 1.4,
-      rotationX: -10,
-      rotationY: 15,
     },
     // More grid positions - continuing outer grid
     {
@@ -235,7 +201,7 @@
       rotationY: 22,
     },
     {
-      imageUrl: `/images/parallax-apps/mulvad.png`,
+      imageUrl: `/images/parallax-apps/rocket.svg`,
       x: 840,
       y: 300,
       size: 0.95,
@@ -243,23 +209,23 @@
       rotationY: -16,
     },
     {
-      imageUrl: `/images/parallax-apps/newpipe.png`,
-      x: -720,
-      y: -100,
+      imageUrl: `/images/parallax-apps/flare.svg`,
+      x: -580,
+      y: -20,
       size: 0.9,
       rotationX: 12,
       rotationY: 15,
     },
     {
-      imageUrl: `/images/parallax-apps/organic-maps.png`,
-      x: 720,
-      y: -100,
+      imageUrl: `/images/parallax-apps/rocket.svg`,
+      x: 580,
+      y: -20,
       size: 0.85,
       rotationX: 10,
       rotationY: -14,
     },
     {
-      imageUrl: `/images/parallax-apps/ridestr.png`,
+      imageUrl: `/images/parallax-apps/lowent.svg`,
       x: -720,
       y: 100,
       size: 0.8,
@@ -267,7 +233,7 @@
       rotationY: 12,
     },
     {
-      imageUrl: `/images/parallax-apps/vexl.png`,
+      imageUrl: `/images/parallax-apps/antennapod.png`,
       x: 720,
       y: 100,
       size: 0.75,
@@ -291,7 +257,7 @@
       rotationY: -6,
     },
     {
-      imageUrl: `/images/parallax-apps/damus.png`,
+      imageUrl: `/images/parallax-apps/antennapod.png`,
       x: -600,
       y: 500,
       size: 0.6,
@@ -308,16 +274,16 @@
     },
     {
       imageUrl: `/images/parallax-apps/antennapod.png`,
-      x: -480,
-      y: 400,
+      x: -560,
+      y: 370,
       size: 1.1,
       rotationX: -14,
       rotationY: 16,
     },
     {
       imageUrl: `/images/parallax-apps/blue-wallet.png`,
-      x: 480,
-      y: 400,
+      x: 560,
+      y: 370,
       size: 1.0,
       rotationX: -12,
       rotationY: -14,
@@ -339,7 +305,7 @@
       rotationY: -10,
     },
     {
-      imageUrl: `/images/parallax-apps/mulvad.png`,
+      imageUrl: `/images/parallax-apps/rocket.svg`,
       x: -360,
       y: 300,
       size: 0.85,
@@ -347,7 +313,7 @@
       rotationY: 8,
     },
     {
-      imageUrl: `/images/parallax-apps/newpipe.png`,
+      imageUrl: `/images/parallax-apps/antennapod.png`,
       x: 360,
       y: 300,
       size: 0.8,
@@ -355,7 +321,7 @@
       rotationY: -6,
     },
     {
-      imageUrl: `/images/parallax-apps/organic-maps.png`,
+      imageUrl: `/images/parallax-apps/rocket.svg`,
       x: -240,
       y: -400,
       size: 0.75,
@@ -363,7 +329,7 @@
       rotationY: 4,
     },
     {
-      imageUrl: `/images/parallax-apps/ridestr.png`,
+      imageUrl: `/images/parallax-apps/lowent.svg`,
       x: 240,
       y: -400,
       size: 0.7,
@@ -371,7 +337,7 @@
       rotationY: -2,
     },
     {
-      imageUrl: `/images/parallax-apps/vexl.png`,
+      imageUrl: `/images/parallax-apps/lowent.svg`,
       x: -240,
       y: 0,
       size: 0.65,
@@ -396,7 +362,7 @@
     },
     // Additional icons in safe areas (far from featured apps)
     {
-      imageUrl: `/images/parallax-apps/damus.png`,
+      imageUrl: `/images/parallax-apps/rocket.svg`,
       x: -840,
       y: -200,
       size: 0.6,
@@ -420,7 +386,7 @@
       rotationY: -4,
     },
     {
-      imageUrl: `/images/parallax-apps/zapstore-developer.svg`,
+      imageUrl: `/images/parallax-apps/bitchat.png`,
       x: 840,
       y: 200,
       size: 0.6,
@@ -469,7 +435,7 @@
       rotationY: 1,
     },
     {
-      imageUrl: `/images/parallax-apps/mulvad.png`,
+      imageUrl: `/images/parallax-apps/vendata.svg`,
       x: 0,
       y: -190,
       size: 0.5,
@@ -564,7 +530,8 @@
 >
   <!-- Background gradient orbs -->
   <div
-    class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] gradient-orb bg-primary/20"
+    class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] gradient-orb bg-primary/20"
+    style="filter: blur(120px);"
   ></div>
   <div
     class="absolute top-40 right-1/3 w-[400px] h-[400px] gradient-orb bg-primary/10"
@@ -578,13 +545,13 @@
   <!-- Left gradient fade -->
   <div
     class="hidden md:block absolute left-0 top-0 bottom-0 w-24 sm:w-32 md:w-48 lg:w-64 xl:w-80 z-20 pointer-events-none"
-    style="background: linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.8) 20%, hsl(var(--background) / 0.45) 50%, transparent 100%);"
+    style="background: linear-gradient(to right, hsl(var(--background) / 0.7) 0%, hsl(var(--background) / 0.5) 20%, hsl(var(--background) / 0.25) 50%, transparent 100%);"
   ></div>
 
   <!-- Right gradient fade -->
   <div
     class="hidden md:block absolute right-0 top-0 bottom-0 w-24 sm:w-32 md:w-48 lg:w-64 xl:w-80 z-20 pointer-events-none"
-    style="background: linear-gradient(to left, hsl(var(--background)) 0%, hsl(var(--background) / 0.8) 20%, hsl(var(--background) / 0.45) 50%, transparent 100%);"
+    style="background: linear-gradient(to left, hsl(var(--background) / 0.7) 0%, hsl(var(--background) / 0.5) 20%, hsl(var(--background) / 0.25) 50%, transparent 100%);"
   ></div>
 
   <!-- App icons with parallax - positioned relative to center -->
@@ -714,11 +681,8 @@
     href="/developers"
     bind:this={devButton}
     on:mousemove={handleDevButtonMouseMove}
-    class="dev-button-bottom btn-glass-small btn-glass-green-hover flex items-center justify-center gap-2 text-sm"
+    class="dev-button-bottom btn-glass-small btn-glass-blurple-hover flex items-center justify-center text-sm"
   >
-    <span class="btn-icon-green flex items-center">
-      <Code2 variant="outline" size={14} color="currentColor" />
-    </span>
     <span class="btn-text-white">For Developers</span>
   </a>
 </section>
@@ -759,7 +723,7 @@
   }
 
   .dev-button-bottom:hover {
-    transform: translateX(-50%) scale(1.025);
+    transform: translateX(-50%) scale(1.04);
   }
 
   .dev-button-bottom:active {
@@ -793,6 +757,49 @@
   }
 
   .dev-button-bottom:hover .btn-text-white {
+    color: hsl(var(--foreground));
+  }
+
+  /* Blurple glass button - hover only variant */
+  .btn-glass-blurple-hover {
+    background-color: rgb(0 0 0 / 0.33);
+    border-radius: 10px;
+    transition:
+      transform 0.2s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease,
+      background 0.3s ease,
+      color 0.3s ease;
+  }
+
+  .btn-glass-blurple-hover:hover {
+    background: radial-gradient(
+      circle at top left,
+      rgb(92 95 255 / 0.08) 0%,
+      rgb(69 66 255 / 0.08) 100%
+    );
+    border-color: rgb(92 95 255 / 0.25);
+    box-shadow:
+      0 0 40px rgb(92 95 255 / 0.15),
+      0 0 80px rgb(92 95 255 / 0.08);
+    color: hsl(var(--foreground));
+  }
+
+  .btn-glass-blurple-hover::before {
+    background: radial-gradient(
+      circle,
+      rgb(92 95 255 / 0.12) 0%,
+      transparent 70%
+    );
+  }
+
+  /* Icon color transition for blurple-hover buttons */
+  .btn-icon-blurple {
+    transition: color 0.3s ease;
+    color: hsl(var(--white66));
+  }
+
+  .btn-glass-blurple-hover:hover .btn-icon-blurple {
     color: hsl(var(--foreground));
   }
 </style>

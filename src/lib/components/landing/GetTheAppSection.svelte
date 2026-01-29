@@ -22,7 +22,7 @@
       <!-- Left: Content -->
       <div
         class="space-y-6 p-8 rounded-2xl lg:order-2"
-        style="background-color: hsl(var(--gray44)); border-radius: var(--radius-32);"
+        style="background-color: hsl(var(--gray33)); border-radius: var(--radius-32);"
       >
         <h2
           class="section-title text-display-lg text-3xl sm:text-4xl lg:text-4xl xl:text-5xl leading-tight section-title-gradient"

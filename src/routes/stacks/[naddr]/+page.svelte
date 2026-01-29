@@ -14,6 +14,7 @@
   import ProfilePic from "$lib/components/ProfilePic.svelte";
   import ProfilePicStack from "$lib/components/ProfilePicStack.svelte";
   import SocialTabs from "$lib/components/SocialTabs.svelte";
+  import BottomBar from "$lib/components/BottomBar.svelte";
   import Timestamp from "$lib/components/Timestamp.svelte";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
   import DetailHeader from "$lib/components/DetailHeader.svelte";
@@ -151,11 +152,7 @@
     showPublisher={true}
   />
 {:else if stack}
-  <DetailHeader
-    {catalogs}
-    catalogText="In Zapstore"
-    showPublisher={false}
-  />
+  <DetailHeader {catalogs} catalogText="In Zapstore" showPublisher={false} />
 {/if}
 
 <section class="stack-page">
@@ -239,8 +236,6 @@
         {/if}
       </div>
 
-      <div class="divider mb-4"></div>
-
       <!-- Social tabs (Comments, Labels, etc.) -->
       <div class="mb-8">
         <SocialTabs
@@ -262,16 +257,14 @@
   </div>
 </section>
 
+<!-- Bottom Bar -->
+{#if stack}
+  <BottomBar publisherName={stack.creator?.name || ""} contentType="stack" />
+{/if}
+
 <style>
   .stack-page {
     min-height: 100vh;
-  }
-
-  /* Simple divider */
-  .divider {
-    width: 100%;
-    height: 1px;
-    background-color: hsl(var(--white16));
   }
 
   /* Stack Header */

@@ -6,7 +6,7 @@
   import TestimonialsSection from "$lib/components/landing/TestimonialsSection.svelte";
   import ZapTheAppSection from "$lib/components/landing/ZapTheAppSection.svelte";
   // import CommunitySection from "$lib/components/landing/CommunitySection.svelte";
-  import DeveloperSection from "$lib/components/landing/DeveloperSection.svelte";
+  import ReleaseYourAppsSection from "$lib/components/landing/ReleaseYourAppsSection.svelte";
   import DifferenceSection from "$lib/components/landing/DifferenceSection.svelte";
   import RoadmapSection from "$lib/components/landing/RoadmapSection.svelte";
   import TeamSection from "$lib/components/landing/TeamSection.svelte";
@@ -22,7 +22,7 @@
   <meta name="description" content="" />
 </svelte:head>
 
-<DownloadModal bind:open={showDownloadModal} />
+<DownloadModal bind:open={showDownloadModal} isZapstore={true} />
 
 <!-- Hero Section -->
 <ParallaxHero />
@@ -30,11 +30,11 @@
 <!-- Get The App Section -->
 <GetTheAppSection showDownloadModal={() => (showDownloadModal = true)} />
 
+<!-- Release with ease Section -->
+<ReleaseYourAppsSection />
+
 <!-- Testimonials Section -->
 <TestimonialsSection {testimonials} />
-
-<!-- Developer Section -->
-<DeveloperSection />
 
 <!-- What's the difference Section -->
 <DifferenceSection />

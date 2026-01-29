@@ -1,5 +1,6 @@
 <script>
   import MessageBubble from "./MessageBubble.svelte";
+  import ThreadComment from "./ThreadComment.svelte";
   import ProfilePicStack from "./ProfilePicStack.svelte";
   import Modal from "./Modal.svelte";
   import { stringToColor } from "$lib/utils/color.js";
@@ -43,6 +44,19 @@
 
   /** @type {string} - HTML content of the root comment (passed via slot, captured here for modal) */
   export let contentHtml = "";
+
+  // App info for thread display in modal
+  /** @type {string|null} - App icon URL */
+  export let appIconUrl = null;
+
+  /** @type {string} - App name */
+  export let appName = "";
+
+  /** @type {string|null} - App identifier */
+  export let appIdentifier = null;
+
+  /** @type {string} - Version string the comment is about */
+  export let version = "";
 
   // Modal state
   let modalOpen = false;
@@ -156,9 +170,13 @@
   class="thread-modal"
 >
   <div class="thread-content">
-    <!-- Root comment (repeated in modal) -->
+    <!-- Root comment in thread style (app + author + content) -->
     <div class="thread-root">
-      <MessageBubble
+      <ThreadComment
+        {appIconUrl}
+        {appName}
+        {appIdentifier}
+        {version}
         {pictureUrl}
         {name}
         {pubkey}
@@ -168,7 +186,7 @@
       >
         {@html contentHtml ||
           "<p class='text-muted-foreground italic'>No content</p>"}
-      </MessageBubble>
+      </ThreadComment>
     </div>
 
     <!-- Full-width divider -->
@@ -250,14 +268,13 @@
   }
 
   .thread-root {
-    padding: 20px;
-    padding-bottom: 16px;
+    padding: 16px;
+    padding-bottom: 12px;
   }
 
   .thread-divider {
-    height: 1px;
-    background-color: hsl(var(--white16));
-    /* Full width - no horizontal padding from parent */
+    height: 1.4px;
+    background-color: hsl(var(--white11));
     margin: 0;
   }
 
@@ -265,6 +282,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 16px 20px 20px;
+    padding: 12px 16px 16px;
   }
 </style>

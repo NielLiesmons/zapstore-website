@@ -237,38 +237,38 @@
     height: var(--modal-max-height);
   }
 
-  /* Wide modal - matches container breakpoints from tailwind.config.js */
+  /* Wide modal - matches container breakpoints minus page padding */
   .modal-wide {
     max-width: 100%; /* Mobile: full width */
   }
 
   @media (min-width: 640px) {
     .modal-wide {
-      max-width: 640px;
+      max-width: calc(640px - 48px); /* 640 - 2*24px padding */
     }
   }
 
   @media (min-width: 768px) {
     .modal-wide {
-      max-width: 768px;
+      max-width: calc(768px - 48px);
     }
   }
 
   @media (min-width: 900px) {
     .modal-wide {
-      max-width: 900px;
+      max-width: calc(900px - 64px); /* 900 - 2*32px padding */
     }
   }
 
   @media (min-width: 1000px) {
     .modal-wide {
-      max-width: 1000px;
+      max-width: calc(1000px - 64px);
     }
   }
 
   @media (min-width: 1100px) {
     .modal-wide {
-      max-width: 1100px;
+      max-width: calc(1100px - 64px);
     }
   }
 

@@ -2,7 +2,10 @@
   import { onMount } from "svelte";
   import LandingSectionTitle from "./LandingSectionTitle.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
+  import { ChevronRight } from "$lib/components/icons";
   export let testimonials = [];
+
+  let seeMoreButton;
 
   $: visibleTestimonials = testimonials;
 
@@ -140,6 +143,15 @@
     // TODO: Navigate to testimonials page
   }
 
+  function handleSeeMoreMouseMove(event) {
+    if (!seeMoreButton) return;
+    const rect = seeMoreButton.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    seeMoreButton.style.setProperty("--mouse-x", `${mouseX}px`);
+    seeMoreButton.style.setProperty("--mouse-y", `${mouseY}px`);
+  }
+
   onMount(() => {
     const init = () => {
       const isLargeScreen = window.innerWidth >= 768;
@@ -194,7 +206,7 @@
 </script>
 
 {#if testimonials.length > 0}
-  <section class="border-t border-border/50 pt-16 pb-8 lg:pt-20 lg:pb-10">
+  <section class="border-t border-border/50 pt-16 lg:pt-20 pb-0 md:pb-10 relative">
     <LandingSectionTitle
       title="What people are saying"
       description="Real posts from the Nostr community"
@@ -216,6 +228,31 @@
         style="background: linear-gradient(to left, hsl(var(--background)) 0%, hsl(var(--background) / 0.95) 20%, hsl(var(--background) / 0.7) 50%, transparent 100%);"
       ></div>
 
+      <!-- Mobile: Bottom gradient fade - overlaps testimonies -->
+      <div
+        class="md:hidden absolute left-0 right-0 bottom-0 z-30 pointer-events-none"
+        style="height: 120px; background: linear-gradient(to top, hsl(10 10% 7%) 0%, hsl(10 10% 7% / 0.95) 20%, hsl(10 10% 7% / 0.7) 50%, hsl(10 10% 7% / 0.3) 75%, transparent 100%);"
+      ></div>
+
+      <!-- Mobile: See More button -->
+      <div class="md:hidden absolute left-1/2 transform -translate-x-1/2 z-40" style="bottom: 32px;">
+        <button
+          type="button"
+          bind:this={seeMoreButton}
+          on:click={handleSeeMore}
+          on:mousemove={handleSeeMoreMouseMove}
+          class="btn-glass-large btn-glass-with-chevron flex items-center group"
+        >
+          See More
+          <ChevronRight
+            variant="outline"
+            color="hsl(var(--white33))"
+            size={18}
+            className="transition-transform group-hover:translate-x-0.5"
+          />
+        </button>
+      </div>
+
       <!-- Scrolling container -->
       <div
         bind:this={testimonialsContainer}
@@ -224,7 +261,7 @@
         on:scroll={handleScroll}
         role="region"
         aria-label="Testimonials carousel"
-        class="flex gap-6 px-4 md:px-32 py-2 overflow-x-auto scrollbar-hide relative z-10"
+        class="flex gap-6 px-4 md:px-32 py-2 pb-20 md:pb-2 overflow-x-auto scrollbar-hide relative z-10"
         style="scroll-behavior: auto;"
       >
         {#each columns as column, columnIndex (`col-${columnIndex}`)}
@@ -239,18 +276,18 @@
                 class="testimonial-card group block"
               >
                 <!-- Top row: Profile pic, name, date/time -->
-                <div class="flex items-center gap-3 mb-3">
+                <div class="flex items-center gap-2.5 mb-3">
                   <ProfilePic
                     pictureUrl={testimonial.profile?.picture}
                     name={getDisplayName(testimonial)}
-                    size="lg"
+                    size="md"
                   />
 
                   <div
                     class="flex-1 min-w-0 flex items-center justify-between gap-2"
                   >
                     <span
-                      class="font-semibold text-foreground truncate text-base"
+                      class="font-semibold text-foreground truncate text-sm"
                     >
                       {getDisplayName(testimonial)}
                     </span>
@@ -265,7 +302,7 @@
 
                 <!-- Content -->
                 <p
-                  class="text-base text-foreground leading-relaxed whitespace-pre-wrap"
+                  class="text-sm text-foreground leading-relaxed whitespace-pre-wrap"
                 >
                   {testimonial.content}
                 </p>

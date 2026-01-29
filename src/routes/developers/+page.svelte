@@ -1,5 +1,8 @@
 <script>
 	import { ChevronRight } from "$lib/components/icons";
+	import PublishAppSection from "$lib/components/developer/PublishAppSection.svelte";
+	import DeveloperDashboard from "$lib/components/developer/DeveloperDashboard.svelte";
+	import { authStore } from "$lib/stores/auth.js";
 
 	let publishButton;
 
@@ -18,8 +21,12 @@
 	<meta name="description" content="No hassle. Yes Insights. Publish your app on Zapstore." />
 </svelte:head>
 
-<!-- Hero Section -->
-<section class="relative overflow-hidden">
+{#if $authStore.isConnected}
+	<!-- Dashboard for logged in users -->
+	<DeveloperDashboard />
+{:else}
+	<!-- Hero Section for logged out users -->
+	<section class="relative overflow-hidden">
 	<!-- Background gradient orbs -->
 	<div
 		class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] gradient-orb bg-[#19DD75]/20"
@@ -136,6 +143,10 @@
 		</div>
 	</div>
 </section>
+
+<!-- Publish Without Permission Section -->
+<PublishAppSection />
+{/if}
 
 <style>
 	.gradient-orb {

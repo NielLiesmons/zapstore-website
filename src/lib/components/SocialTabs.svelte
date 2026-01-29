@@ -1,17 +1,17 @@
 <script>
   import { onMount } from "svelte";
-  import { Loader2, AlertCircle, LogIn } from "lucide-svelte";
+  import { Loader2, AlertCircle } from "lucide-svelte";
   import {
     fetchAppComments,
-    publishAppComment,
     getCachedComments,
     cacheComments,
     fetchProfilesBatch,
   } from "$lib/nostr.js";
-  import { authStore, connect } from "$lib/stores/auth.js";
+  import { authStore } from "$lib/stores/auth.js";
   import { wheelScroll } from "$lib/actions/wheelScroll.js";
-  import ProfilePic from "./ProfilePic.svelte";
   import RootComment from "./RootComment.svelte";
+  import DetailsTab from "./DetailsTab.svelte";
+  import { getAppSlug, pubkeyToNpub } from "$lib/nostr.js";
 
   /**
    * SocialTabs - Tabbed interface for social content
@@ -37,7 +37,6 @@
     { id: "comments", label: "Comments" },
     { id: "labels", label: "Labels" },
     { id: "stacks", label: "Stacks" },
-    { id: "supporters", label: "Supporters" },
     { id: "details", label: "Details" },
   ];
 
@@ -50,13 +49,9 @@
   let comments = [];
   let commentsLoading = true;
   let commentsError = "";
-  let commentText = "";
-  let submitting = false;
   let profiles = {};
   let profilesLoading = true;
   let commentsInitialized = false;
-
-  const MAX_LENGTH = 1000;
 
   // Pre-populate profiles with known profiles immediately
   function initializeKnownProfiles() {
@@ -174,47 +169,6 @@
     profilesLoading = false;
   }
 
-  async function handleSignIn() {
-    commentsError = "";
-    try {
-      await connect();
-    } catch (err) {
-      console.error("Failed to sign in", err);
-      commentsError = err?.message || "Failed to sign in. Please try again.";
-    }
-  }
-
-  $: canSubmit =
-    !!commentText.trim() && $authStore.isConnected && !!version && !submitting;
-
-  async function submitComment() {
-    if (!canSubmit) return;
-    submitting = true;
-    commentsError = "";
-
-    try {
-      await publishAppComment(
-        app,
-        commentText.slice(0, MAX_LENGTH),
-        window.nostr,
-        version,
-      );
-      commentText = "";
-      await loadComments();
-    } catch (err) {
-      console.error("Failed to publish comment", err);
-      commentsError = err?.message || "Failed to publish comment.";
-    } finally {
-      submitting = false;
-    }
-  }
-
-  // Get display name for current user
-  $: currentUserDisplay =
-    $authStore.profile?.displayName ||
-    $authStore.profile?.name ||
-    ($authStore.npub ? `${$authStore.npub.slice(0, 12)}...` : "");
-
   // Add profile data to a comment
   function enrichComment(comment) {
     const profile = profiles[comment.pubkey];
@@ -260,6 +214,9 @@
 </script>
 
 <div class="social-tabs {className}">
+  <!-- Top divider -->
+  <div class="tab-divider"></div>
+
   <!-- Tab buttons -->
   <div class="tab-row" use:wheelScroll>
     {#each tabs as tab}
@@ -274,6 +231,9 @@
       </button>
     {/each}
   </div>
+
+  <!-- Bottom divider -->
+  <div class="tab-divider"></div>
 
   <!-- Tab content -->
   <div class="tab-content">
@@ -310,6 +270,10 @@
               replies={comment.replies}
               authorPubkey={app?.pubkey}
               contentHtml={comment.contentHtml}
+              appIconUrl={app?.icon}
+              appName={app?.name}
+              appIdentifier={app?.dTag}
+              {version}
             >
               {@html comment.contentHtml ||
                 "<p class='text-muted-foreground italic'>No content</p>"}
@@ -317,84 +281,23 @@
           {/each}
         </div>
       {/if}
-
-      <div class="mt-6 pt-4 border-t border-border/60">
-        {#if $authStore.isConnecting}
-          <div class="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 class="h-4 w-4 animate-spin" />
-            <span>Connecting...</span>
-          </div>
-        {:else if !$authStore.isConnected}
-          <div class="flex items-center gap-3">
-            <button
-              type="button"
-              on:click={handleSignIn}
-              class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <LogIn class="h-4 w-4" />
-              Sign in to comment
-            </button>
-            <span class="text-sm text-muted-foreground">
-              Requires a Nostr extension
-            </span>
-          </div>
-        {:else}
-          <!-- Signed in user info -->
-          <div class="flex items-center gap-2 mb-3">
-            <ProfilePic
-              pictureUrl={$authStore.profile?.picture}
-              name={$authStore.profile?.displayName || $authStore.profile?.name}
-              pubkey={$authStore.pubkey}
-              size="sm"
-            />
-            <span class="text-sm text-muted-foreground">
-              Commenting as <span class="font-medium text-foreground"
-                >{currentUserDisplay}</span
-              >
-            </span>
-          </div>
-
-          <div class="space-y-3">
-            <textarea
-              bind:value={commentText}
-              maxlength={MAX_LENGTH}
-              rows="3"
-              placeholder="Share your experience or feedback..."
-              class="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            ></textarea>
-            <div
-              class="flex items-center justify-between text-xs text-muted-foreground"
-            >
-              <span>{commentText.length}/{MAX_LENGTH} characters</span>
-              <button
-                type="button"
-                on:click={submitComment}
-                disabled={!canSubmit}
-                class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-              >
-                {#if submitting}
-                  <Loader2 class="h-4 w-4 animate-spin" />
-                  Posting...
-                {:else}
-                  Post Comment
-                {/if}
-              </button>
-            </div>
-          </div>
-        {/if}
-      </div>
     {:else if activeTab === "labels"}
       <!-- Labels Tab -->
       <p class="text-sm text-muted-foreground">Labels coming soon...</p>
     {:else if activeTab === "stacks"}
       <!-- Stacks Tab -->
       <p class="text-sm text-muted-foreground">Stacks coming soon...</p>
-    {:else if activeTab === "supporters"}
-      <!-- Supporters Tab -->
-      <p class="text-sm text-muted-foreground">Supporters coming soon...</p>
     {:else if activeTab === "details"}
       <!-- Details Tab -->
-      <p class="text-sm text-muted-foreground">Details coming soon...</p>
+      <DetailsTab
+        shareableId={app?.pubkey && app?.dTag
+          ? getAppSlug(app.pubkey, app.dTag)
+          : ""}
+        publicationLabel="App"
+        npub={app?.pubkey ? pubkeyToNpub(app.pubkey) : ""}
+        pubkey={app?.pubkey || ""}
+        rawData={app?.rawEvent || app}
+      />
     {/if}
   </div>
 </div>
@@ -405,10 +308,16 @@
     flex-direction: column;
   }
 
+  .tab-divider {
+    width: 100%;
+    height: 1.4px;
+    background-color: hsl(var(--white11));
+  }
+
   .tab-row {
     display: flex;
     gap: 8px;
-    margin-bottom: 16px;
+    padding: 12px 0;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -425,5 +334,6 @@
 
   .tab-content {
     min-height: 100px;
+    padding-top: 16px;
   }
 </style>
