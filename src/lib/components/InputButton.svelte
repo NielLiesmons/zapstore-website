@@ -38,11 +38,17 @@
   }
 
   .input-placeholder {
-    font-size: 0.875rem;
+    font-size: 16px;
     font-weight: 500;
     color: hsl(var(--white33));
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  @media (max-width: 767px) {
+    .input-placeholder {
+      font-size: 14px;
+    }
   }
 </style>

@@ -34,13 +34,13 @@
           unreadable consectetur adipiscing elit.
         </p>
         <div class="flex flex-row gap-3">
-          <button
-            type="button"
+          <a
+            href="/apps/naddr1qvzqqqr7pvpzq7xwd748yfjrsu5yuerm56fcn9tntmyv04w95etn0e23xrczvvraqqgxgetk9eaxzurnw3hhyefwv9c8qakg5jt"
             class="btn-secondary-large btn-secondary-light"
             style="color: hsl(var(--white66));"
           >
-            Learn More
-          </button>
+            More Info
+          </a>
           <button
             type="button"
             on:click={showDownloadModal}
@@ -59,7 +59,7 @@
             src={`${assets}/images/android-app-screenshot.png`}
             alt="Zapstore Android app screenshot"
             class="w-full h-full object-cover object-top"
-            style="filter: drop-shadow(0 0 60px hsl(var(--blurpleColor) / 0.1)) drop-shadow(0 0 120px hsl(var(--blurpleColor) / 0.05));"
+            style="filter: drop-shadow(0 0 60px hsl(var(--blurpleColor) / 0.05)) drop-shadow(0 0 120px hsl(var(--blurpleColor) / 0.025));"
             loading="lazy"
           />
         </div>

@@ -3,6 +3,10 @@
   import ThreadComment from "./ThreadComment.svelte";
   import ProfilePicStack from "./ProfilePicStack.svelte";
   import Modal from "./Modal.svelte";
+  import InputButton from "./InputButton.svelte";
+  import ZapIcon from "./icons/Zap.svelte";
+  import ReplyIcon from "./icons/Reply.svelte";
+  import OptionsIcon from "./icons/Options.svelte";
   import { stringToColor } from "$lib/utils/color.js";
 
   /**
@@ -108,9 +112,23 @@
   function openThread() {
     modalOpen = true;
   }
+
+  // Placeholder handlers for bottom bar (to be implemented)
+  function handleZap() {
+    // TODO: Implement zap functionality for comment
+  }
+
+  function handleReply() {
+    // TODO: Open reply input
+  }
+
+  function handleOptions() {
+    // TODO: Show options menu
+  }
 </script>
 
-<div class="root-comment {className}">
+<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+<div class="root-comment {className}" on:click={openThread}>
   <!-- Main message bubble -->
   <MessageBubble
     {pictureUrl}
@@ -125,7 +143,7 @@
 
   <!-- Reply indicator -->
   {#if hasReplies}
-    <div class="reply-indicator">
+    <div class="reply-indicator" on:click|stopPropagation>
       <!-- L-shaped connector: vertical line + curved corner -->
       <div class="connector-column">
         <div class="connector-vertical"></div>
@@ -194,19 +212,45 @@
 
     <!-- Replies in chronological order -->
     <div class="thread-replies">
-      {#each sortedReplies as reply (reply.id)}
-        <MessageBubble
-          pictureUrl={reply.avatarUrl}
-          name={reply.displayName}
-          pubkey={reply.pubkey}
-          timestamp={reply.createdAt}
-          profileUrl={reply.profileUrl}
-          loading={reply.profileLoading}
-        >
-          {@html reply.contentHtml ||
-            "<p class='text-muted-foreground italic'>No content</p>"}
-        </MessageBubble>
-      {/each}
+      {#if sortedReplies.length > 0}
+        {#each sortedReplies as reply (reply.id)}
+          <MessageBubble
+            pictureUrl={reply.avatarUrl}
+            name={reply.displayName}
+            pubkey={reply.pubkey}
+            timestamp={reply.createdAt}
+            profileUrl={reply.profileUrl}
+            loading={reply.profileLoading}
+            light={true}
+          >
+            {@html reply.contentHtml ||
+              "<p class='text-muted-foreground italic'>No content</p>"}
+          </MessageBubble>
+        {/each}
+      {:else}
+        <div class="no-comments-text">No comments yet</div>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Bottom bar for thread actions -->
+  <div class="thread-bottom-bar" slot="footer">
+    <div class="thread-bottom-bar-content">
+      <!-- Zap CTA Button -->
+      <button type="button" class="btn-primary-large zap-button" on:click={handleZap}>
+        <ZapIcon variant="fill" size={18} color="hsl(var(--whiteEnforced))" />
+        <span>Zap</span>
+      </button>
+
+      <!-- Comment Input Button -->
+      <InputButton placeholder="Comment" onClick={handleReply}>
+        <ReplyIcon slot="icon" variant="outline" size={18} strokeWidth={1.4} color="hsl(var(--white33))" />
+      </InputButton>
+
+      <!-- Options Button -->
+      <button type="button" class="btn-secondary-large btn-secondary-dark options-button" on:click={handleOptions}>
+        <OptionsIcon variant="fill" size={20} color="hsl(var(--white33))" />
+      </button>
     </div>
   </div>
 </Modal>
@@ -215,6 +259,7 @@
   .root-comment {
     display: flex;
     flex-direction: column;
+    cursor: pointer;
   }
 
   .reply-indicator {
@@ -283,5 +328,51 @@
     flex-direction: column;
     gap: 16px;
     padding: 12px 16px 16px;
+  }
+
+  .no-comments-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: hsl(var(--white16));
+    text-align: center;
+    padding: 48px 0;
+    margin: 0;
+  }
+
+  /* Thread Bottom Bar Styles */
+  .thread-bottom-bar {
+    background: hsl(var(--gray66));
+    border-top: 0.33px solid hsl(var(--white16));
+    padding: 16px;
+  }
+
+  .thread-bottom-bar-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Zap CTA Button - Override padding for icon alignment */
+  .zap-button {
+    gap: 8px;
+    padding: 0 20px 0 14px;
+    flex-shrink: 0;
+  }
+
+  /* Options Button - Square aspect ratio */
+  .options-button {
+    width: 42px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 767px) {
+    .options-button {
+      width: 38px;
+    }
+
+    .zap-button span {
+      font-size: 14px;
+    }
   }
 </style>

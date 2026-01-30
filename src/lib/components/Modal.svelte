@@ -195,6 +195,8 @@
       <div class="modal-content">
         <slot />
       </div>
+      <!-- Optional footer slot (non-scrolling) -->
+      <slot name="footer" />
     </div>
   </div>
 {/if}
@@ -235,6 +237,14 @@
   /* Fill height modifier - forces modal to fill to maxHeight */
   .modal-fill-height {
     height: var(--modal-max-height);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-fill-height .modal-content {
+    flex: 1;
+    min-height: 0;
+    max-height: unset;
   }
 
   /* Wide modal - matches container breakpoints minus page padding */

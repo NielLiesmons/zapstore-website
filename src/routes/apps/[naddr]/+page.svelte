@@ -1514,6 +1514,7 @@
   .description-container {
     position: relative;
     margin-bottom: 1rem;
+    margin-top: -0.25rem;
   }
 
   .description-container:not(.expanded) .app-description {
@@ -1526,12 +1527,17 @@
   }
 
   .app-description {
-    font-size: 0.8125rem; /* 13px on mobile */
     line-height: 1.5;
     color: hsl(var(--foreground) / 0.85);
   }
 
-  /* Remove prose margins for tight spacing */
+  /* Override global prose p styles for description */
+  .app-description :global(p) {
+    font-size: 0.9375rem; /* 15px on mobile */
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
   .app-description :global(p:first-child) {
     margin-top: 0;
   }
@@ -1540,15 +1546,13 @@
     margin-bottom: 0;
   }
 
-  .app-description :global(p) {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-  }
-
   /* Larger screens */
   @media (min-width: 768px) {
-    .app-description {
-      font-size: 0.9375rem; /* 15px on desktop */
+    .description-container {
+      margin-top: -0.5rem;
+    }
+    .app-description :global(p) {
+      font-size: 1.0625rem; /* 17px on desktop */
     }
     .description-container:not(.expanded) .app-description {
       max-height: 150px; /* Desktop max height */

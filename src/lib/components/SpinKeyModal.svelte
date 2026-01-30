@@ -1,13 +1,13 @@
 <script>
   /**
    * SpinKeyModal - Slot machine style nsec key generator
-   * 
+   *
    * Features:
    * - 12 spinning slots showing nsec characters (3 rows of 4)
    * - Draggable handle to trigger spin
    * - Staggered animation with custom easing
    * - Auto-proceeds after spin completes
-   * 
+   *
    * @see zaplab_design/lib/src/widgets/keys/slot_machine.dart
    */
   import Modal from "./Modal.svelte";
@@ -47,8 +47,12 @@
   let secretKeyHex = "";
   let pubkey = "";
   // Placeholder pattern: first 9 slots = 5 chars, last 3 = 6 chars
-  let slotParts = Array(12).fill("").map((_, i) => i < 9 ? "-----" : "------");
-  let currentDisplayParts = Array(12).fill("").map((_, i) => i < 9 ? "-----" : "------");
+  let slotParts = Array(12)
+    .fill("")
+    .map((_, i) => (i < 9 ? "-----" : "------"));
+  let currentDisplayParts = Array(12)
+    .fill("")
+    .map((_, i) => (i < 9 ? "-----" : "------"));
   let isSpinning = false;
   let hasSpun = false;
 
@@ -66,7 +70,7 @@
   });
 
   onDestroy(() => {
-    slotIntervals.forEach(id => clearInterval(id));
+    slotIntervals.forEach((id) => clearInterval(id));
     cleanupGlobalListeners();
   });
 
@@ -76,7 +80,9 @@
       hasSpun = false;
       isSpinning = false;
       handleOffset = HANDLE_MIN_OFFSET;
-      currentDisplayParts = Array(12).fill("").map((_, i) => i < 9 ? "-----" : "------");
+      currentDisplayParts = Array(12)
+        .fill("")
+        .map((_, i) => (i < 9 ? "-----" : "------"));
     }, 300);
   }
 
@@ -95,7 +101,7 @@
     // This ensures all 12 slots are filled with content
     const parts = [];
     let pos = 0;
-    
+
     for (let i = 0; i < 12; i++) {
       // First 9 slots: 5 chars each (45 total)
       // Last 3 slots: 6 chars each (18 total) = 63 chars
@@ -122,7 +128,7 @@
     generateNewKey();
 
     // Clear any existing animations
-    slotIntervals.forEach(id => clearInterval(id));
+    slotIntervals.forEach((id) => clearInterval(id));
     slotIntervals = [];
 
     // Spin each slot with staggered timing (100ms apart like Flutter)
@@ -149,7 +155,7 @@
     });
 
     // Complete after all slots finish
-    const totalDuration = 2000 + (11 * 100) + 300;
+    const totalDuration = 2000 + 11 * 100 + 300;
     setTimeout(() => {
       isSpinning = false;
       hasSpun = true;
@@ -159,7 +165,7 @@
           nsec,
           secretKeyHex,
           pubkey,
-          profileName
+          profileName,
         });
       }, spinCompleteDelay);
     }, totalDuration);
@@ -189,8 +195,8 @@
   // Handle ball size animation (grows when centered)
   $: distanceFromCenter = Math.abs(handleOffset - CENTER_Y);
   $: maxDistanceFromCenter = CENTER_Y - HANDLE_MIN_OFFSET;
-  $: circleProgress = 1.0 - (distanceFromCenter / maxDistanceFromCenter);
-  $: circleSize = 44 + (6 * Math.max(0, circleProgress));
+  $: circleProgress = 1.0 - distanceFromCenter / maxDistanceFromCenter;
+  $: circleSize = 44 + 6 * Math.max(0, circleProgress);
 
   // Handle drag
   function handleDragStart(e) {
@@ -207,7 +213,10 @@
     const rect = handleContainerEl.getBoundingClientRect();
     const relativeY = clientY - rect.top;
 
-    handleOffset = Math.max(HANDLE_MIN_OFFSET, Math.min(HANDLE_MAX_OFFSET, relativeY));
+    handleOffset = Math.max(
+      HANDLE_MIN_OFFSET,
+      Math.min(HANDLE_MAX_OFFSET, relativeY),
+    );
   }
 
   function handleDragEnd() {
@@ -273,7 +282,11 @@
       <!-- Title -->
       <h1 class="title">Hey {profileName}!</h1>
       <p class="description">
-        Spin up a <button type="button" class="link-text" on:click={handleExistingKey}>secret key</button> to secure your profile and publications
+        Spin up a <button
+          type="button"
+          class="link-text"
+          on:click={handleExistingKey}>secret key</button
+        > to secure your profile and publications
       </p>
 
       <!-- Slot Machine -->
@@ -289,7 +302,9 @@
                     {#if currentDisplayParts[slotIndex].startsWith("---")}
                       <div class="slot-placeholder"></div>
                     {:else}
-                      <span class="slot-text">{currentDisplayParts[slotIndex]}</span>
+                      <span class="slot-text"
+                        >{currentDisplayParts[slotIndex]}</span
+                      >
                     {/if}
                   </div>
                 </div>
@@ -308,7 +323,7 @@
 
           <!-- Handle bar (connects ball to slot center) -->
           {#if barHeight > 2}
-            <div 
+            <div
               class="handle-bar"
               class:bar-top={!isBottomHalf}
               class:bar-bottom={isBottomHalf}
@@ -320,7 +335,10 @@
           <div
             class="handle-ball"
             class:dragging={isDragging}
-            style="top: {handleOffset - circleSize / 2}px; width: {circleSize}px; height: {circleSize}px; left: {2 - (circleSize - 44) / 2}px;"
+            style="top: {handleOffset -
+              circleSize /
+                2}px; width: {circleSize}px; height: {circleSize}px; left: {2 -
+              (circleSize - 44) / 2}px;"
             on:mousedown={handleDragStart}
             on:touchstart|preventDefault={handleDragStart}
             role="button"
@@ -345,7 +363,7 @@
         type="button"
         class="btn-secondary-large btn-secondary-light w-full flex items-center justify-center gap-3"
         style="color: hsl(var(--white66));"
-        on:click={() => window.open('https://zapstore.dev', '_blank')}
+        on:click={() => window.open("https://zapstore.dev", "_blank")}
       >
         <Download variant="fill" color="hsl(var(--white33))" size={20} />
         Download Zapstore
@@ -364,7 +382,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px 24px 24px;
+    padding: 16px;
+  }
+
+  @media (min-width: 768px) {
+    .modal-content {
+      padding: 24px;
+    }
   }
 
   .divider {
@@ -377,7 +401,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 16px 24px 20px;
+    padding: 16px 16px 16px;
+  }
+
+  @media (min-width: 768px) {
+    .app-section {
+      padding: 16px 24px 20px;
+    }
   }
 
   .app-description {
@@ -540,11 +570,7 @@
     position: absolute;
     left: 16px;
     width: 16px;
-    background: linear-gradient(
-      to right,
-      #9696a3,
-      #6a6a75
-    );
+    background: linear-gradient(to right, #9696a3, #6a6a75);
     border-radius: 8px;
   }
 
@@ -553,13 +579,13 @@
     mask-image: linear-gradient(
       to bottom,
       white 50%,
-      rgba(255,255,255,0.4) 75%,
+      rgba(255, 255, 255, 0.4) 75%,
       transparent 100%
     );
     -webkit-mask-image: linear-gradient(
       to bottom,
       white 50%,
-      rgba(255,255,255,0.4) 75%,
+      rgba(255, 255, 255, 0.4) 75%,
       transparent 100%
     );
   }
@@ -569,13 +595,13 @@
     mask-image: linear-gradient(
       to top,
       white 50%,
-      rgba(255,255,255,0.4) 75%,
+      rgba(255, 255, 255, 0.4) 75%,
       transparent 100%
     );
     -webkit-mask-image: linear-gradient(
       to top,
       white 50%,
-      rgba(255,255,255,0.4) 75%,
+      rgba(255, 255, 255, 0.4) 75%,
       transparent 100%
     );
   }
@@ -611,5 +637,4 @@
       hsl(var(--black33)) 100%
     );
   }
-
 </style>

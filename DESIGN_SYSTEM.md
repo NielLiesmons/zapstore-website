@@ -613,13 +613,13 @@ border-color: hsl(var(--white16));
 
 ### Font Families
 
-- **Inter** (`--font-sans`) - Primary body and heading font
-- **Courier Prime** (`--font-mono`) - Code/monospace font (Google Font)
+- **Inter** (`--font-sans`) - Primary body and heading font (self-hosted)
+- **JetBrains Mono** (`--font-mono`) - Code/monospace font (self-hosted)
 
 **CSS Variables:**
 ```css
 --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
---font-mono: 'Courier Prime', 'Courier New', monospace;
+--font-mono: 'JetBrains Mono', 'Courier New', monospace;
 ```
 
 **Usage:**
@@ -1519,7 +1519,28 @@ This prevents the modal from "jumping" when content loads and triggers the align
 
 - Default background: `hsl(var(--gray66))`
 - Border radius: `var(--radius-32)` (32px)
+- **Content padding**: `16px` on mobile, `24px` on desktop (768px breakpoint)
 - Use `class` prop to override background (e.g., `DownloadModal` uses gradient)
+
+### Modal Content Padding
+
+**CRITICAL**: All modal content containers MUST use responsive padding:
+- **Mobile (<768px)**: `16px` padding
+- **Desktop (≥768px)**: `24px` padding
+
+```css
+.modal-content {
+  padding: 16px;
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    padding: 24px;
+  }
+}
+```
+
+Or with Tailwind: `class="p-4 md:p-6"`
 
 ### Button Usage in Modals
 

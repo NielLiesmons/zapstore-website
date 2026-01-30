@@ -5,7 +5,7 @@
     fetchAppComments,
     getCachedComments,
     cacheComments,
-    fetchProfilesBatch,
+    fetchProfile,
   } from "$lib/nostr.js";
   import { authStore } from "$lib/stores/auth.js";
   import { wheelScroll } from "$lib/actions/wheelScroll.js";
@@ -127,44 +127,35 @@
   }
 
   async function loadProfiles() {
-    profilesLoading = true;
     const uniquePubkeys = [...new Set(comments.map((c) => c.pubkey))];
 
-    // Filter out pubkeys we already have profiles for
-    const pubkeysToFetch = uniquePubkeys.filter((pubkey) => !profiles[pubkey]);
+    // Filter out pubkeys we already have profiles for (undefined means not attempted)
+    const pubkeysToFetch = uniquePubkeys.filter(
+      (pubkey) => profiles[pubkey] === undefined,
+    );
 
     if (pubkeysToFetch.length === 0) {
       profilesLoading = false;
       return;
     }
 
-    try {
-      // Batch fetch all profiles in a single request
-      const fetchedProfiles = await fetchProfilesBatch(pubkeysToFetch);
-
-      // Update profiles object with all fetched profiles
-      for (const [pubkey, profile] of Object.entries(fetchedProfiles)) {
-        profiles[pubkey] = profile;
-      }
-
-      // Mark unfound profiles as null so we don't keep trying
-      for (const pubkey of pubkeysToFetch) {
-        if (!profiles[pubkey]) {
+    // Fetch profiles in parallel, updating UI progressively as each loads
+    // This is much faster than waiting for entire batch to complete
+    await Promise.all(
+      pubkeysToFetch.map(async (pubkey) => {
+        try {
+          const profile = await fetchProfile(pubkey);
+          // Update immediately as each profile loads (triggers reactivity)
+          profiles[pubkey] = profile || null;
+          profiles = profiles;
+        } catch (e) {
+          console.warn("Failed to fetch profile for", pubkey);
+          // Mark as attempted so we don't retry
           profiles[pubkey] = null;
+          profiles = profiles;
         }
-      }
-
-      profiles = profiles; // trigger reactivity
-    } catch (e) {
-      console.error("Failed to batch fetch profiles:", e);
-      // Mark all as attempted
-      for (const pubkey of pubkeysToFetch) {
-        if (!profiles[pubkey]) {
-          profiles[pubkey] = null;
-        }
-      }
-      profiles = profiles;
-    }
+      }),
+    );
 
     profilesLoading = false;
   }
@@ -214,9 +205,6 @@
 </script>
 
 <div class="social-tabs {className}">
-  <!-- Top divider -->
-  <div class="tab-divider"></div>
-
   <!-- Tab buttons -->
   <div class="tab-row" use:wheelScroll>
     {#each tabs as tab}
@@ -231,9 +219,6 @@
       </button>
     {/each}
   </div>
-
-  <!-- Bottom divider -->
-  <div class="tab-divider"></div>
 
   <!-- Tab content -->
   <div class="tab-content">
@@ -308,16 +293,9 @@
     flex-direction: column;
   }
 
-  .tab-divider {
-    width: 100%;
-    height: 1.4px;
-    background-color: hsl(var(--white11));
-  }
-
   .tab-row {
     display: flex;
     gap: 8px;
-    padding: 12px 0;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;

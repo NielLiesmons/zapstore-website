@@ -410,7 +410,7 @@
     height: 48px !important;
     width: 360px !important;
     padding-bottom: 1px !important;
-    font-size: 0.9375rem;
+    font-size: 1rem;
     background-color: rgb(0 0 0 / 0.33) !important;
     border-top-left-radius: 24px !important;
     border-top-right-radius: 24px !important;

@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
 
 /* ========================================
    FONT FACE DECLARATIONS
@@ -38,22 +37,21 @@
   src: url('/fonts/inter-latin-700-normal.woff2') format('woff2');
 }
 
-/* Fraunces - Display Font (creative serif) */
+/* JetBrains Mono - Code Font */
 @font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 100 900;
-  src: url('/fonts/fraunces-latin-full-normal.woff2') format('woff2');
-}
-
-/* Geist Mono - Code Font */
-@font-face {
-  font-family: 'Geist Mono';
+  font-family: 'JetBrains Mono';
   font-style: normal;
   font-display: swap;
   font-weight: 400;
-  src: url('/fonts/geist-mono-latin-400-normal.woff2') format('woff2');
+  src: url('/fonts/jetbrains-mono-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/jetbrains-mono-700-normal.woff2') format('woff2');
 }
 
 /* ========================================
@@ -105,7 +103,7 @@
      FONT FAMILIES
      ======================================== */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Courier Prime', 'Courier New', monospace;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
   /* ========================================
      SEMANTIC MAPPING (for Tailwind compatibility)
@@ -1093,7 +1091,7 @@ h5, h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 42px;
+  height: 46px;
   padding: 0 24px;
   font-size: 16px;
   font-weight: 500;
@@ -1148,7 +1146,7 @@ h5, h6 {
 /* Responsive: Scale down large glass button to 38px on mobile */
 @media (max-width: 767px) {
   .btn-glass-large {
-    height: 38px;
+    height: 42px;
     padding: 0 18px;
   }
   

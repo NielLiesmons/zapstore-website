@@ -16,11 +16,6 @@
   /** @type {string} - Additional CSS classes */
   export let className = "";
 
-  // Build the comment placeholder text
-  $: commentPlaceholder = contentType === "app"
-    ? (appName ? `Comment on ${appName}` : "Comment on this App")
-    : (publisherName ? `Comment on ${publisherName}'s Stack` : "Comment on this Stack");
-
   // Placeholder handlers (to be implemented)
   function handleZap() {
     // TODO: Implement zap functionality
@@ -39,18 +34,32 @@
   <div class="bottom-bar">
     <div class="bottom-bar-content">
       <!-- Zap CTA Button -->
-      <button type="button" class="btn-primary-large zap-button" on:click={handleZap}>
+      <button
+        type="button"
+        class="btn-primary-large zap-button"
+        on:click={handleZap}
+      >
         <ZapIcon variant="fill" size={18} color="hsl(var(--whiteEnforced))" />
         <span>Zap</span>
       </button>
 
       <!-- Comment Input Button -->
-      <InputButton placeholder={commentPlaceholder} onClick={handleComment}>
-        <ReplyIcon slot="icon" variant="outline" size={18} strokeWidth={1.4} color="hsl(var(--white33))" />
+      <InputButton placeholder="Comment" onClick={handleComment}>
+        <ReplyIcon
+          slot="icon"
+          variant="outline"
+          size={18}
+          strokeWidth={1.4}
+          color="hsl(var(--white33))"
+        />
       </InputButton>
 
       <!-- Options Button -->
-      <button type="button" class="btn-secondary-large btn-secondary-dark options-button" on:click={handleOptions}>
+      <button
+        type="button"
+        class="btn-secondary-large btn-secondary-dark options-button"
+        on:click={handleOptions}
+      >
         <OptionsIcon variant="fill" size={20} color="hsl(var(--white33))" />
       </button>
     </div>
@@ -136,6 +145,10 @@
   @media (max-width: 767px) {
     .options-button {
       width: 38px;
+    }
+
+    .zap-button span {
+      font-size: 14px;
     }
   }
 </style>

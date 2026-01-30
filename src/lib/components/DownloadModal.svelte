@@ -157,7 +157,7 @@
       class="w-full h-auto object-cover"
       loading="lazy"
     />
-    <div class="p-6 relative" style="margin-top: -{IMAGE_TOP_HEIGHT}px;">
+    <div class="p-4 md:p-6 relative" style="margin-top: -{IMAGE_TOP_HEIGHT}px;">
       <h2 class="text-display text-4xl text-foreground text-center mb-6">
         Download Zapstore
       </h2>
@@ -177,7 +177,10 @@
           <div
             class="flex items-stretch rounded-xl bg-white/5 border border-border/30 overflow-hidden"
           >
-            <div class="flex flex-col items-center gap-5 pt-5 pb-4 px-5">
+            <!-- QR Code - Hidden on mobile -->
+            <div
+              class="hidden md:flex flex-col items-center gap-5 pt-5 pb-4 px-5"
+            >
               <img
                 src={`${assets}/images/qr.png`}
                 alt="QR code to download Zapstore"
@@ -209,14 +212,43 @@
                 {/if}
               </button>
             </div>
+            <!-- Vertical Divider - Hidden on mobile -->
             <div
-              class="w-[1.4px] flex-shrink-0 self-stretch"
+              class="hidden md:block w-[1.4px] flex-shrink-0 self-stretch"
+              style="background-color: hsl(var(--white16));"
+            ></div>
+            <!-- Left Column (Android info) - Only on mobile -->
+            <div class="flex-1 md:hidden flex flex-col justify-center">
+              <div
+                class="flex flex-col justify-center gap-1 text-muted-foreground px-5 py-4"
+              >
+                <span class="flex items-center gap-2">
+                  <svg
+                    class="w-5 h-5 flex-shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.463 11.463 0 00-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 003 18h18a10.78 10.78 0 00-3.4-8.52zM8.5 14c-.83 0-1.5-.67-1.5-1.5S7.67 11 8.5 11s1.5.67 1.5 1.5S9.33 14 8.5 14zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+                    />
+                  </svg>
+                  <span class="text-sm">Android 10+</span>
+                </span>
+                <span class="text-sm" style="color: hsl(var(--white33));"
+                  ><strong>arm64-v8a</strong> only</span
+                >
+              </div>
+            </div>
+            <!-- Vertical Divider - Only on mobile -->
+            <div
+              class="md:hidden w-[1.4px] flex-shrink-0 self-stretch"
               style="background-color: hsl(var(--white16));"
             ></div>
             <div class="flex-1 flex flex-col">
-              <!-- Android 10+ Info -->
+              <!-- Android 10+ Info - Hidden on mobile (shown in left column instead) -->
               <div
-                class="flex-1 flex flex-col justify-center gap-1 text-muted-foreground pl-6 pr-4 py-2"
+                class="hidden md:flex flex-1 flex-col justify-center gap-1 text-muted-foreground pl-6 pr-4 py-2"
               >
                 <span class="flex items-center gap-2">
                   <svg
@@ -236,9 +268,9 @@
                 >
               </div>
 
-              <!-- Horizontal Divider -->
+              <!-- Horizontal Divider - Hidden on mobile -->
               <div
-                class="w-full h-[1.4px] flex-shrink-0"
+                class="hidden md:block w-full h-[1.4px] flex-shrink-0"
                 style="background-color: hsl(var(--white16));"
               ></div>
 
@@ -352,7 +384,7 @@
     </div>
   {:else}
     <!-- Other apps: Standard download modal -->
-    <div class="p-6">
+    <div class="p-4 md:p-6">
       <!-- App icon centered -->
       <div class="flex justify-center mb-4">
         <AppPic
@@ -382,8 +414,8 @@
       <div
         class="flex items-stretch rounded-xl bg-white/5 border border-border/30 overflow-hidden mb-5"
       >
-        <!-- QR Code Left -->
-        <div class="flex flex-col items-center gap-5 pt-5 pb-4 px-5">
+        <!-- QR Code Left - Hidden on mobile -->
+        <div class="hidden md:flex flex-col items-center gap-5 pt-5 pb-4 px-5">
           <img
             src={`${assets}/images/qr.png`}
             alt="QR code to open in Zapstore"
@@ -416,17 +448,17 @@
           </button>
         </div>
 
-        <!-- Vertical Divider -->
+        <!-- Vertical Divider - Hidden on mobile -->
         <div
-          class="w-[1.4px] flex-shrink-0 self-stretch"
+          class="hidden md:block w-[1.4px] flex-shrink-0 self-stretch"
           style="background-color: hsl(var(--white16));"
         ></div>
 
-        <!-- Right Column -->
+        <!-- Single column on mobile, right column on desktop -->
         <div class="flex-1 flex flex-col">
           <!-- Android Version Info -->
           <div
-            class="flex-1 flex flex-col justify-center gap-1 text-muted-foreground pl-6 pr-4 py-2"
+            class="flex-1 flex flex-col justify-center gap-1 text-muted-foreground pl-6 pr-4 py-4 md:py-2"
           >
             <span class="flex items-center gap-2">
               <svg
@@ -443,14 +475,14 @@
             </span>
           </div>
 
-          <!-- Horizontal Divider -->
-          <div
-            class="w-full h-[1.4px] flex-shrink-0"
-            style="background-color: hsl(var(--white16));"
-          ></div>
-
-          <!-- Source Code -->
+          <!-- Horizontal Divider - Only show if there's source code -->
           {#if sourceUrl}
+            <div
+              class="w-full h-[1.4px] flex-shrink-0"
+              style="background-color: hsl(var(--white16));"
+            ></div>
+
+            <!-- Source Code -->
             <a
               href={sourceUrl}
               class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pl-6 pr-4 py-4"
@@ -466,12 +498,6 @@
                 className="ml-auto"
               />
             </a>
-          {:else}
-            <div
-              class="flex items-center gap-2 text-sm text-muted-foreground pl-6 pr-4 py-4"
-            >
-              <span>Closed Source</span>
-            </div>
           {/if}
         </div>
       </div>

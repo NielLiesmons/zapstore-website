@@ -4,6 +4,14 @@
   import { ChevronRight } from "$lib/components/icons";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
 
+  // Preload the 4 main featured app icons for faster initial render
+  const preloadImages = [
+    "/images/parallax-apps/zapstore-studio.svg",
+    "/images/parallax-apps/yakihonne.png",
+    "/images/parallax-apps/grimoire.svg",
+    "/images/parallax-apps/bitwarden.png",
+  ];
+
   let heroButton;
 
   // Track loaded state for each icon image
@@ -523,6 +531,17 @@
   });
 </script>
 
+<svelte:head>
+  {#each preloadImages as src}
+    <link
+      rel="preload"
+      href={src}
+      as="image"
+      type={src.endsWith('.svg') ? 'image/svg+xml' : 'image/png'}
+    />
+  {/each}
+</svelte:head>
+
 <section
   bind:this={heroElement}
   class="relative h-[450px] sm:h-[500px] md:h-[540px] lg:h-[580px] flex items-center justify-center overflow-hidden"
@@ -681,9 +700,15 @@
     href="/studio"
     bind:this={devButton}
     on:mousemove={handleDevButtonMouseMove}
-    class="dev-button-bottom btn-glass-small btn-glass-blurple-hover flex items-center justify-center text-sm"
+    class="dev-button-bottom btn-glass-small btn-glass-blurple-hover flex items-center justify-center gap-2 group"
   >
     <span class="btn-text-white">For Developers</span>
+    <ChevronRight
+      variant="outline"
+      color="hsl(var(--white33))"
+      size={14}
+      className="transition-transform group-hover:translate-x-0.5"
+    />
   </a>
 </section>
 
@@ -711,9 +736,10 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 20;
-    height: 40px !important;
+    height: 48px !important;
     width: 360px !important;
     padding-bottom: 1px !important;
+    font-size: 1rem;
     background-color: rgb(0 0 0 / 0.33) !important;
     border-top-left-radius: 24px !important;
     border-top-right-radius: 24px !important;

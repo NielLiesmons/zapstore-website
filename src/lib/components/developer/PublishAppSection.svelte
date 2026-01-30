@@ -1,7 +1,6 @@
 <script>
   import { onMount } from "svelte";
   import { assets } from "$app/paths";
-  import { Code2 } from "$lib/components/icons";
 
   let sectionElement;
   let scrollProgress = 0;
@@ -9,16 +8,6 @@
   let chainRightOffset = 0;
   let textOpacity = 0;
   let textScale = 0.8;
-  let developerButton;
-
-  function handleButtonMouseMove(event) {
-    if (!developerButton) return;
-    const rect = developerButton.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    developerButton.style.setProperty("--mouse-x", `${mouseX}px`);
-    developerButton.style.setProperty("--mouse-y", `${mouseY}px`);
-  }
 
   function handleScroll() {
     if (!sectionElement) return;
@@ -130,19 +119,10 @@
         Without Permission
       </span>
     </h2>
-    <p class="section-description max-w-2xl mx-auto mt-7 mb-10">
+    <p class="section-description max-w-2xl mx-auto mt-7">
       Break free from the chains of centralized app stores.<br />Publish your
       app in the open.
     </p>
-    <a
-      href="/docs/publish"
-      bind:this={developerButton}
-      on:mousemove={handleButtonMouseMove}
-      class="btn-glass-large btn-glass-blurple flex items-center gap-3 mx-auto"
-    >
-      <Code2 variant="outline" color="hsl(var(--blurpleColor))" size={16} />
-      Start Publishing
-    </a>
   </div>
 </section>
 

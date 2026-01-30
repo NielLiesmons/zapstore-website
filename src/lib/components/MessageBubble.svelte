@@ -51,6 +51,9 @@
   /** @type {boolean} - Whether profile data is still loading */
   export let loading = false;
 
+  /** @type {boolean} - Use light variant (white8 background instead of gray66) */
+  export let light = false;
+
   // Dark mode detection
   let isDarkMode = true;
 
@@ -103,7 +106,7 @@
   </div>
 
   <!-- Chat bubble -->
-  <div class="bubble">
+  <div class="bubble" class:bubble-light={light}>
     <!-- Header row: name + timestamp -->
     <div class="bubble-header">
       {#if profileUrl}
@@ -157,7 +160,11 @@
     min-width: 200px; /* Prevent header clipping */
     background-color: hsl(var(--gray66));
     border-radius: 16px 16px 16px 4px;
-    padding: 12px;
+    padding: 8px 12px;
+  }
+
+  .bubble-light {
+    background-color: hsl(var(--white8));
   }
 
   .bubble-header {

@@ -157,7 +157,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px 24px 20px;
+    padding: 16px 16px 16px;
+  }
+
+  @media (min-width: 768px) {
+    .modal-content {
+      padding: 24px 24px 20px;
+    }
   }
 
   .logo-container {
