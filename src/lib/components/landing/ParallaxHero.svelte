@@ -537,7 +537,7 @@
       rel="preload"
       href={src}
       as="image"
-      type={src.endsWith('.svg') ? 'image/svg+xml' : 'image/png'}
+      type={src.endsWith(".svg") ? "image/svg+xml" : "image/png"}
     />
   {/each}
 </svelte:head>
@@ -549,16 +549,16 @@
 >
   <!-- Background gradient orbs -->
   <div
-    class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] gradient-orb bg-primary/20"
-    style="filter: blur(120px);"
+    class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] gradient-orb"
+    style="background-color: hsl(var(--primary) / 0.09); filter: blur(280px);"
   ></div>
   <div
     class="absolute top-40 right-1/3 w-[400px] h-[400px] gradient-orb bg-primary/10"
-    style="animation-delay: -4s;"
+    style="filter: blur(120px); animation-delay: -4s;"
   ></div>
   <div
     class="absolute bottom-0 right-0 w-[500px] h-[500px] gradient-orb bg-primary/15"
-    style="animation-delay: -2s;"
+    style="filter: blur(140px); animation-delay: -2s;"
   ></div>
 
   <!-- Left gradient fade -->

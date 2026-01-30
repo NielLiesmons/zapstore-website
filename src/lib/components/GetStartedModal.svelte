@@ -93,8 +93,8 @@
     </div>
 
     <!-- Title -->
-    <h2 class="text-display text-4xl text-foreground text-center mb-2">
-      Welcome
+    <h2 class="text-display text-4xl text-foreground text-center mb-4">
+      Zapstore
     </h2>
     <p class="description">
       Create or add a <button
