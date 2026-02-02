@@ -145,7 +145,7 @@
     max-width: 100%;
     background: hsl(var(--gray66));
     border-radius: var(--radius-32) var(--radius-32) 0 0;
-    border: 0.33px solid hsl(var(--white16));
+    border: 0.33px solid hsl(var(--white8));
     border-bottom: none;
     padding: 16px;
     pointer-events: auto;

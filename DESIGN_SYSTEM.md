@@ -680,7 +680,7 @@ Only use `--font-mono` for actual code content (JSON, programming languages, etc
 ### Border Specs
 
 - **Thickness**: `0.33px` for thin element borders (ProfilePic, AppPic, cards, inputs)
-- **Color**: `white16` for standard borders, `white33` for emphasized borders
+- **Color**: Varies by context (see Border Colors table below)
 - **Style**: Always `solid`
 
 ### Implementation
@@ -688,16 +688,23 @@ Only use `--font-mono` for actual code content (JSON, programming languages, etc
 For thin borders on rounded elements, use the CSS `border` property:
 
 ```css
+/* Standard element borders */
 border: 0.33px solid hsl(var(--white16));
+
+/* Overlay containers (modals, bottom bars) - more subtle */
+border: 0.33px solid hsl(var(--white8));
 ```
 
 ### Border Colors
 
 | Color | Use Case |
 |-------|----------|
+| `white8` | **Overlay containers** (modals, bottom bars, floating panels) - very subtle |
 | `white16` | Default borders (cards, inputs, profile pics) |
 | `white33` | Emphasized borders (focused inputs, highlighted elements) |
 | `white11` | Dividers (see Dividers section) |
+
+**Important**: Overlay containers like `Modal` and `BottomBar` use `white8` for their borders to keep them subtle and not compete with the content. Regular element borders (cards, inputs, profile pics) use `white16`.
 
 ### Important Rules
 

@@ -35,6 +35,34 @@
   // Pad with empty slots if less than 4 apps
   $: gridApps = [...displayApps, ...Array(4 - displayApps.length).fill(null)];
 
+  // Helper to capitalize a string (first letter uppercase)
+  function capitalize(text) {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  // Helper to get first N words from a string
+  function getFirstWords(text, count = 5) {
+    if (!text) return "";
+    const words = text.trim().split(/\s+/);
+    const result = words.slice(0, count).join(" ");
+    return words.length > count ? result + "…" : result;
+  }
+
+  // Check if description is essentially the same as the name (case-insensitive)
+  function isDescriptionSameAsName(name, description) {
+    if (!name || !description) return false;
+    return name.toLowerCase().trim() === description.toLowerCase().trim();
+  }
+
+  // Display title: use name (capitalized), or first 5 words of description (capitalized) as fallback
+  $: displayTitle = capitalize(stack.name) || capitalize(getFirstWords(stack.description, 5)) || "Untitled Stack";
+
+  // Display description: show default if no name, no description, or description equals name
+  $: displayDescription = (!stack.name || !stack.description || isDescriptionSameAsName(stack.name, stack.description))
+    ? `A stack of curated ${displayTitle} applications`
+    : stack.description;
+
   function handleCardClick() {
     if (href) {
       goto(href);
@@ -96,9 +124,9 @@
 
   <!-- Stack Info -->
   <div class="stack-info">
-    <span class="stack-name">{stack.name || ""}</span>
-    {#if stack.description}
-      <span class="stack-description">{stack.description}</span>
+    <span class="stack-name">{displayTitle}</span>
+    {#if displayDescription}
+      <span class="stack-description">{displayDescription}</span>
     {/if}
 
     <!-- Creator Row -->

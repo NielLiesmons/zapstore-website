@@ -643,12 +643,13 @@ export async function fetchApps({ limit = 12, authors, dTags, until, search } = 
 function parseAppStackEvent(event) {
 	const tags = event.tags || [];
 	
-	// Get name from content (title is stored in content field)
-	const name = event.content || null;
-	
-	// Get d-tag (identifier)
+	// Get d-tag - this is both the identifier AND the title/name
 	const dTag = tags.find(t => t[0] === 'd');
 	const identifier = dTag ? dTag[1] : null;
+	
+	// Name comes from d-tag, description comes from content
+	const name = identifier || null;
+	const description = event.content || null;
 	
 	// Get app references from 'a' tags (format: 32267:pubkey:identifier)
 	const appRefs = tags
@@ -661,9 +662,6 @@ function parseAppStackEvent(event) {
 				identifier: parts[2]
 			};
 		});
-	
-	// Placeholder description for now
-	const description = "A curated collection of apps for your needs.";
 	
 	return {
 		id: event.id,

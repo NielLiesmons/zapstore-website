@@ -215,6 +215,8 @@
     border-radius: 0 0 var(--radius-32) var(--radius-32);
     max-height: var(--modal-max-height);
     background: hsl(var(--gray66));
+    border: 0.33px solid hsl(var(--white8));
+    border-top: none;
   }
 
   /* Center-aligned modal */
@@ -223,6 +225,7 @@
     border-radius: var(--radius-32);
     max-height: calc(100vh - 2rem);
     background: hsl(var(--gray66));
+    border: 0.33px solid hsl(var(--white8));
   }
 
   /* Bottom-aligned modal - hugs content up to maxHeight */
@@ -232,6 +235,8 @@
     border-radius: var(--radius-32) var(--radius-32) 0 0;
     max-height: var(--modal-max-height);
     background: hsl(var(--gray66));
+    border: 0.33px solid hsl(var(--white8));
+    border-bottom: none;
   }
 
   /* Fill height modifier - forces modal to fill to maxHeight */

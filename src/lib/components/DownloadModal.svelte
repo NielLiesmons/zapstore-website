@@ -150,16 +150,14 @@
   class={isZapstore ? "download-modal-bg" : ""}
 >
   {#if isZapstore}
-    <!-- Zapstore: Fancy header image - clipped on smaller screens -->
-    <div class="download-image-container">
-      <img
-        src={`${assets}/images/download-image.png`}
-        alt="Download Zapstore"
-        class="w-full h-auto object-cover"
-        loading="lazy"
-      />
-    </div>
-    <div class="p-4 md:p-6 relative" style="margin-top: -{IMAGE_TOP_HEIGHT}px;">
+    <!-- Zapstore: Fancy header image -->
+    <img
+      src={`${assets}/images/download-image.png`}
+      alt="Download Zapstore"
+      class="w-full h-auto object-cover"
+      loading="lazy"
+    />
+    <div class="zapstore-content p-4 md:p-6 relative">
       <h2 class="text-display text-4xl text-foreground text-center mb-6">
         Download Zapstore
       </h2>
@@ -330,7 +328,11 @@
                 ></div>
                 Downloading...
               {:else}
-                <Download variant="fill" color="hsl(var(--white66))" size={20} />
+                <Download
+                  variant="fill"
+                  color="hsl(var(--white66))"
+                  size={20}
+                />
                 Download Android App
               {/if}
             </button>
@@ -646,15 +648,14 @@
     ) !important;
   }
 
-  /* Image container with clipping on smaller screens */
-  .download-image-container {
-    overflow: hidden;
-    max-height: 280px;
+  /* Zapstore content overlap with image - less overlap on smaller screens */
+  .zapstore-content {
+    margin-top: -300px;
   }
 
   @media (min-width: 640px) {
-    .download-image-container {
-      max-height: none;
+    .zapstore-content {
+      margin-top: -360px;
     }
   }
 

@@ -139,6 +139,32 @@
   }
 
   $: appColumns = getAppColumns(apps, 3);
+
+  // Helper to capitalize a string (first letter uppercase)
+  function capitalize(text) {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  // Helper to get first N words from a string
+  function getFirstWords(text, count = 5) {
+    if (!text) return "";
+    const words = text.trim().split(/\s+/);
+    const result = words.slice(0, count).join(" ");
+    return words.length > count ? result + "…" : result;
+  }
+
+  // Check if description is essentially the same as the name (case-insensitive)
+  function isDescriptionSameAsName(name, description) {
+    if (!name || !description) return false;
+    return name.toLowerCase().trim() === description.toLowerCase().trim();
+  }
+
+  // Computed display values for stack
+  $: displayTitle = capitalize(stack?.name) || capitalize(getFirstWords(stack?.description, 5)) || "Untitled Stack";
+  $: displayDescription = (!stack?.name || !stack?.description || isDescriptionSameAsName(stack?.name, stack?.description))
+    ? `A stack of curated ${displayTitle} applications`
+    : stack?.description;
 </script>
 
 <svelte:head>
@@ -217,10 +243,8 @@
     {:else if stack}
       <!-- Stack Header -->
       <div class="stack-header">
-        <h1 class="stack-title">{stack.name}</h1>
-        {#if stack.description}
-          <p class="stack-description">{stack.description}</p>
-        {/if}
+        <h1 class="stack-title">{displayTitle}</h1>
+        <p class="stack-description">{displayDescription}</p>
       </div>
 
       <!-- Apps Section -->
