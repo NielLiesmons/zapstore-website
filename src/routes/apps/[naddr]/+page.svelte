@@ -29,6 +29,9 @@
     cacheApp,
     parseAppSlug,
   } from "$lib/nostr.js";
+  import { authStore } from "$lib/stores/auth.js";
+  import { createSearchProfilesFunction } from "$lib/services/profile-search.js";
+  import { createSearchEmojisFunction } from "$lib/services/emoji-search.js";
   import { wheelScroll } from "$lib/actions/wheelScroll.js";
   import ProfileInfo from "$lib/components/ProfileInfo.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
@@ -37,6 +40,7 @@
   import SocialTabs from "$lib/components/SocialTabs.svelte";
   import BottomBar from "$lib/components/BottomBar.svelte";
   import ZapButton from "$lib/components/ZapButton.svelte";
+  import ZapPill from "$lib/components/ZapPill.svelte";
   import Timestamp from "$lib/components/Timestamp.svelte";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
   import DownloadModal from "$lib/components/DownloadModal.svelte";
@@ -63,6 +67,13 @@
 
   // Publisher profile state
   let publisherProfile = null;
+
+  // Search functions (reactive based on logged-in user)
+  $: searchProfiles = $authStore.pubkey 
+    ? createSearchProfilesFunction($authStore.pubkey) 
+    : async () => [];
+  
+  $: searchEmojis = createSearchEmojisFunction($authStore.pubkey);
 
   // Screenshot carousel state
   let carouselOpen = false;
@@ -821,6 +832,24 @@
       </button>
     </div>
 
+    <!-- Zaps Row -->
+    {#if zapsData.zaps.length > 0}
+      <div class="zaps-row-container mb-6">
+        <div class="zaps-row" use:wheelScroll>
+          {#each zapsData.zaps as zap}
+            <ZapPill
+              amount={zap.amountSats || 0}
+              profile={{
+                pubkey: zap.senderPubkey,
+                name: zapperProfiles.get(zap.senderPubkey)?.name || zapperProfiles.get(zap.senderPubkey)?.displayName,
+                pictureUrl: zapperProfiles.get(zap.senderPubkey)?.picture
+              }}
+            />
+          {/each}
+        </div>
+      </div>
+    {/if}
+
     <!-- Social tabs (Comments, Labels, Stacks, Details) -->
     <div class="mb-8">
       <SocialTabs {app} version={fileVersion} {publisherProfile} />
@@ -1144,10 +1173,51 @@
 
 <!-- Bottom Bar -->
 {#if app}
-  <BottomBar appName={app.name || ""} contentType="app" />
+  {@const zapTarget = {
+    name: app.name,
+    pubkey: app.pubkey,
+    dTag: app.dTag,
+    id: app.id,
+    pictureUrl: publisherProfile?.picture
+  }}
+  {@const otherZapsForSlider = zapsData.zaps.map(zap => ({
+    amount: zap.amountSats || 0,
+    profile: {
+      pubkey: zap.senderPubkey,
+      name: zapperProfiles.get(zap.senderPubkey)?.name || zapperProfiles.get(zap.senderPubkey)?.displayName,
+      pictureUrl: zapperProfiles.get(zap.senderPubkey)?.picture
+    }
+  }))}
+  <BottomBar 
+    appName={app.name || ""} 
+    {publisherName}
+    contentType="app" 
+    {zapTarget}
+    otherZaps={otherZapsForSlider}
+    {searchProfiles}
+    {searchEmojis}
+  />
 {/if}
 
 <style>
+  /* Zaps row */
+  .zaps-row-container {
+    overflow: hidden;
+  }
+
+  .zaps-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .zaps-row::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Info panels container */
   .info-panels-container {
     display: flex;

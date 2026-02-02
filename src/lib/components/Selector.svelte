@@ -16,7 +16,7 @@
     : 'rounded-lg'}"
   style={size === "large"
     ? "background: linear-gradient(to right, hsl(var(--white4)), hsl(0 0% 100% / 0.02));"
-    : "background-color: hsl(var(--black16));"}
+    : "background-color: hsl(var(--black33));"}
 >
   {#each options as option}
     {@const isSelected = selectedOption === option}

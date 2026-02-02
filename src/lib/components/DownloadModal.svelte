@@ -150,13 +150,15 @@
   class={isZapstore ? "download-modal-bg" : ""}
 >
   {#if isZapstore}
-    <!-- Zapstore: Fancy header image -->
-    <img
-      src={`${assets}/images/download-image.png`}
-      alt="Download Zapstore"
-      class="w-full h-auto object-cover"
-      loading="lazy"
-    />
+    <!-- Zapstore: Fancy header image - clipped on smaller screens -->
+    <div class="download-image-container">
+      <img
+        src={`${assets}/images/download-image.png`}
+        alt="Download Zapstore"
+        class="w-full h-auto object-cover"
+        loading="lazy"
+      />
+    </div>
     <div class="p-4 md:p-6 relative" style="margin-top: -{IMAGE_TOP_HEIGHT}px;">
       <h2 class="text-display text-4xl text-foreground text-center mb-6">
         Download Zapstore
@@ -315,22 +317,24 @@
             </div>
           </div>
 
-          <button
-            type="button"
-            on:click={downloadApk}
-            disabled={downloading}
-            class="btn-primary-large w-full disabled:opacity-70 flex items-center justify-center gap-3"
-          >
-            {#if downloading}
-              <div
-                class="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent"
-              ></div>
-              Downloading...
-            {:else}
-              <Download variant="fill" color="hsl(var(--white66))" size={20} />
-              Download Android App
-            {/if}
-          </button>
+          <div class="download-actions">
+            <button
+              type="button"
+              on:click={downloadApk}
+              disabled={downloading}
+              class="btn-primary-large w-full disabled:opacity-70 flex items-center justify-center gap-3"
+            >
+              {#if downloading}
+                <div
+                  class="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent"
+                ></div>
+                Downloading...
+              {:else}
+                <Download variant="fill" color="hsl(var(--white66))" size={20} />
+                Download Android App
+              {/if}
+            </button>
+          </div>
         </div>
       {:else if selectedPlatform === "iOS"}
         <div class="space-y-5">
@@ -503,7 +507,7 @@
       </div>
 
       <!-- Action buttons -->
-      <div class="flex gap-3">
+      <div class="download-actions">
         <a
           href="/download"
           class="btn-secondary-large btn-secondary-modal flex-shrink-0"
@@ -642,12 +646,24 @@
     ) !important;
   }
 
+  /* Image container with clipping on smaller screens */
+  .download-image-container {
+    overflow: hidden;
+    max-height: 280px;
+  }
+
+  @media (min-width: 640px) {
+    .download-image-container {
+      max-height: none;
+    }
+  }
+
   /* Custom platform selector for non-Zapstore apps */
   .app-platform-selector {
     display: flex;
     gap: 0.5rem;
     padding: 0.5rem;
-    background-color: hsl(var(--black16));
+    background-color: hsl(var(--black33));
     border-radius: 0.5rem;
   }
 
@@ -675,5 +691,19 @@
     background-color: transparent;
     color: hsl(var(--white33));
     cursor: not-allowed;
+  }
+
+  .download-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  /* Smaller button text on mobile */
+  @media (max-width: 767px) {
+    .download-actions :global(.btn-primary-large),
+    .download-actions :global(.btn-secondary-large),
+    :global(.space-y-3 .btn-primary-large) {
+      font-size: 14px;
+    }
   }
 </style>

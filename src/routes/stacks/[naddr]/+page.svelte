@@ -9,6 +9,9 @@
     pubkeyToNpub,
     parseStackSlug,
   } from "$lib/nostr.js";
+  import { authStore } from "$lib/stores/auth.js";
+  import { createSearchProfilesFunction } from "$lib/services/profile-search.js";
+  import { createSearchEmojisFunction } from "$lib/services/emoji-search.js";
   import { wheelScroll } from "$lib/actions/wheelScroll.js";
   import AppSmallCard from "$lib/components/AppSmallCard.svelte";
   import ProfilePic from "$lib/components/ProfilePic.svelte";
@@ -33,6 +36,13 @@
   let apps = [];
   let loading = true;
   let error = null;
+
+  // Search functions (reactive based on logged-in user)
+  $: searchProfiles = $authStore.pubkey 
+    ? createSearchProfilesFunction($authStore.pubkey) 
+    : async () => [];
+  
+  $: searchEmojis = createSearchEmojisFunction($authStore.pubkey);
 
   $: stackNaddr = $page.params.naddr;
 
@@ -259,7 +269,20 @@
 
 <!-- Bottom Bar -->
 {#if stack}
-  <BottomBar publisherName={stack.creator?.name || ""} contentType="stack" />
+  {@const zapTarget = {
+    name: stack.title || stack.name,
+    pubkey: stack.pubkey,
+    dTag: stack.identifier,
+    id: stack.id,
+    pictureUrl: stack.creator?.picture
+  }}
+  <BottomBar 
+    publisherName={stack.creator?.name || ""} 
+    contentType="stack"
+    {zapTarget}
+    {searchProfiles}
+    {searchEmojis}
+  />
 {/if}
 
 <style>

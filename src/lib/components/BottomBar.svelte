@@ -1,8 +1,13 @@
 <script>
+  import { createEventDispatcher } from "svelte";
   import ZapIcon from "./icons/Zap.svelte";
   import ReplyIcon from "./icons/Reply.svelte";
   import OptionsIcon from "./icons/Options.svelte";
   import InputButton from "./InputButton.svelte";
+  import ZapSliderModal from "./ZapSliderModal.svelte";
+  import CommentModal from "./CommentModal.svelte";
+
+  const dispatch = createEventDispatcher();
 
   /** @type {string} - App name (for apps) */
   export let appName = "";
@@ -16,17 +21,51 @@
   /** @type {string} - Additional CSS classes */
   export let className = "";
 
-  // Placeholder handlers (to be implemented)
+  /** @type {{ name?: string, pubkey?: string, dTag?: string, id?: string, pictureUrl?: string } | null} - Target for zapping/commenting */
+  export let zapTarget = null;
+
+  /** @type {Array<{ amount: number, profile: { pictureUrl?: string, name?: string, pubkey?: string } }>} - Other zaps on this content */
+  export let otherZaps = [];
+
+  /** @type {(query: string) => Promise<Array<{ pubkey: string, name?: string, displayName?: string, picture?: string, nip05?: string }>>} */
+  export let searchProfiles = async () => [];
+
+  /** @type {(query: string) => Promise<Array<{ shortcode: string, url: string, source: 'unicode' | 'custom' }>>} */
+  export let searchEmojis = async () => [];
+
+  // Modal state
+  let zapModalOpen = false;
+  let commentModalOpen = false;
+
   function handleZap() {
-    // TODO: Implement zap functionality
+    zapModalOpen = true;
+  }
+
+  function handleZapClose(e) {
+    zapModalOpen = false;
+    if (e.detail?.success) {
+      dispatch("zapReceived");
+    }
+  }
+
+  function handleZapReceived(e) {
+    dispatch("zapReceived", e.detail);
   }
 
   function handleComment() {
-    // TODO: Open comment modal/input
+    commentModalOpen = true;
+  }
+
+  function handleCommentClose() {
+    commentModalOpen = false;
+  }
+
+  function handleCommentSubmit(e) {
+    dispatch("commentSubmit", e.detail);
   }
 
   function handleOptions() {
-    // TODO: Show options menu
+    dispatch("options");
   }
 </script>
 
@@ -65,6 +104,29 @@
     </div>
   </div>
 </div>
+
+<!-- Zap Slider Modal -->
+<ZapSliderModal
+  bind:isOpen={zapModalOpen}
+  target={zapTarget}
+  {publisherName}
+  {otherZaps}
+  {searchProfiles}
+  {searchEmojis}
+  on:close={handleZapClose}
+  on:zapReceived={handleZapReceived}
+/>
+
+<!-- Comment Modal -->
+<CommentModal
+  bind:isOpen={commentModalOpen}
+  target={zapTarget}
+  placeholder="Comment on {zapTarget?.name || 'this'}"
+  {searchProfiles}
+  {searchEmojis}
+  on:close={handleCommentClose}
+  on:submit={handleCommentSubmit}
+/>
 
 <style>
   .bottom-bar-wrapper {
