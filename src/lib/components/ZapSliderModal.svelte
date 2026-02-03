@@ -353,6 +353,12 @@
     padding: 16px;
   }
 
+  @media (min-width: 768px) {
+    .zap-modal-content {
+      padding: 12px;
+    }
+  }
+
   .error-message {
     display: flex;
     align-items: flex-start;

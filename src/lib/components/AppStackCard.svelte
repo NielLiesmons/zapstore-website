@@ -56,12 +56,18 @@
   }
 
   // Display title: use name (capitalized), or first 5 words of description (capitalized) as fallback
-  $: displayTitle = capitalize(stack.name) || capitalize(getFirstWords(stack.description, 5)) || "Untitled Stack";
+  $: displayTitle =
+    capitalize(stack.name) ||
+    capitalize(getFirstWords(stack.description, 5)) ||
+    "Untitled Stack";
 
   // Display description: show default if no name, no description, or description equals name
-  $: displayDescription = (!stack.name || !stack.description || isDescriptionSameAsName(stack.name, stack.description))
-    ? `A stack of curated ${displayTitle} applications`
-    : stack.description;
+  $: displayDescription =
+    !stack.name ||
+    !stack.description ||
+    isDescriptionSameAsName(stack.name, stack.description)
+      ? `A stack of curated ${displayTitle} applications`
+      : stack.description;
 
   function handleCardClick() {
     if (href) {
@@ -250,6 +256,7 @@
     font-size: 0.75rem;
     color: hsl(var(--white66));
     line-height: 1.4;
+    height: 2.8em; /* Fixed height for 2 lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -264,6 +271,7 @@
 
     .stack-description {
       font-size: 0.875rem;
+      height: 2.8em; /* Fixed height for 2 lines */
     }
   }
 

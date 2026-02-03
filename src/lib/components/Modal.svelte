@@ -157,7 +157,7 @@
     class:items-center={actualAlignment === "center"}
     class:items-end={actualAlignment === "bottom"}
     style="z-index: {zIndex};"
-    transition:fade={{ duration: 150 }}
+    transition:fade={{ duration: 200 }}
     on:click={handleBackdropClick}
     role="dialog"
     aria-modal="true"
@@ -178,11 +178,10 @@
       transition:fly={{
         y:
           actualAlignment === "bottom"
-            ? 100
+            ? 50
             : actualAlignment === "top"
-              ? -100
+              ? -50
               : 0,
-        opacity: 0,
         duration: 200,
         easing: cubicOut,
       }}
@@ -206,6 +205,19 @@
     display: flex;
     justify-content: center;
     padding: 0;
+    margin: 0;
+  }
+
+  .modal-backdrop.items-start {
+    align-items: flex-start;
+  }
+
+  .modal-backdrop.items-center {
+    align-items: center;
+  }
+
+  .modal-backdrop.items-end {
+    align-items: flex-end;
   }
 
   /* Top-aligned modal (e.g., search dropdown) */
@@ -231,12 +243,22 @@
   /* Bottom-aligned modal - hugs content up to maxHeight */
   .modal-bottom {
     margin: 0;
-    margin-top: auto;
+    padding: 0;
     border-radius: var(--radius-32) var(--radius-32) 0 0;
     max-height: var(--modal-max-height);
     background: hsl(var(--gray66));
     border: 0.33px solid hsl(var(--white8));
     border-bottom: none;
+  }
+
+  /* Desktop: floating bottom modal with all rounded corners and shadow */
+  @media (min-width: 768px) {
+    .modal-bottom {
+      margin-bottom: 16px;
+      border-radius: 24px;
+      border-bottom: 0.33px solid hsl(var(--white8));
+      box-shadow: 0 8px 64px hsl(var(--black));
+    }
   }
 
   /* Fill height modifier - forces modal to fill to maxHeight */
@@ -252,38 +274,14 @@
     max-height: unset;
   }
 
-  /* Wide modal - matches container breakpoints minus page padding */
+  /* Wide modal - full width on mobile, narrower on desktop */
   .modal-wide {
     max-width: 100%; /* Mobile: full width */
   }
 
-  @media (min-width: 640px) {
-    .modal-wide {
-      max-width: calc(640px - 48px); /* 640 - 2*24px padding */
-    }
-  }
-
   @media (min-width: 768px) {
     .modal-wide {
-      max-width: calc(768px - 48px);
-    }
-  }
-
-  @media (min-width: 900px) {
-    .modal-wide {
-      max-width: calc(900px - 64px); /* 900 - 2*32px padding */
-    }
-  }
-
-  @media (min-width: 1000px) {
-    .modal-wide {
-      max-width: calc(1000px - 64px);
-    }
-  }
-
-  @media (min-width: 1100px) {
-    .modal-wide {
-      max-width: calc(1100px - 64px);
+      max-width: 560px;
     }
   }
 

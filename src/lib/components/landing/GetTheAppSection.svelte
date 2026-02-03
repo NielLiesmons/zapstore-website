@@ -7,7 +7,7 @@
 
 <!-- Get The App Section -->
 <section
-  class="relative h-[500px] lg:h-[600px] border-t border-border/50 overflow-hidden"
+  class="relative h-[640px] lg:h-[600px] border-t border-border/50 overflow-hidden"
 >
   <!-- Section background decoration -->
   <div
@@ -17,11 +17,11 @@
     class="container mx-auto px-4 sm:px-6 md:px-8 lg:px-8 h-full relative z-10"
   >
     <div
-      class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start h-full pt-16 lg:pt-20"
+      class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start h-full pt-12 sm:pt-16 lg:pt-20"
     >
       <!-- Left: Content -->
       <div
-        class="space-y-6 p-8 rounded-2xl lg:order-2"
+        class="space-y-4 sm:space-y-6 p-6 sm:p-8 rounded-2xl lg:order-2"
         style="background-color: hsl(var(--gray33)); border-radius: var(--radius-32);"
       >
         <h2
@@ -29,9 +29,8 @@
         >
           Get The App
         </h2>
-        <p class="section-description max-w-xl pb-2">
-          Lorem ipsum dolor sit amet and then some more of this weird and
-          unreadable consectetur adipiscing elit.
+        <p class="section-description max-w-xl">
+          Discover apps through communities where builders and users connect, with secure downloads and reliable updates built in.
         </p>
         <div class="flex flex-row gap-3">
           <a
@@ -46,7 +45,7 @@
             on:click={showDownloadModal}
             class="btn-primary-large flex-1 flex items-center justify-center gap-3"
           >
-            <Download variant="fill" color="hsl(var(--white66))" size={20} />
+            <Download variant="fill" color="hsl(var(--white66))" size={18} />
             Download
           </button>
         </div>

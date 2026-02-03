@@ -1,6 +1,8 @@
 <script>
   import { createEventDispatcher } from "svelte";
-  import Modal from "./Modal.svelte";
+  import { fly } from "svelte/transition";
+  import { cubicOut } from "svelte/easing";
+  import { browser } from "$app/environment";
   import ShortTextInput from "./ShortTextInput.svelte";
 
   const dispatch = createEventDispatcher();
@@ -80,44 +82,98 @@
     console.log("Chevron tap");
   }
 
+  function handleKeydown(e) {
+    if (e.key === "Escape") {
+      close();
+    }
+  }
+
   // Focus input when modal opens
   $: if (isOpen && textInput) {
     setTimeout(() => textInput?.focus(), 100);
   }
 </script>
 
-<Modal
-  bind:open={isOpen}
-  ariaLabel="Write a comment"
-  wide={true}
-  align="bottom"
-  on:close={close}
->
-  <div class="comment-modal">
-    <div class="input-container">
-      <ShortTextInput
-        bind:this={textInput}
-        {placeholder}
-        size="medium"
-        {searchProfiles}
-        {searchEmojis}
-        autoFocus={true}
-        showActionRow={true}
-        onCameraTap={handleCameraTap}
-        onEmojiTap={handleEmojiTap}
-        onGifTap={handleGifTap}
-        onAddTap={handleAddTap}
-        onChevronTap={handleChevronTap}
-        on:submit={handleSubmit}
-      />
+<svelte:window on:keydown={handleKeydown} />
+
+{#if isOpen}
+  <!-- Transparent dismissible overlay -->
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div class="overlay" on:click={close}></div>
+  
+  <div
+    class="comment-sheet-wrapper"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Write a comment"
+  >
+    <div
+      class="comment-sheet"
+      transition:fly={{ y: 100, duration: 200, easing: cubicOut }}
+    >
+      <div class="input-container">
+        <ShortTextInput
+          bind:this={textInput}
+          {placeholder}
+          size="medium"
+          {searchProfiles}
+          {searchEmojis}
+          autoFocus={true}
+          showActionRow={true}
+          onCameraTap={handleCameraTap}
+          onEmojiTap={handleEmojiTap}
+          onGifTap={handleGifTap}
+          onAddTap={handleAddTap}
+          onChevronTap={handleChevronTap}
+          on:submit={handleSubmit}
+        />
+      </div>
     </div>
   </div>
-</Modal>
+{/if}
 
 <style>
-  .comment-modal {
-    padding: 16px;
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: transparent;
+  }
+
+  .comment-sheet-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .comment-sheet {
     width: 100%;
+    max-width: 100%;
+    margin: 0;
+    background: hsl(var(--gray66));
+    border-radius: var(--radius-32) var(--radius-32) 0 0;
+    border: 0.33px solid hsl(var(--white8));
+    border-bottom: none;
+    padding: 16px;
+    pointer-events: auto;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Desktop: floating sheet with all rounded corners */
+  @media (min-width: 768px) {
+    .comment-sheet {
+      max-width: 560px;
+      margin-bottom: 16px;
+      border-radius: 24px;
+      border-bottom: 0.33px solid hsl(var(--white8));
+      padding: 12px;
+    }
   }
 
   .input-container {

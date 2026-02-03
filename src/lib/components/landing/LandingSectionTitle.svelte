@@ -48,7 +48,7 @@
 </script>
 
 <div
-  class="container mx-auto px-4 sm:px-6 lg:px-8 {description ? 'mb-8' : 'mb-4'}"
+  class="container mx-auto px-6 sm:px-6 lg:px-8 {description ? 'mb-8' : 'mb-4'}"
 >
   <!-- Title row with button -->
   <div class="flex items-center justify-between gap-4 mb-3">

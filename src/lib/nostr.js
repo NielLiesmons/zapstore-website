@@ -1263,11 +1263,13 @@ export function parseZapEventWithSender(event) {
     const baseZap = parseZapEvent(event);
     
     let senderPubkey = '';
+    let comment = '';
     try {
         const descriptionTag = event.tags.find(tag => tag[0] === 'description');
         if (descriptionTag && descriptionTag[1]) {
             const descEvent = JSON.parse(descriptionTag[1]);
             senderPubkey = descEvent.pubkey || '';
+            comment = descEvent.content || '';
         }
     } catch (e) {
         console.warn('Failed to parse zap sender:', e);
@@ -1276,7 +1278,8 @@ export function parseZapEventWithSender(event) {
     return {
         ...baseZap,
         senderPubkey: senderPubkey,
-        senderNpub: senderPubkey ? pubkeyToNpub(senderPubkey) : ''
+        senderNpub: senderPubkey ? pubkeyToNpub(senderPubkey) : '',
+        comment: comment
     };
 }
 

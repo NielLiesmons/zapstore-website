@@ -206,7 +206,7 @@
 </script>
 
 {#if testimonials.length > 0}
-  <section class="border-t border-border/50 pt-16 lg:pt-20 pb-0 md:pb-10 relative">
+  <section class="border-t border-border/50 pt-8 sm:pt-12 lg:pt-16 pb-0 md:pb-10 relative">
     <LandingSectionTitle
       title="What people are saying"
       description="Real posts from the Nostr community"

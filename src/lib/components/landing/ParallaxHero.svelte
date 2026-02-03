@@ -152,7 +152,7 @@
       rotationY: -20,
     },
     {
-      imageUrl: `/images/parallax-apps/electrum.png`,
+      imageUrl: `/images/parallax-apps/obsidian.png`,
       x: -720,
       y: -300,
       size: 1.8,
@@ -412,7 +412,7 @@
     // Small icons in center zone - spread out from center
     {
       imageUrl: `/images/parallax-apps/antennapod.png`,
-      x: -190,
+      x: -230,
       y: -180,
       size: 0.5,
       rotationX: 2,
@@ -420,7 +420,7 @@
     },
     {
       imageUrl: `/images/parallax-apps/blue-wallet.png`,
-      x: 190,
+      x: 230,
       y: -180,
       size: 0.5,
       rotationX: -2,
@@ -428,7 +428,7 @@
     },
     {
       imageUrl: `/images/parallax-apps/breezy.png`,
-      x: -190,
+      x: -230,
       y: 180,
       size: 0.5,
       rotationX: 1,
@@ -436,7 +436,7 @@
     },
     {
       imageUrl: `/images/parallax-apps/grimoire.svg`,
-      x: 190,
+      x: 230,
       y: 180,
       size: 0.5,
       rotationX: -1,
@@ -544,7 +544,7 @@
 
 <section
   bind:this={heroElement}
-  class="relative h-[450px] sm:h-[500px] md:h-[540px] lg:h-[580px] flex items-center justify-center overflow-hidden"
+  class="relative h-[500px] sm:h-[480px] md:h-[520px] lg:h-[560px] flex items-center justify-center overflow-hidden"
   style="perspective: 2000px; perspective-origin: center center;"
 >
   <!-- Background gradient orbs -->
@@ -574,18 +574,43 @@
   ></div>
 
   <!-- App icons with parallax - positioned relative to center -->
+  <!-- On mobile, fixed height container keeps icons in place when section grows -->
   <div
-    class="absolute inset-0 pointer-events-none"
+    class="absolute left-0 right-0 top-0 h-[490px] sm:h-full pointer-events-none"
     style="transform-style: preserve-3d;"
   >
-    {#each iconPositions as iconData}
+    {#each iconPositions as iconData, index}
       {@const parallaxOffset = -scrollY * iconData.parallaxSpeed}
-      {@const baseSize = Math.max(30, (windowWidth / 100) * 3.5)}
+      {@const cappedWidth = Math.min(windowWidth, 1440)}
+      {@const baseSize = Math.max(30, (cappedWidth / 100) * 3.5)}
       {@const scaledSize = baseSize * iconData.size}
       {@const borderRadius = baseSize * 0.24}
-      {@const positionScale = 1.0 + (windowWidth / 1920 - 1) * 0.6}
-      {@const scaledX = iconData.x * positionScale}
-      {@const scaledY = iconData.y * positionScale}
+      <!-- Horizontal scaling: slight boost on mobile for centering -->
+      {@const baseXFactor = 0.6}
+      {@const mobileBoost = windowWidth < 768 ? (1 - windowWidth / 768) * 0.15 : 0}
+      {@const xFactor = baseXFactor + mobileBoost}
+      {@const positionScaleX = 1.0 + (cappedWidth / 1920 - 1) * xFactor}
+      <!-- Vertical scaling: compression toward vertical center -->
+      {@const yFactor = 0.5}
+      {@const positionScaleY = 1.0 + (cappedWidth / 1920 - 1) * yFactor}
+      <!-- Mobile adjustments for featured icons: top two closer, bottom two more centered -->
+      {@const isTopFeatured = index === 0 || index === 1}
+      {@const isBottomFeatured = index === 2 || index === 3}
+      {@const isGrimoire = index === 2}
+      {@const isPrimal = index === 4}
+      {@const isMiddle = index === 5 || index === 6}
+      {@const mobileOffsetX = windowWidth < 640 
+        ? (isTopFeatured ? (iconData.x > 0 ? -50 : 50) 
+          : isGrimoire ? 75
+          : isBottomFeatured ? (iconData.x > 0 ? -65 : 65)
+          : isMiddle ? (iconData.x > 0 ? -20 : 20)
+          : 0) 
+        : 0}
+      {@const mobileOffsetY = windowWidth < 640 
+        ? (isTopFeatured ? -30 : isPrimal ? -30 : isGrimoire ? -15 : isMiddle ? -12 : 0) 
+        : 0}
+      {@const scaledX = iconData.x * positionScaleX + mobileOffsetX}
+      {@const scaledY = iconData.y * positionScaleY + mobileOffsetY}
       {@const thicknessSpread = 1}
       {@const thicknessOffsetMultiplier = Math.max(
         8,
@@ -660,9 +685,9 @@
   </div>
 
   <!-- Central text -->
-  <div class="relative z-10 text-center px-4">
+  <div class="relative z-10 text-center px-4 -mt-2 sm:mt-0">
     <h1
-      class="text-display-lg text-4xl sm:text-6xl lg:text-7xl xl:text-8xl leading-tight mb-6"
+      class="text-display-lg text-5xl sm:text-6xl lg:text-7xl xl:text-8xl leading-tight mb-6"
     >
       <span
         style="background: var(--gradient-gray); -webkit-background-clip: text; background-clip: text; color: transparent;"
@@ -676,7 +701,7 @@
         Released.
       </span>
     </h1>
-    <p class="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-8">
+    <p class="text-lg sm:text-xl text-muted-foreground max-w-[260px] sm:max-w-none mx-auto mb-8">
       Finally, an open app store for freely sharing apps
     </p>
     <a
@@ -766,6 +791,7 @@
       border-top-right-radius: 0 !important;
       border-left: none !important;
       border-right: none !important;
+      background-color: rgb(0 0 0 / 0.33) !important;
     }
 
     .dev-button-bottom:hover {

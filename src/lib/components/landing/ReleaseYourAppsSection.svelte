@@ -16,22 +16,22 @@
 <section class="relative border-t border-border/50 overflow-hidden">
   <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-12 lg:pt-16 pb-0">
     <!-- Center text -->
-    <div class="relative z-20 text-center mb-12">
+    <div class="relative z-20 text-center mb-6 sm:mb-12">
       <h2 class="section-title text-display-lg leading-tight">
         <span
-          class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl section-title-gradient"
+          class="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl section-title-gradient"
         >
           Release with ease
         </span>
       </h2>
-      <p class="section-description max-w-2xl mx-auto mt-5">
-        Publish apps directly to users without gatekeepers. <br />Get insights,
+      <p class="section-description max-w-2xl mx-auto mt-3 sm:mt-5">
+        Publish apps directly to users without gatekeepers. <span class="hidden sm:inline"><br /></span>Get insights,
         monetize and build community.
       </p>
     </div>
 
     <!-- Preview container -->
-    <div class="relative h-[280px] sm:h-[360px] lg:h-[440px] overflow-hidden">
+    <div class="relative h-[220px] sm:h-[360px] lg:h-[440px] overflow-hidden">
       <!-- Studio screenshot -->
       <img
         src="/images/studio-screenshot.png"
@@ -77,7 +77,7 @@
               fill="url(#studio-icon-gradient)"
             />
           </svg>
-          Zapstore Studio
+          <span class="whitespace-nowrap">Zapstore Studio</span>
           <ChevronRight
             variant="outline"
             color="hsl(var(--white33))"

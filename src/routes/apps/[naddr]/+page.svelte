@@ -40,7 +40,7 @@
   import SocialTabs from "$lib/components/SocialTabs.svelte";
   import BottomBar from "$lib/components/BottomBar.svelte";
   import ZapButton from "$lib/components/ZapButton.svelte";
-  import ZapPill from "$lib/components/ZapPill.svelte";
+  import ZapIcon from "$lib/components/icons/Zap.svelte";
   import Timestamp from "$lib/components/Timestamp.svelte";
   import SkeletonLoader from "$lib/components/SkeletonLoader.svelte";
   import DownloadModal from "$lib/components/DownloadModal.svelte";
@@ -69,10 +69,10 @@
   let publisherProfile = null;
 
   // Search functions (reactive based on logged-in user)
-  $: searchProfiles = $authStore.pubkey 
-    ? createSearchProfilesFunction($authStore.pubkey) 
+  $: searchProfiles = $authStore.pubkey
+    ? createSearchProfilesFunction($authStore.pubkey)
     : async () => [];
-  
+
   $: searchEmojis = createSearchEmojisFunction($authStore.pubkey);
 
   // Screenshot carousel state
@@ -368,6 +368,15 @@
     return Prism.highlight(jsonString, Prism.languages.json, "json");
   }
 
+  // Format zap amount for display
+  function formatZapAmount(amount) {
+    if (amount >= 1000000)
+      return `${(amount / 1000000).toFixed(amount % 1000000 === 0 ? 0 : 1)}M`;
+    if (amount >= 1000)
+      return `${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}K`;
+    return amount.toLocaleString();
+  }
+
   // Strip markdown formatting from text
   function stripMarkdown(text) {
     if (!text) return "";
@@ -540,7 +549,7 @@
     {showPublisher}
   />
 
-  <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-4 md:pt-6 pb-8">
     <!-- App Header Row -->
     <div class="app-header flex items-center gap-4 sm:gap-6 mb-6">
       <!-- App Icon -->
@@ -795,11 +804,8 @@
           </div>
         </button>
 
-        <!-- Similar Apps Panel (desktop only in main row) -->
-        <button
-          type="button"
-          class="info-panel panel-similar-desktop text-left"
-        >
+        <!-- Suggestions Panel (desktop only) -->
+        <button type="button" class="info-panel panel-similar-desktop text-left">
           <div class="panel-header">
             <span
               class="text-base font-semibold"
@@ -815,44 +821,34 @@
         </button>
       </div>
 
-      <!-- Row 2 (mobile only): Similar Apps -->
-      <button type="button" class="info-panel panel-similar-mobile text-left">
-        <div class="panel-header">
-          <span
-            class="text-base font-semibold"
-            style="color: hsl(var(--foreground));">Suggestions</span
-          >
-        </div>
-        <div class="similar-apps-row flex gap-2 mt-2">
-          <AppPic size="xs" name="App 1" />
-          <AppPic size="xs" name="App 2" />
-          <AppPic size="xs" name="App 3" />
-          <AppPic size="xs" name="App 4" />
-        </div>
-      </button>
-    </div>
-
-    <!-- Zaps Row -->
-    {#if zapsData.zaps.length > 0}
-      <div class="zaps-row-container mb-6">
-        <div class="zaps-row" use:wheelScroll>
-          {#each zapsData.zaps as zap}
-            <ZapPill
-              amount={zap.amountSats || 0}
-              profile={{
-                pubkey: zap.senderPubkey,
-                name: zapperProfiles.get(zap.senderPubkey)?.name || zapperProfiles.get(zap.senderPubkey)?.displayName,
-                pictureUrl: zapperProfiles.get(zap.senderPubkey)?.picture
-              }}
-            />
-          {/each}
-        </div>
+      <!-- Row 2 (mobile only): Suggestions -->
+      <div class="info-panels-secondary">
+        <button type="button" class="info-panel panel-similar-mobile text-left">
+          <div class="panel-header">
+            <span
+              class="text-base font-semibold"
+              style="color: hsl(var(--foreground));">Suggestions</span
+            >
+          </div>
+          <div class="similar-apps-row flex gap-2">
+            <AppPic size="xs" name="App 1" />
+            <AppPic size="xs" name="App 2" />
+            <AppPic size="xs" name="App 3" />
+            <AppPic size="xs" name="App 4" />
+          </div>
+        </button>
       </div>
-    {/if}
+    </div>
 
     <!-- Social tabs (Comments, Labels, Stacks, Details) -->
     <div class="mb-8">
-      <SocialTabs {app} version={fileVersion} {publisherProfile} />
+      <SocialTabs
+        {app}
+        version={fileVersion}
+        {publisherProfile}
+        zaps={zapsData.zaps}
+        {zapperProfiles}
+      />
     </div>
 
     <!-- Screenshot Carousel Modal -->
@@ -1178,20 +1174,22 @@
     pubkey: app.pubkey,
     dTag: app.dTag,
     id: app.id,
-    pictureUrl: publisherProfile?.picture
+    pictureUrl: publisherProfile?.picture,
   }}
-  {@const otherZapsForSlider = zapsData.zaps.map(zap => ({
+  {@const otherZapsForSlider = zapsData.zaps.map((zap) => ({
     amount: zap.amountSats || 0,
     profile: {
       pubkey: zap.senderPubkey,
-      name: zapperProfiles.get(zap.senderPubkey)?.name || zapperProfiles.get(zap.senderPubkey)?.displayName,
-      pictureUrl: zapperProfiles.get(zap.senderPubkey)?.picture
-    }
+      name:
+        zapperProfiles.get(zap.senderPubkey)?.name ||
+        zapperProfiles.get(zap.senderPubkey)?.displayName,
+      pictureUrl: zapperProfiles.get(zap.senderPubkey)?.picture,
+    },
   }))}
-  <BottomBar 
-    appName={app.name || ""} 
+  <BottomBar
+    appName={app.name || ""}
     {publisherName}
-    contentType="app" 
+    contentType="app"
     {zapTarget}
     otherZaps={otherZapsForSlider}
     {searchProfiles}
@@ -1200,24 +1198,6 @@
 {/if}
 
 <style>
-  /* Zaps row */
-  .zaps-row-container {
-    overflow: hidden;
-  }
-
-  .zaps-row {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .zaps-row::-webkit-scrollbar {
-    display: none;
-  }
-
   /* Info panels container */
   .info-panels-container {
     display: flex;
@@ -1225,7 +1205,7 @@
     gap: 12px;
   }
 
-  /* Main row containing Security + Releases (+ Similar on desktop) */
+  /* Main row containing Security + Releases + Suggestions */
   .info-panels-main {
     display: flex;
     gap: 12px;
@@ -1265,30 +1245,17 @@
     min-width: 0;
   }
 
-  /* Similar panel - hidden on mobile in main row, shown in separate row */
-  .panel-similar-desktop {
-    display: none;
+  /* Secondary row (mobile only): Suggestions */
+  .info-panels-secondary {
+    display: flex;
+    gap: 12px;
   }
 
-  .panel-similar-mobile {
-    width: 100%;
-    padding-bottom: 20px;
-  }
-
-  /* Desktop layout: all three in one row */
+  /* Desktop layout */
   @media (min-width: 768px) {
-    /* Hide mobile Similar panel */
-    .panel-similar-mobile {
+    /* Hide mobile secondary row */
+    .info-panels-secondary {
       display: none;
-    }
-
-    /* Show desktop Similar panel - icons row at bottom */
-    .panel-similar-desktop {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      flex: 1; /* Equal width */
-      min-width: 0;
     }
 
     /* Desktop widths: all panels equal */
@@ -1309,9 +1276,32 @@
     cursor: pointer;
   }
 
-  /* Extra bottom padding for Suggestions panel on desktop */
+  /* Desktop Suggestions panel - hidden on mobile */
   .panel-similar-desktop {
-    padding-bottom: 16px;
+    display: none;
+  }
+
+  /* Mobile Suggestions panel */
+  .panel-similar-mobile {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .panel-similar-mobile .panel-header {
+    margin-bottom: 6px;
+  }
+
+  /* Desktop layout for Suggestions panel */
+  @media (min-width: 768px) {
+    /* Show desktop Suggestions panel */
+    .panel-similar-desktop {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+      min-width: 0;
+      padding-bottom: 16px;
+    }
   }
 
   /* Responsive install buttons */
@@ -1619,7 +1609,8 @@
   /* Larger screens */
   @media (min-width: 768px) {
     .description-container {
-      margin-top: -0.5rem;
+      margin-top: -0.4375rem;
+      margin-bottom: 1.0625rem;
     }
     .app-description :global(p) {
       font-size: 1.0625rem; /* 17px on desktop */

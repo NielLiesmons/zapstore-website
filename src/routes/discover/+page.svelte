@@ -116,8 +116,9 @@
         }),
       );
 
-      // Keep all stacks, even those with no resolved apps (they might have apps we couldn't fetch)
-      stacks = resolvedStacks.filter((s) => s.name); // Just filter out ones without names
+      // Keep all stacks - we have fallback logic for title/description now
+      // Sort by createdAt (newest first) - this is the event timestamp, updated on edits
+      stacks = resolvedStacks.sort((a, b) => b.createdAt - a.createdAt);
     } catch (err) {
       console.error("Error loading stacks:", err);
     } finally {
@@ -173,7 +174,7 @@
     return columns;
   }
 
-  $: appColumns = getAppColumns(apps, 3);
+  $: appColumns = getAppColumns(apps, 4);
 </script>
 
 <svelte:head>
@@ -194,7 +195,7 @@
           <div class="scroll-content">
             {#each Array(4) as _, colIndex}
               <div class="app-column">
-                {#each Array(3) as _, cardIndex}
+                {#each Array(4) as _, cardIndex}
                   <div class="skeleton-card">
                     <div class="skeleton-icon">
                       <SkeletonLoader />
@@ -242,7 +243,7 @@
             <div class="scroll-content">
               {#each Array(4) as _}
                 <div class="app-column">
-                  {#each Array(3) as _}
+                  {#each Array(4) as _}
                     <div class="skeleton-card">
                       <div class="skeleton-icon">
                         <SkeletonLoader />

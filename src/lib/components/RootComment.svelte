@@ -339,11 +339,11 @@
     margin: 0;
   }
 
-  /* Thread Bottom Bar Styles */
+  /* Thread Bottom Bar Styles - matches BottomBar.svelte */
   .thread-bottom-bar {
     background: hsl(var(--gray66));
     border-top: 0.33px solid hsl(var(--white16));
-    padding: 16px;
+    padding: 16px 6px 16px 16px;
   }
 
   .thread-bottom-bar-content {
@@ -359,11 +359,19 @@
     flex-shrink: 0;
   }
 
-  /* Options Button - Square aspect ratio */
+  /* Options Button - transparent, no gap before it */
   .options-button {
     width: 42px;
     padding: 0;
     flex-shrink: 0;
+    background: transparent !important;
+    border: none !important;
+    margin-left: -12px;
+  }
+
+  .options-button :global(svg) {
+    width: 24px;
+    height: 24px;
   }
 
   @media (max-width: 767px) {
@@ -373,6 +381,12 @@
 
     .zap-button span {
       font-size: 14px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .thread-bottom-bar {
+      padding: 12px 2px 12px 12px;
     }
   }
 </style>

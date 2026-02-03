@@ -143,45 +143,15 @@
   .bottom-bar {
     width: 100%;
     max-width: 100%;
+    margin: 0;
     background: hsl(var(--gray66));
     border-radius: var(--radius-32) var(--radius-32) 0 0;
     border: 0.33px solid hsl(var(--white8));
     border-bottom: none;
-    padding: 16px;
+    padding: 16px 6px 16px 16px;
     pointer-events: auto;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-  }
-
-  /* Match modal-wide breakpoints */
-  @media (min-width: 640px) {
-    .bottom-bar {
-      max-width: calc(640px - 48px);
-    }
-  }
-
-  @media (min-width: 768px) {
-    .bottom-bar {
-      max-width: calc(768px - 48px);
-    }
-  }
-
-  @media (min-width: 900px) {
-    .bottom-bar {
-      max-width: calc(900px - 64px);
-    }
-  }
-
-  @media (min-width: 1000px) {
-    .bottom-bar {
-      max-width: calc(1000px - 64px);
-    }
-  }
-
-  @media (min-width: 1100px) {
-    .bottom-bar {
-      max-width: calc(1100px - 64px);
-    }
   }
 
   .bottom-bar-content {
@@ -197,11 +167,19 @@
     flex-shrink: 0;
   }
 
-  /* Options Button - Square aspect ratio */
+  /* Options Button - transparent, no gap before it */
   .options-button {
     width: 42px;
     padding: 0;
     flex-shrink: 0;
+    background: transparent !important;
+    border: none !important;
+    margin-left: -12px;
+  }
+
+  .options-button :global(svg) {
+    width: 24px;
+    height: 24px;
   }
 
   @media (max-width: 767px) {
@@ -211,6 +189,19 @@
 
     .zap-button span {
       font-size: 14px;
+    }
+  }
+
+  /* Desktop-only styles */
+  @media (min-width: 768px) {
+    /* Desktop: floating bar with all rounded corners and shadow */
+    .bottom-bar {
+      max-width: 560px;
+      margin-bottom: 16px;
+      border-radius: 24px;
+      border-bottom: 0.33px solid hsl(var(--white8));
+      padding: 12px 2px 12px 12px;
+      box-shadow: 0 8px 64px hsl(var(--black));
     }
   }
 </style>

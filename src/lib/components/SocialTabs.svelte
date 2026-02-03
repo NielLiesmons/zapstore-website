@@ -6,11 +6,14 @@
     getCachedComments,
     cacheComments,
     fetchProfile,
+    formatSats,
   } from "$lib/nostr.js";
   import { authStore } from "$lib/stores/auth.js";
   import { wheelScroll } from "$lib/actions/wheelScroll.js";
   import RootComment from "./RootComment.svelte";
+  import ZapBubble from "./ZapBubble.svelte";
   import DetailsTab from "./DetailsTab.svelte";
+  import ZapIcon from "./icons/Zap.svelte";
   import { getAppSlug, pubkeyToNpub } from "$lib/nostr.js";
 
   /**
@@ -29,18 +32,28 @@
   /** @type {Object|null} - Pre-loaded publisher profile from parent */
   export let publisherProfile = null;
 
+  /** @type {Array} - Zaps data array */
+  export let zaps = [];
+
+  /** @type {Map} - Zapper profiles map (pubkey -> profile) */
+  export let zapperProfiles = new Map();
+
   /** @type {string} - Additional CSS classes */
   export let className = "";
 
-  // Tab definitions
-  const tabs = [
+  // Tab definitions (zaps tab is handled separately due to dynamic content)
+  const staticTabs = [
     { id: "comments", label: "Comments" },
+    { id: "zaps", label: "Zaps" },
     { id: "labels", label: "Labels" },
     { id: "stacks", label: "Stacks" },
     { id: "details", label: "Details" },
   ];
 
   let activeTab = "comments";
+
+  // Calculate total zap amount
+  $: totalZapAmount = zaps.reduce((sum, zap) => sum + (zap.amountSats || 0), 0);
 
   // ============================================================================
   // Comments Tab State & Logic
@@ -202,12 +215,45 @@
     ...comment,
     replies: repliesByParent.get(comment.id) || [],
   }));
+
+  // Enrich zaps with profile data and sort newest first
+  $: enrichedZaps = zaps
+    .map((zap) => {
+      const profile = zapperProfiles.get(zap.senderPubkey);
+      return {
+        ...zap,
+        type: "zap",
+        displayName: profile?.displayName || profile?.name || "Anonymous",
+        avatarUrl: profile?.picture || null,
+        profileUrl: zap.senderPubkey
+          ? `/p/${pubkeyToNpub(zap.senderPubkey)}`
+          : "",
+        timestamp: zap.createdAt,
+      };
+    })
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+  // Combine comments and zaps (only zaps with a comment) for the Comments tab
+  $: combinedFeed = (() => {
+    const commentsWithType = rootCommentsWithReplies.map((c) => ({
+      ...c,
+      type: "comment",
+      timestamp: c.createdAt,
+    }));
+
+    // Only include zaps that have a comment message
+    const zapsWithComments = enrichedZaps.filter((zap) => zap.comment && zap.comment.trim());
+
+    const combined = [...commentsWithType, ...zapsWithComments];
+
+    return combined.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  })();
 </script>
 
 <div class="social-tabs {className}">
   <!-- Tab buttons -->
   <div class="tab-row" use:wheelScroll>
-    {#each tabs as tab}
+    {#each staticTabs as tab}
       <button
         type="button"
         class={activeTab === tab.id
@@ -215,7 +261,22 @@
           : "btn-secondary-small"}
         on:click={() => (activeTab = tab.id)}
       >
-        {tab.label}
+        {#if tab.id === "zaps"}
+          <span>Zaps</span>
+          {#if totalZapAmount > 0}
+            <span class="tab-stats">
+              <ZapIcon variant="fill" size={12} color="hsl(0 0% 100% / 0.44)" />
+              <span>{formatSats(totalZapAmount).replace(' sats', '')}</span>
+            </span>
+          {/if}
+        {:else if tab.id === "comments"}
+          <span>Comments</span>
+          {#if rootCommentsWithReplies.length > 0}
+            <span class="tab-stats">{rootCommentsWithReplies.length}</span>
+          {/if}
+        {:else}
+          {tab.label}
+        {/if}
       </button>
     {/each}
   </div>
@@ -238,31 +299,64 @@
           <Loader2 class="h-4 w-4 animate-spin" />
           <span>Loading comments...</span>
         </div>
-      {:else if rootCommentsWithReplies.length === 0}
+      {:else if combinedFeed.length === 0}
         <p class="text-sm text-muted-foreground">
           No comments yet. Be the first to share feedback.
         </p>
       {:else}
         <div class="space-y-4">
-          {#each rootCommentsWithReplies as comment (comment.id)}
-            <RootComment
-              pictureUrl={comment.avatarUrl}
-              name={comment.displayName}
-              pubkey={comment.pubkey}
-              timestamp={comment.createdAt}
-              profileUrl={comment.profileUrl}
-              loading={comment.profileLoading}
-              replies={comment.replies}
-              authorPubkey={app?.pubkey}
-              contentHtml={comment.contentHtml}
-              appIconUrl={app?.icon}
-              appName={app?.name}
-              appIdentifier={app?.dTag}
-              {version}
-            >
-              {@html comment.contentHtml ||
-                "<p class='text-muted-foreground italic'>No content</p>"}
-            </RootComment>
+          {#each combinedFeed as item (item.type === "zap" ? `zap-${item.id}` : item.id)}
+            {#if item.type === "zap"}
+              <ZapBubble
+                pictureUrl={item.avatarUrl}
+                name={item.displayName}
+                pubkey={item.senderPubkey}
+                amount={item.amountSats || 0}
+                timestamp={item.createdAt}
+                profileUrl={item.profileUrl}
+                message={item.comment || ""}
+              />
+            {:else}
+              <RootComment
+                pictureUrl={item.avatarUrl}
+                name={item.displayName}
+                pubkey={item.pubkey}
+                timestamp={item.createdAt}
+                profileUrl={item.profileUrl}
+                loading={item.profileLoading}
+                replies={item.replies}
+                authorPubkey={app?.pubkey}
+                contentHtml={item.contentHtml}
+                appIconUrl={app?.icon}
+                appName={app?.name}
+                appIdentifier={app?.dTag}
+                {version}
+              >
+                {@html item.contentHtml ||
+                  "<p class='text-muted-foreground italic'>No content</p>"}
+              </RootComment>
+            {/if}
+          {/each}
+        </div>
+      {/if}
+    {:else if activeTab === "zaps"}
+      <!-- Zaps Tab -->
+      {#if enrichedZaps.length === 0}
+        <p class="text-sm text-muted-foreground">
+          No zaps yet. Be the first to zap this app.
+        </p>
+      {:else}
+        <div class="space-y-4">
+          {#each enrichedZaps as zap (zap.id)}
+            <ZapBubble
+              pictureUrl={zap.avatarUrl}
+              name={zap.displayName}
+              pubkey={zap.senderPubkey}
+              amount={zap.amountSats || 0}
+              timestamp={zap.createdAt}
+              profileUrl={zap.profileUrl}
+              message={zap.comment || ""}
+            />
           {/each}
         </div>
       {/if}
@@ -313,5 +407,20 @@
   .tab-content {
     min-height: 100px;
     padding-top: 16px;
+  }
+
+  /* Zap tab button styling */
+  .tab-row :global(button) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tab-stats {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    margin-left: 2px;
+    color: hsl(0 0% 100% / 0.44);
   }
 </style>

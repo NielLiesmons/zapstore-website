@@ -2,13 +2,12 @@
   import LandingSectionTitle from "./LandingSectionTitle.svelte";
   import { ChevronRight } from "$lib/components/icons";
 
-  // Store icons - placeholders for now
+  // Store icons with image paths
   const stores = [
-    { name: "Zapstore", icon: "zapstore" },
-    { name: "App Store", icon: "appstore" },
-    { name: "Play Store", icon: "playstore" },
-    { name: "Obtainium", icon: "obtainium" },
-    { name: "Accrescent", icon: "accrescent" },
+    { name: "Zapstore", icon: "/images/logo.svg", hasIcon: true, isZapstore: true },
+    { name: "App Store", icon: "/images/appstore.svg", hasIcon: true },
+    { name: "Play Store", icon: "/images/playstore.svg", hasIcon: true },
+    { name: "Obtainium", icon: "/images/obtainium.svg", hasIcon: true },
   ];
 
   // Criteria with values for each store
@@ -16,27 +15,27 @@
   const criteria = [
     {
       name: "Open Source",
-      values: [true, false, false, true, true],
+      values: [true, false, false, true],
     },
     {
       name: "No Fees",
-      values: [true, false, false, true, true],
+      values: [true, false, false, true],
     },
     {
       name: "No Review Process",
-      values: [true, false, false, true, false],
+      values: [true, false, false, true],
     },
     {
       name: "Decentralized",
-      values: [true, false, false, false, false],
+      values: [true, false, false, false],
     },
     {
       name: "Developer Tips",
-      values: [true, false, false, false, false],
+      values: [true, false, false, false],
     },
     {
       name: "Verified Builds",
-      values: [true, false, false, false, true],
+      values: [true, false, false, false],
     },
   ];
 
@@ -54,7 +53,7 @@
   }
 </script>
 
-<section class="border-t border-border/50 pt-12 lg:pt-16 pb-0">
+<section class="border-t border-border/50 pt-8 sm:pt-12 lg:pt-16 pb-0">
   <LandingSectionTitle
     title="What's the difference?"
     description="Let's compare Zapstore to some common alternatives."
@@ -95,7 +94,6 @@
           <col class="col-store" />
           <col class="col-store" />
           <col class="col-store" />
-          <col class="col-store" />
         </colgroup>
         <thead>
           <tr>
@@ -103,7 +101,11 @@
             {#each stores as store, i}
               <th class="store-header">
                 <div class="store-header-content">
-                  <div class="store-icon-placeholder"></div>
+                  <div class="store-icon-wrapper" class:zapstore-icon={store.isZapstore}>
+                    {#if store.hasIcon}
+                      <img src={store.icon} alt={store.name} class="store-icon" />
+                    {/if}
+                  </div>
                   <span class="store-name" class:highlight={i === 0}>{store.name}</span>
                 </div>
               </th>
@@ -200,11 +202,28 @@
     gap: 0.5rem;
   }
 
-  .store-icon-placeholder {
+  .store-icon-wrapper {
     width: 40px;
     height: 40px;
     border-radius: 12px;
     background-color: hsl(var(--white8));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .store-icon {
+    width: 22px;
+    height: 22px;
+    opacity: 0.33;
+    filter: brightness(0) invert(1);
+  }
+
+  .store-icon-wrapper.zapstore-icon .store-icon {
+    width: 14px;
+    height: 22px;
+    filter: brightness(0) invert(1);
+    opacity: 1;
   }
 
   .store-name {
@@ -304,10 +323,20 @@
       height: 16px;
     }
 
-    .store-icon-placeholder {
+    .store-icon-wrapper {
       width: 44px;
       height: 44px;
       border-radius: 14px;
+    }
+
+    .store-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .store-icon-wrapper.zapstore-icon .store-icon {
+      width: 16px;
+      height: 24px;
     }
   }
 
@@ -320,10 +349,20 @@
       padding: 0.75rem 0.25rem;
     }
 
-    .store-icon-placeholder {
+    .store-icon-wrapper {
       width: 28px;
       height: 28px;
       border-radius: 9px;
+    }
+
+    .store-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    .store-icon-wrapper.zapstore-icon .store-icon {
+      width: 10px;
+      height: 16px;
     }
 
     .store-name {
